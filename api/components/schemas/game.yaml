@@ -1,0 +1,88 @@
+# components/schemas/game.yaml
+type: object
+description: A game definition.
+properties:
+  id:
+    type: string
+    description: The ID of the game.
+    examples: [11223344-5566-7788-9900-aabbccddeeff]
+  name:
+    type: string
+    description: The name of the game.
+    examples: [test-game]
+  version:
+    type: string
+    description: The version of the game.
+    examples: ["1"]
+  description:
+    type: string
+    description: The description of the game.
+    examples: [A test game]
+  debug:
+    type: boolean
+    description: Whether the game is in debug mode.
+    examples: [false]
+  w:
+    type: integer
+    description: The width of the game in device independent pixels.
+    examples: [800]
+  h:
+    type: integer
+    description: The height of the game in device independent pixels.
+    examples: [600]
+  status:
+    type: string
+    description: The current status of the game.
+    enum:
+      - active
+      - inactive
+      - new
+      - error
+    examples: [active]
+  status_data:
+    type: object
+    description: Additional data related to the status.
+  subject:
+    $ref: "./object.yaml"
+    description: The player object.
+  objects:
+    type: object
+    description: A map of game objects keyed by ID.
+    additionalProperties:
+      $ref: "./object.yaml"
+  images:
+    type: object
+    description: A map of game images keyed by ID.
+    additionalProperties:
+      $ref: "./image.yaml"
+  scripts:
+    type: object
+    description: A map of game scripts keyed by ID.
+    additionalProperties:
+      $ref: "./script.yaml"
+  source:
+    type: string
+    description: The source of the game.
+    examples: [git]
+  commit_hash:
+    type: string
+    description: >
+      The commit hash of the of the import repository when source is git.
+  created_at:
+    type: integer
+    description: >
+      The Unix epoch timestamp for when the game was created.
+    examples: [1234567890]
+  created_by:
+    type: string
+    description: The ID of the user that created the game.
+    examples: [1234567890abcdef]
+  updated_at:
+    type: integer
+    description: >
+      The Unix epoch timestamp for when the game was last updated.
+    examples: [1234567890]
+  updated_by:
+    type: string
+    description: The ID of the user that last updated the game.
+    examples: [1234567890abcdef]

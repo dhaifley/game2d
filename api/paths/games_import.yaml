@@ -1,0 +1,17 @@
+# paths/games_import.yaml
+post:
+  tags:
+    - games
+  operationId: create_games_import
+  summary: Import games
+  description: Imports games from the import repository.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:admin"
+  responses:
+    "204":
+      description: No response body.
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

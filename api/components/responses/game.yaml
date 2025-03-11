@@ -1,0 +1,7 @@
+# components/responses/game.yaml
+description: >
+  A response containing details about a game.
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/game.yaml"

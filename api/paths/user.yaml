@@ -1,0 +1,61 @@
+# paths/user.yaml
+get:
+  tags:
+    - user
+  operationId: get_user
+  summary: Get user
+  description: Retrieves details for the current user.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "user:read"
+  responses:
+    "200":
+      $ref: "../components/responses/user.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+patch:
+  tags:
+    - user
+  operationId: update_user
+  summary: Update user
+  description: Updates details for the current user.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "user:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/user.yaml"
+  responses:
+    "200":
+      $ref: "../components/responses/user.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+put:
+  tags:
+    - user
+  operationId: replace_user
+  summary: Replace user
+  description: Updates details for the current user.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "resource:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/user.yaml"
+  responses:
+    "200":
+      $ref: "../components/responses/user.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

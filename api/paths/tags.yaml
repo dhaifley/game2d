@@ -1,0 +1,57 @@
+# paths/tags.yaml
+parameters:
+  - $ref: "../components/parameters/id.yaml"
+get:
+  tags:
+    - tags
+  operationId: get_tags
+  summary: Get tags
+  description: Retrieves tags for a resource.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "resource:read"
+  responses:
+    "200":
+      $ref: "../components/responses/tags.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+post:
+  tags:
+    - tags
+  operationId: create_tags
+  summary: Create tags
+  description: Adds tags to a resource.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "resource:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/tags.yaml"
+  responses:
+    "200":
+      $ref: "../components/responses/tags.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+delete:
+  tags:
+    - tags
+  operationId: delete_tags
+  summary: Delete tags
+  description: Deletes tags for a specific resource.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "resource:write"
+  responses:
+    "204":
+      description: No response body.
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

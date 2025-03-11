@@ -1,0 +1,17 @@
+# components/responses/index.yaml
+account:
+  $ref: "./account.yaml"
+error:
+  $ref: "./error.yaml"
+game:
+  $ref: "./game.yaml"
+games:
+  $ref: "./games.yaml"
+tags:
+  $ref: "./tags.yaml"
+tags_multi_assignment:
+  $ref: "./tags_multi_assignment.yaml"
+user:
+  $ref: "./user.yaml"
+user_error:
+  $ref: "./user_error.yaml"

@@ -1,0 +1,45 @@
+# paths/games.yaml
+parameters:
+  - $ref: "../components/parameters/search.yaml"
+  - $ref: "../components/parameters/size.yaml"
+  - $ref: "../components/parameters/skip.yaml"
+  - $ref: "../components/parameters/sort.yaml"
+  - $ref: "../components/parameters/summary.yaml"
+get:
+  tags:
+    - games
+  operationId: search_games
+  summary: Search games
+  description: Retrieves game definitions based on a search query.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:read"
+  responses:
+    "200":
+      $ref: "../components/responses/games.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+post:
+  tags:
+    - games
+  operationId: create_game
+  summary: Create game
+  description: Creates a new game definition.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/game.yaml"
+  responses:
+    "201":
+      $ref: "../components/responses/game.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

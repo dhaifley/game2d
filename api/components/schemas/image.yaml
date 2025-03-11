@@ -1,0 +1,15 @@
+# components/schemas/image.yaml
+type: object
+description: An image definition.
+properties:
+  id:
+    type: string
+    description: The ID of the image.
+    examples: [11223344-5566-7788-9900-aabbccddeeff]
+  name:
+    type: string
+    description: The name of the image.
+    examples: [test-image]
+  data:
+    type: string
+    description: Base64 encoded image data.

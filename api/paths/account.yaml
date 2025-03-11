@@ -1,0 +1,39 @@
+# paths/account.yaml
+get:
+  tags:
+    - account
+  operationId: get_account
+  summary: Get account
+  description: Retrieves details for the current account.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "account:read"
+  responses:
+    "200":
+      $ref: "../components/responses/account.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+post:
+  tags:
+    - account
+  operationId: create_account
+  summary: Create account
+  description: Creates a new account, or re-creates an existing one.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "account:admin"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/account.yaml"
+  responses:
+    "201":
+      $ref: "../components/responses/account.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

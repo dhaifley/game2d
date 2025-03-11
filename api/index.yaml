@@ -1,0 +1,45 @@
+openapi: 3.1.0
+info:
+  title: empty
+  version: "0.1.1"
+  description: >
+    An application programming interface service.
+  license:
+    name: MIT License
+    url: https://choosealicense.com/licenses/mit/
+security:
+  - OAuth2PasswordBearer: []
+paths:
+  $ref: "./paths/index.yaml"
+components:
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes:
+            "account:read": "Read the current account."
+            "account:write": "Write to the current account."
+            "account:admin": "Administer the current account."
+            "games:read": "Read games."
+            "games:write": "Write to games."
+            "games:admin": "Administer games."
+            "user:read": "Read the current user."
+            "user:write": "Write to the current user."
+            "user:admin": "Administer the current user."
+          tokenUrl: "/api/v1/login/token"
+  parameters:
+    $ref: "./components/parameters/index.yaml"
+  schemas:
+    $ref: "./components/schemas/index.yaml"
+  responses:
+    $ref: "./components/responses/index.yaml"
+tags:
+  - name: account
+    description: Account information and services.
+  - name: games
+    description: Operations related to games.
+  - name: tags
+    description: Operations related to game tags.
+  - name: user
+    description: User information and services.

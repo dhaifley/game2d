@@ -1,0 +1,47 @@
+# components/schemas/object.yaml
+type: object
+description: An object definition.
+properties:
+  id:
+    type: string
+    description: The ID of the object.
+    examples: [11223344-5566-7788-9900-aabbccddeeff]
+  name:
+    type: string
+    description: The name of the object.
+    examples: [test-object]
+  hidden:
+    type: boolean
+    description: Whether the object is hidden or drawn.
+    examples: [false]
+  x:
+    type: integer
+    description: The x-coordinate of the object in device independent pixels.
+    examples: [100]
+  y:
+    type: integer
+    description: The y-coordinate of the object in device independent pixels.
+    examples: [50]
+  z:
+    type: integer
+    description: The z-index of the object.
+    examples: [1]
+  w:
+    type: integer
+    description: The width of the object in device independent pixels.
+    examples: [200]
+  h:
+    type: integer
+    description: The height of the object in device independent pixels.
+    examples: [100]
+  image:
+    type: string
+    description: The ID of the object image.
+    examples: ["image_id"]
+  script:
+    type: string
+    description: The ID of the object script.
+    examples: ["script_id"]
+  data:
+    type: object
+    description: Additional object data.

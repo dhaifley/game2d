@@ -1,0 +1,79 @@
+# paths/game.yaml
+parameters:
+  - $ref: "../components/parameters/id.yaml"
+get:
+  tags:
+    - games
+  operationId: get_game
+  summary: Get game
+  description: Retrieves the definition for a specific game.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:read"
+  responses:
+    "200":
+      $ref: "../components/responses/game.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+patch:
+  tags:
+    - games
+  operationId: update_game
+  summary: Update game
+  description: Updates the definition for a specific game.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/game.yaml"
+  responses:
+    "200":
+      $ref: "../components/responses/game.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+put:
+  tags:
+    - games
+  operationId: replace_game
+  summary: Replace game
+  description: Updates the definition for a specific game.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/game.yaml"
+  responses:
+    "200":
+      $ref: "../components/responses/game.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"
+delete:
+  tags:
+    - games
+  operationId: delete_game
+  summary: Delete game
+  description: Deletes the definition for a specific game.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:write"
+  responses:
+    "204":
+      description: No response body.
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

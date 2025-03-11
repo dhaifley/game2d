@@ -1,0 +1,19 @@
+# paths/index.yaml
+"/api/v1/account":
+  $ref: "./account.yaml"
+"/api/v1/account/repo":
+  $ref: "./account_repo.yaml"
+"/api/v1/games":
+  $ref: "./games.yaml"
+"/api/v1/games/{id}":
+  $ref: "./game.yaml"
+"/api/v1/games/import":
+  $ref: "./games_import.yaml"
+"/api/v1/games/{id}/import":
+  $ref: "./game_import.yaml"
+"/api/v1/games/{id}/tags":
+  $ref: "./tags.yaml"
+"/api/v1/games/tags_multi_assignments":
+  $ref: "./tags_multi_assignments.yaml"
+"/api/v1/user":
+  $ref: "./user.yaml"

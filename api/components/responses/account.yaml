@@ -1,0 +1,7 @@
+# components/responses/account.yaml
+description: >
+  A response containing details about an account.
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/account.yaml"

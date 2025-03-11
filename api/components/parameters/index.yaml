@@ -1,0 +1,13 @@
+# components/parameters/index.yaml
+id:
+  $ref: "./id.yaml"
+search:
+  $ref: "./search.yaml"
+size:
+  $ref: "./size.yaml"
+skip:
+  $ref: "./skip.yaml"
+sort:
+  $ref: "./sort.yaml"
+summary:
+  $ref: "./summary.yaml"
