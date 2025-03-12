@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	TestScript = "function update(data)\n  return data\nend"
+	TestScript = "function Update(data)\nend"
 )
 
 func TestNewScript(t *testing.T) {

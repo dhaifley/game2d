@@ -3,8 +3,10 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 
 	"github.com/Shopify/go-lua"
 	"github.com/dhaifley/empty/errors"
@@ -191,6 +193,37 @@ func (g *Game) AddScript(src *Script) {
 
 // Update updates the game state each frame.
 func (g *Game) Update() error {
+	objects := make(map[string]any, len(g.obj))
+
+	for k, obj := range g.obj {
+		objects[k] = obj.Map()
+	}
+
+	d := map[string]any{
+		"id":          g.id,
+		"version":     g.ver,
+		"name":        g.name,
+		"description": g.desc,
+		"debug":       g.debug,
+		"w":           g.w,
+		"h":           g.h,
+		"subject":     g.sub.Map(),
+		"objects":     objects,
+	}
+
+	if keys := inpututil.AppendPressedKeys(nil); len(keys) > 0 {
+		keyMap := map[string]any{}
+
+		for i, k := range keys {
+			keyMap[strconv.Itoa(i)] = int(k)
+		}
+
+		d["keys"] = keyMap
+	}
+
+	pushMap(g.lua, d)
+	g.lua.SetGlobal("game")
+
 	for _, obj := range g.obj {
 		if err := obj.Update(); err != nil {
 			return err
@@ -201,6 +234,19 @@ func (g *Game) Update() error {
 		if err := g.sub.Update(); err != nil {
 			return err
 		}
+	}
+
+	luaState, err := pullMap(g.lua)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrClient,
+			"unable to retrieve game state from lua")
+	}
+
+	delete(luaState, "keys")
+
+	if err := g.updateFromMap(luaState); err != nil {
+		return errors.Wrap(err, errors.ErrClient,
+			"unable to update game state from lua")
 	}
 
 	if keys := inpututil.AppendJustPressedKeys(nil); len(keys) > 0 {
@@ -241,17 +287,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if g.sub != nil {
 		g.sub.Draw(screen)
+	}
 
-		if g.debug {
-			b, _ := json.MarshalIndent(&g.sub, "", "  ")
-
-			ebitenutil.DebugPrint(screen, string(b))
-		}
+	if g.debug {
+		ebitenutil.DebugPrint(screen,
+			fmt.Sprintf("FPS: %f\nTPS: %f",
+				ebiten.ActualFPS(), ebiten.ActualTPS()))
 	}
 }
 
 // Layout returns the game object dimensions.
 func (g *Game) Layout(w, h int) (int, int) {
+	if g.w == 0 || g.h == 0 {
+		g.w = w
+		g.h = h
+	}
+
+	if g.w != w || g.h != h {
+		g.w = w
+		g.h = h
+	}
+
+	if g.w < 1 {
+		g.w = 1
+	}
+
+	if g.h < 1 {
+		g.h = 1
+	}
+
 	return g.w, g.h
 }
 
@@ -335,4 +399,187 @@ func (g *Game) Quit(err error) {
 	}
 
 	os.Exit(0)
+}
+
+// pushMap adds a map to the lua stack as a table and sets it as the lua global
+// table.
+func pushMap(l *lua.State, m map[string]any) {
+	l.NewTable()
+
+	for k, v := range m {
+		l.PushString(k)
+		pushValue(l, v)
+		l.SetTable(-3)
+	}
+}
+
+// pushSlice pushes a slice to the lua stack as a table.
+func pushSlice(l *lua.State, a []any) {
+	l.NewTable()
+
+	for i, v := range a {
+		l.PushInteger(i + 1)
+		pushValue(l, v)
+		l.SetTable(-3)
+	}
+}
+
+// pushValue pushes a value to the lua stack.
+func pushValue(l *lua.State, v any) {
+	switch val := v.(type) {
+	case byte:
+		l.PushInteger(int(val))
+	case int:
+		l.PushInteger(val)
+	case float64:
+		l.PushNumber(val)
+	case string:
+		l.PushString(val)
+	case bool:
+		l.PushBoolean(val)
+	case map[string]any:
+		pushMap(l, val)
+	case []any:
+		pushSlice(l, val)
+	case nil:
+		l.PushNil()
+	default:
+		l.PushNil()
+	}
+}
+
+// tableToMap retrieves a table from the lua stack, at index, as a map.
+func tableToMap(l *lua.State, index int) (map[string]any, error) {
+	if !l.IsTable(index) {
+		return nil, errors.New(errors.ErrClient,
+			"value at index is not a table",
+			"index", index)
+	}
+
+	if l.IsNil(index) {
+		return nil, nil
+	}
+
+	l.PushValue(index)
+	l.PushNil()
+
+	result := make(map[string]any)
+
+	for l.Next(-2) {
+		if l.IsString(-2) {
+			key, _ := l.ToString(-2)
+			result[key] = getValue(l, -1)
+		}
+
+		l.Pop(1)
+
+		if _, ok := result["1"]; ok {
+			break
+		}
+
+		if !l.IsTable(-2) {
+			break
+		}
+	}
+
+	l.Pop(1)
+
+	return result, nil
+}
+
+// getValue returns the value, at index from the lua stack.
+func getValue(l *lua.State, index int) any {
+	switch l.TypeOf(index) {
+	case lua.TypeNil:
+		return nil
+	case lua.TypeBoolean:
+		return l.ToBoolean(index)
+	case lua.TypeNumber:
+		v, _ := l.ToNumber(index)
+
+		return v
+	case lua.TypeString:
+		v, _ := l.ToString(index)
+
+		return v
+	case lua.TypeTable:
+		v, _ := tableToMap(l, index)
+
+		return v
+	default:
+		return nil
+	}
+}
+
+// pullMap retrieves a map from the lua global table.
+func pullMap(l *lua.State) (map[string]any, error) {
+	l.Global("game")
+
+	if !l.IsTable(-1) {
+		l.Pop(1)
+
+		return nil, errors.New(errors.ErrClient,
+			"global game table not found")
+	}
+
+	result, err := tableToMap(l, -1)
+
+	l.Pop(1)
+
+	return result, err
+}
+
+// updateFromMap updates the game state from a map retrieved from lua.
+func (g *Game) updateFromMap(m map[string]any) error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := m["debug"].(bool); ok {
+		g.debug = v
+	}
+
+	if v, ok := m["id"].(string); ok {
+		g.id = v
+	}
+
+	if v, ok := m["version"].(string); ok {
+		g.ver = v
+	}
+
+	if v, ok := m["name"].(string); ok {
+		g.name = v
+	}
+
+	if v, ok := m["description"].(string); ok {
+		g.desc = v
+	}
+
+	if v, ok := m["w"].(int); ok {
+		g.w = v
+	}
+
+	if v, ok := m["h"].(int); ok {
+		g.h = v
+	}
+
+	if v, ok := m["subject"].(map[string]any); ok {
+		obj := objectFromMap(v)
+
+		g.sub = obj
+		g.sub.game = g
+	}
+
+	if v, ok := m["objects"].(map[string]any); ok {
+		for id, v := range v {
+			if vv, ok := v.(map[string]any); ok {
+				obj := objectFromMap(vv)
+				obj.game = g
+
+				g.obj[id] = obj
+			}
+		}
+	}
+
+	return nil
 }

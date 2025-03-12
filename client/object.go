@@ -1,16 +1,11 @@
 package client
 
 import (
-	"encoding/hex"
+	"bytes"
 	"encoding/json"
-	"maps"
-	"slices"
-	"strconv"
 
-	"github.com/Shopify/go-lua"
 	"github.com/dhaifley/empty/errors"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // Object values represent the objects in the game.
@@ -120,6 +115,57 @@ func (o *Object) SetData(data map[string]any) {
 	o.data = data
 }
 
+func (o *Object) Map() map[string]any {
+	return map[string]any{
+		"id":      o.id,
+		"name":    o.name,
+		"hidden":  o.hidden,
+		"subject": o.sub,
+		"x":       o.x,
+		"y":       o.y,
+		"z":       o.z,
+		"w":       o.w,
+		"h":       o.h,
+		"image":   o.img,
+		"script":  o.src,
+		"data":    o.data,
+	}
+}
+
+func objectFromMap(m map[string]any) *Object {
+	hidden, _ := m["hidden"].(bool)
+	id, _ := m["id"].(string)
+	name, _ := m["name"].(string)
+	src, _ := m["script"].(string)
+	img, _ := m["image"].(string)
+	data, _ := m["data"].(map[string]any)
+	sub, _ := m["subject"].(bool)
+	x, _ := m["x"].(float64)
+	y, _ := m["y"].(float64)
+	z, _ := m["z"].(float64)
+	w, _ := m["w"].(float64)
+	h, _ := m["h"].(float64)
+
+	if id == "" {
+		return nil
+	}
+
+	return &Object{
+		id:     id,
+		name:   name,
+		hidden: hidden,
+		src:    src,
+		img:    img,
+		data:   data,
+		sub:    sub,
+		x:      int(x),
+		y:      int(y),
+		z:      int(z),
+		w:      int(w),
+		h:      int(h),
+	}
+}
+
 // MarshalJSON serializes the object to JSON.
 func (o *Object) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
@@ -198,7 +244,11 @@ func (o *Object) Update() error {
 			"script_id", o.src)
 	}
 
-	if err := lua.LoadString(o.game.lua, string(src.data)); err != nil {
+	l := o.game.lua
+
+	buf := bytes.NewBufferString(src.data)
+
+	if err := l.Load(buf, "Update", "text"); err != nil {
 		return errors.Wrap(err, errors.ErrClient,
 			"unable to load script",
 			"object_id", o.id,
@@ -206,173 +256,23 @@ func (o *Object) Update() error {
 			"script", string(src.data))
 	}
 
-	o.game.lua.Call(0, 0)
+	l.Call(0, 0)
 
-	o.game.lua.Global("update")
+	l.Global("Update")
 
-	if !o.game.lua.IsFunction(1) {
+	if !l.IsFunction(-1) {
 		return errors.New(errors.ErrClient,
-			"no update function in script",
+			"no Update function in script",
 			"object_id", o.id,
-			"script_id", o.src)
+			"script_id", o.src,
+			"script", string(src.data))
 	}
 
-	d := map[string]any{
-		"x": o.x,
-		"y": o.y,
-		"z": o.z,
-		"w": o.w,
-		"h": o.h,
-	}
+	d := map[string]any{"id": o.id}
 
-	d["keys"] = []any{}
+	pushMap(l, d)
 
-	if keys := inpututil.AppendPressedKeys(nil); len(keys) > 0 {
-		s := make([]any, len(keys))
-
-		for i, k := range keys {
-			s[i] = int(k)
-		}
-
-		d["keys"] = s
-	}
-
-	incImg, incScript := false, false
-
-	for _, inc := range src.include {
-		switch inc {
-		case "image":
-			if o.img == "" {
-				continue
-			}
-
-			if i, ok := o.game.img[o.img]; ok && i != nil {
-				if len(i.data) > 0 {
-					d["image"] = hex.EncodeToString(i.data)
-				}
-
-				incImg = true
-			}
-		case "script":
-			if o.src == "" {
-				continue
-			}
-
-			if s, ok := o.game.src[o.src]; ok && s != nil {
-				d["script"] = s.data
-				incScript = true
-			}
-		}
-	}
-
-	delete(o.data, "keys")
-
-	maps.Copy(d, o.data)
-
-	pushMap(o.game.lua, d)
-
-	o.game.lua.Call(1, 1)
-
-	r, err := tableToMap(o.game.lua, -1)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrClient,
-			"invalid return value from script",
-			"object_id", o.id,
-			"script_id", o.src)
-	}
-
-	o.game.lua.SetTop(0)
-
-	if x, ok := r["x"].(float64); ok {
-		o.x = int(x)
-
-		delete(r, "x")
-	}
-
-	if y, ok := r["y"].(float64); ok {
-		o.y = int(y)
-
-		delete(r, "y")
-	}
-
-	if z, ok := r["z"].(float64); ok {
-		o.z = int(z)
-
-		delete(r, "z")
-	}
-
-	if w, ok := r["w"].(float64); ok {
-		o.w = int(w)
-
-		delete(r, "w")
-	}
-
-	if h, ok := r["h"].(float64); ok {
-		o.h = int(h)
-
-		delete(r, "h")
-	}
-
-	if incImg {
-		if rImg, ok := r["image"].(string); ok {
-			ib, err := hex.DecodeString(rImg)
-			if err != nil {
-				return errors.Wrap(err, errors.ErrClient,
-					"unable to decode image",
-					"object_id", o.id,
-					"image_id", o.img,
-					"image", rImg)
-			}
-
-			if i, ok := o.game.img[o.img]; ok && i != nil {
-				if !slices.Equal(i.data, ib) && i.img != nil {
-					i.img.WritePixels(ib)
-					o.w = i.img.Bounds().Size().X
-					o.h = i.img.Bounds().Size().Y
-				}
-			}
-
-			delete(r, "image")
-		}
-	}
-
-	if incScript {
-		if rSrc, ok := r["script"].(string); ok {
-			if s, ok := o.game.src[o.src]; ok && s != nil {
-				s.data = rSrc
-			}
-
-			delete(r, "script")
-		}
-	}
-
-	if keys, ok := r["keys"].(map[string]any); ok {
-		var lk []any
-
-		for _, v := range keys {
-			lk = append(lk, v)
-		}
-
-		if o.data == nil {
-			o.data = make(map[string]any)
-		}
-
-		if len(lk) > 0 {
-			o.data["keys"] = lk
-		} else {
-			delete(o.data, "keys")
-		}
-
-		delete(r, "keys")
-	}
-
-	if len(r) > 0 {
-		if o.data == nil {
-			o.data = make(map[string]any)
-		}
-
-		maps.Copy(o.data, r)
-	}
+	l.Call(1, 0)
 
 	return nil
 }
@@ -413,99 +313,4 @@ func (o *Object) Draw(screen *ebiten.Image) {
 // Layout returns the object dimensions.
 func (o *Object) Layout(w, h int) (int, int) {
 	return o.w, o.h
-}
-
-// pushMap adds a map to the lua stack as a table.
-func pushMap(l *lua.State, m map[string]any) {
-	l.NewTable()
-
-	for k, v := range m {
-		l.PushString(k)
-		pushValue(l, v)
-		l.SetTable(-3)
-	}
-}
-
-// pushSlice pushes a slice to the lua stack as a table.
-func pushSlice(l *lua.State, a []any) {
-	l.NewTable()
-
-	for i, v := range a {
-		l.PushString(strconv.FormatInt(int64(i+1), 10))
-		pushValue(l, v)
-		l.SetTable(-3)
-	}
-}
-
-// pushValue pushes a value to the lua stack.
-func pushValue(l *lua.State, v any) {
-	switch val := v.(type) {
-	case byte:
-		l.PushInteger(int(val))
-	case int:
-		l.PushInteger(val)
-	case float64:
-		l.PushNumber(val)
-	case string:
-		l.PushString(val)
-	case bool:
-		l.PushBoolean(val)
-	case map[string]any:
-		pushMap(l, val)
-	case []any:
-		pushSlice(l, val)
-	case nil:
-		l.PushNil()
-	default:
-		l.PushNil()
-	}
-}
-
-// Returns a table, from the lua stack, at index, as a map.
-func tableToMap(l *lua.State, index int) (map[string]any, error) {
-	if !l.IsTable(index) {
-		return nil, errors.New(errors.ErrClient,
-			"value at index is not a table",
-			"index", index)
-	}
-
-	result := make(map[string]any)
-
-	l.PushNil()
-
-	for l.Next(index - 1) {
-		if l.IsString(-2) {
-			key, _ := l.ToString(-2)
-
-			result[key] = getValue(l, -1)
-		}
-
-		l.Pop(1)
-	}
-
-	return result, nil
-}
-
-// getValue returns the value, at index from the lua stack.
-func getValue(l *lua.State, index int) any {
-	switch l.TypeOf(index) {
-	case lua.TypeNil:
-		return nil
-	case lua.TypeBoolean:
-		return l.ToBoolean(index)
-	case lua.TypeNumber:
-		v, _ := l.ToNumber(index)
-
-		return v
-	case lua.TypeString:
-		v, _ := l.ToString(index)
-
-		return v
-	case lua.TypeTable:
-		v, _ := tableToMap(l, index)
-
-		return v
-	default:
-		return nil
-	}
 }
