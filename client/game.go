@@ -558,7 +558,7 @@ func (g *Game) updateFromMap(m map[string]any) error {
 	}
 
 	if v, ok := m["subject"].(map[string]any); ok {
-		obj := objectFromMap(v)
+		obj := NewObjectFromMap(v)
 
 		g.sub = obj
 		g.sub.game = g
@@ -567,7 +567,7 @@ func (g *Game) updateFromMap(m map[string]any) error {
 	if v, ok := m["objects"].(map[string]any); ok {
 		for id, v := range v {
 			if vv, ok := v.(map[string]any); ok {
-				obj := objectFromMap(vv)
+				obj := NewObjectFromMap(vv)
 				obj.game = g
 
 				g.obj[id] = obj

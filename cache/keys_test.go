@@ -18,16 +18,8 @@ func TestCacheKeys(t *testing.T) {
 			run: func() string { return cache.KeyAccount("test") },
 		},
 		{
-			exp: "Account::Name::test",
-			run: func() string { return cache.KeyAccountName("test") },
-		},
-		{
 			exp: "User::test",
 			run: func() string { return cache.KeyUser("test") },
-		},
-		{
-			exp: "User::Details::test",
-			run: func() string { return cache.KeyUserDetails("test") },
 		},
 		{
 			exp: "Token::Auth::test",
@@ -38,8 +30,8 @@ func TestCacheKeys(t *testing.T) {
 			run: func() string { return cache.KeyToken("test") },
 		},
 		{
-			exp: "Resource::test",
-			run: func() string { return cache.KeyResource("test") },
+			exp: "Game::test",
+			run: func() string { return cache.KeyGame("test") },
 		},
 	}
 

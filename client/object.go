@@ -132,7 +132,8 @@ func (o *Object) Map() map[string]any {
 	}
 }
 
-func objectFromMap(m map[string]any) *Object {
+// NewObjectFromMap creates a new object from a map.
+func NewObjectFromMap(m map[string]any) *Object {
 	hidden, _ := m["hidden"].(bool)
 	id, _ := m["id"].(string)
 	name, _ := m["name"].(string)

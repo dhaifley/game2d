@@ -3,11 +3,11 @@ package assets
 import "embed"
 
 //go:embed *.png *.lua
-var Assets embed.FS
+var afs embed.FS
 
 // GetImage retrieves an image from the embedded assets.
 func GetImage(name string) ([]byte, error) {
-	data, err := Assets.ReadFile(name)
+	data, err := afs.ReadFile(name)
 	if err != nil {
 		return nil, err
 	}
@@ -17,7 +17,7 @@ func GetImage(name string) ([]byte, error) {
 
 // GetScript retrieves a script from the embedded assets.
 func GetScript(name string) (string, error) {
-	data, err := Assets.ReadFile(name)
+	data, err := afs.ReadFile(name)
 	if err != nil {
 		return "", err
 	}
