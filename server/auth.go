@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/rsa"
 	"encoding/base64"
@@ -12,12 +13,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dhaifley/game2d/cache"
 	"github.com/dhaifley/game2d/errors"
 	"github.com/dhaifley/game2d/logger"
 	"github.com/dhaifley/game2d/request"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -47,29 +52,126 @@ type Claims struct {
 func (s *Server) getAccountSecret(ctx context.Context,
 	id string,
 ) ([]byte, error) {
-	_ = ctx
+	a, err := s.getAccount(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
-	return []byte(id), nil
+	if a == nil || !a.Secret.Valid {
+		return nil, errors.New(errors.ErrNotFound,
+			"account secret not found",
+			"id", id)
+	}
+
+	return []byte(a.Secret.Value), nil
 }
 
-// GetAccount retrieves an account from the database.
-func (s *Server) GetAccount(ctx context.Context,
+// getAccount retrieves an account from the database.
+func (s *Server) getAccount(ctx context.Context,
 	id string,
 ) (*Account, error) {
-	return nil, nil
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	if id == "" {
+		id = aID
+	}
+
+	if !request.ValidAccountID(id) {
+		return nil, errors.New(errors.ErrInvalidRequest,
+			"invalid account id",
+			"id", id)
+	}
+
+	if !request.ContextHasScope(ctx, request.ScopeSuperuser) && aID != id {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unauthorized request")
+	}
+
+	var r *Account
+
+	if s.Cache(ctx) != nil {
+		ck := cache.KeyAccount(id)
+
+		ci, err := s.Cache(ctx).Get(ctx, ck)
+		if err != nil && !errors.Has(err, errors.ErrNotFound) {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to get account cache key",
+				"error", err,
+				"cache_key", ck,
+				"id", id)
+		} else if ci != nil {
+			buf := bytes.NewBuffer(ci.Value)
+
+			if err := json.NewDecoder(buf).Decode(&r); err != nil {
+				s.log.Log(ctx, logger.LvlError,
+					"unable to decode account cache value",
+					"error", err,
+					"cache_key", ck,
+					"cache_value", string(ci.Value),
+					"id", id)
+			}
+		}
+	}
+
+	if r == nil {
+		f := bson.M{"id": id}
+
+		if err := s.DB().Collection("accounts").FindOne(ctx, f,
+			options.FindOne().SetProjection(bson.M{"_id": 0})).
+			Decode(&r); err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return nil, errors.New(errors.ErrNotFound,
+					"account not found",
+					"id", id)
+			}
+
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to get account",
+				"id", id)
+		}
+
+		if s.cache != nil {
+			ck := cache.KeyAccount(r.ID.Value)
+
+			buf, err := json.Marshal(r)
+			if err != nil {
+				s.log.Log(ctx, logger.LvlError,
+					"unable to encode account cache value",
+					"error", err,
+					"cache_key", ck,
+					"cache_value", r,
+					"id", id)
+			} else if len(buf) < s.cfg.CacheMaxBytes() {
+				if err := s.Cache(ctx).Set(ctx, &cache.Item{
+					Key:        ck,
+					Value:      buf,
+					Expiration: s.cfg.CacheExpiration(),
+				}); err != nil {
+					s.log.Log(ctx, logger.LvlError,
+						"unable to set account cache value",
+						"error", err,
+						"cache_key", ck,
+						"cache_value", string(buf),
+						"expiration", s.cfg.CacheExpiration(),
+						"id", id)
+				}
+			}
+		}
+	}
+
+	return r, nil
 }
 
-// GetAccountByName retrieves an account from the database by name not ID.
-func (s *Server) GetAccountByName(ctx context.Context,
-	name string,
+// createAccount inserts a new account in the database.
+func (s *Server) createAccount(ctx context.Context,
+	req *Account,
 ) (*Account, error) {
-	return nil, nil
-}
+	_, _ = ctx, req
 
-// CreateAccount inserts a new account in the database.
-func (s *Server) CreateAccount(ctx context.Context,
-	v *Account,
-) (*Account, error) {
 	return nil, nil
 }
 
@@ -80,8 +182,8 @@ type AccountRepo struct {
 	RepoStatusData request.FieldJSON   `json:"repo_status_data"`
 }
 
-// GetAccountRepo retrieves the account repository from the database.
-func (s *Server) GetAccountRepo(ctx context.Context) (*AccountRepo, error) {
+// getAccountRepo retrieves the account repository from the database.
+func (s *Server) getAccountRepo(ctx context.Context) (*AccountRepo, error) {
 	admin := true
 
 	if !request.ContextHasScope(ctx, request.ScopeSuperuser) &&
@@ -94,8 +196,8 @@ func (s *Server) GetAccountRepo(ctx context.Context) (*AccountRepo, error) {
 	return nil, nil
 }
 
-// SetAccountRepo sets the account repository in the database.
-func (s *Server) SetAccountRepo(ctx context.Context,
+// setAccountRepo sets the account repository in the database.
+func (s *Server) setAccountRepo(ctx context.Context,
 	v *AccountRepo,
 ) error {
 	if !request.ContextHasScope(ctx, request.ScopeSuperuser) &&
@@ -108,71 +210,26 @@ func (s *Server) SetAccountRepo(ctx context.Context,
 	return nil
 }
 
-// hashPassword creates a hashed password.
-func hashPassword(password string) (string, error) {
-	hp, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", errors.Wrap(err, errors.ErrServer,
-			"unable to hash password")
-	}
-
-	return string(hp), nil
-}
-
-// verifyPassword verifies if a password matches a hashed password.
-func verifyPassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword),
-		[]byte(password))
-}
-
-// GetUser retrieves a user from the database.
-func (s *Server) GetUser(ctx context.Context,
-	id string,
-) (*User, error) {
-	return nil, nil
-}
-
-// CreateUser inserts a new user in the database.
-func (s *Server) CreateUser(ctx context.Context,
-	v *User,
-) (*User, error) {
-	return nil, nil
-}
-
-// UpdateUser updates a user in the database.
-func (s *Server) UpdateUser(ctx context.Context,
-	v *User,
-) (*User, error) {
-	return nil, nil
-}
-
-// DeleteUser deletes a user from the database.
-func (s *Server) DeleteUser(ctx context.Context,
-	id string,
-) error {
-	return nil
-}
-
-// AuthJWT authenticates using a JWT token.
-func (s *Server) AuthJWT(ctx context.Context,
-	token, tenant string,
+// authJWT authenticates using a JWT token.
+func (s *Server) authJWT(ctx context.Context,
+	token, accountID string,
 ) (*Claims, error) {
 	res := &Claims{}
 
-	tenantID := ""
+	aID := ""
 
-	if tenant != "" {
+	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
 
-		a, err := s.GetAccountByName(aCtx, tenant)
+		a, err := s.getAccount(aCtx, accountID)
 		if err != nil {
 			return nil, errors.New(errors.ErrUnauthorized,
-				"invalid tenant",
+				"invalid account",
 				"token", token,
-				"tenant", tenant)
+				"account_id", accountID)
 		}
 
-		tenantID = a.ID.Value
+		aID = a.ID.Value
 	}
 
 	tok, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
@@ -245,7 +302,7 @@ func (s *Server) AuthJWT(ctx context.Context,
 			"invalid authentication token used",
 			"error", err,
 			"token", token,
-			"tenant", tenant,
+			"account_id", aID,
 			"claims", claims)
 
 		return nil, errors.New(errors.ErrUnauthorized,
@@ -262,15 +319,14 @@ func (s *Server) AuthJWT(ctx context.Context,
 		ctx = context.WithValue(ctx, request.CtxKeyScopes,
 			request.ScopeSuperuser)
 
-		oa, err := s.GetAccount(ctx, res.AccountID)
+		oa, err := s.getAccount(ctx, res.AccountID)
 		if err != nil && !errors.Has(err, errors.ErrNotFound) {
 			s.log.Log(ctx, logger.LvlDebug,
 				"unable to retrieve account",
 				"error", err,
 				"token", token,
-				"tenant", tenant,
-				"claims", claims,
-				"account_id", res.AccountID)
+				"account_id", aID,
+				"claims", claims)
 
 			return nil, err
 		}
@@ -303,9 +359,9 @@ func (s *Server) AuthJWT(ctx context.Context,
 		}
 	}
 
-	if tenantID != "" && res.AccountID != tenantID && sysAdmin {
+	if aID != "" && res.AccountID != aID && sysAdmin {
 		// Cross-tenant requests currently only permitted for system admin.
-		res.AccountID = tenantID
+		res.AccountID = aID
 	}
 
 	ctx = context.WithValue(ctx, request.CtxKeyAccountID, res.AccountID)
@@ -316,7 +372,7 @@ func (s *Server) AuthJWT(ctx context.Context,
 			"unable to get subject from claims",
 			"error", err,
 			"token", token,
-			"tenant", tenant,
+			"account_id", accountID,
 			"claims", claims)
 
 		return nil, errors.New(errors.ErrUnauthorized,
@@ -329,7 +385,7 @@ func (s *Server) AuthJWT(ctx context.Context,
 			"invalid subject found in claims",
 			"error", err,
 			"token", token,
-			"tenant", tenant,
+			"account_id", accountID,
 			"claims", claims)
 
 		return nil, errors.New(errors.ErrUnauthorized,
@@ -342,9 +398,9 @@ func (s *Server) AuthJWT(ctx context.Context,
 	return res, nil
 }
 
-// AuthPassword authenticates using a user password.
-func (s *Server) AuthPassword(ctx context.Context,
-	userID, password, tenant string,
+// authPassword authenticates using a user password.
+func (s *Server) authPassword(ctx context.Context,
+	userID, password, accountID string,
 ) error {
 	var err error
 
@@ -355,14 +411,14 @@ func (s *Server) AuthPassword(ctx context.Context,
 
 	aID := ""
 
-	if tenant != "" {
+	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
 
-		a, err := s.GetAccountByName(aCtx, tenant)
+		a, err := s.getAccount(aCtx, accountID)
 		if err != nil {
 			return errors.New(errors.ErrUnauthorized,
-				"invalid tenant",
-				"tenant", tenant)
+				"invalid account",
+				"account_id", accountID)
 		}
 
 		aID = a.ID.Value
@@ -395,8 +451,8 @@ func (s *Server) AuthPassword(ctx context.Context,
 	return nil
 }
 
-// UpdateAuth periodically updates authentication data.
-func (s *Server) UpdateAuth(ctx context.Context) context.CancelFunc {
+// updateAuth periodically updates authentication data.
+func (s *Server) updateAuth(ctx context.Context) context.CancelFunc {
 	ctx, cancel := context.WithCancel(ctx)
 
 	if tu, err := uuid.NewRandom(); err == nil {
@@ -625,27 +681,27 @@ func (s *Server) UpdateAuth(ctx context.Context) context.CancelFunc {
 	return cancel
 }
 
-// CreateToken is used to create a JWT token that can be used for tokens.
-func (s *Server) CreateToken(ctx context.Context,
+// createToken is used to create a JWT token that can be used for tokens.
+func (s *Server) createToken(ctx context.Context,
 	userID string,
 	expiration int64,
-	scopes, tenant string,
+	scopes, accountID string,
 ) (string, error) {
-	accountID := ""
+	aID := ""
 
-	if tenant != "" {
+	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
 
-		a, err := s.GetAccountByName(aCtx, tenant)
+		a, err := s.getAccount(aCtx, accountID)
 		if err != nil {
 			return "", errors.New(errors.ErrUnauthorized,
-				"invalid tenant",
-				"tenant", tenant)
+				"invalid account",
+				"account_id", accountID)
 		}
 
-		accountID = a.ID.Value
+		aID = a.ID.Value
 	} else {
-		accountID = s.cfg.ServiceName()
+		aID = s.cfg.ServiceName()
 	}
 
 	if !request.ValidUserID(userID) {
@@ -683,10 +739,10 @@ func (s *Server) CreateToken(ctx context.Context,
 	tok.Header = map[string]any{
 		"alg": "HS512",
 		"typ": "JWT",
-		"kid": accountID,
+		"kid": aID,
 	}
 
-	secret, err := s.getAccountSecret(ctx, accountID)
+	secret, err := s.getAccountSecret(ctx, aID)
 	if err != nil {
 		return "", err
 	}
@@ -700,8 +756,8 @@ func (s *Server) CreateToken(ctx context.Context,
 	return authToken, nil
 }
 
-// Auth wraps an http handler with authentication verification.
-func (s *Server) Auth(next http.Handler) http.Handler {
+// auth wraps an http handler with authentication verification.
+func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -728,7 +784,7 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 
 		tenant := r.Header.Get("securitytenant")
 
-		claims, err := s.AuthJWT(ctx, token, tenant)
+		claims, err := s.authJWT(ctx, token, tenant)
 		if err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				s.error(e, w, r)
@@ -759,9 +815,6 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(ctx, request.CtxKeyAccountID, claims.AccountID)
 
-		ctx = context.WithValue(ctx, request.CtxKeyAccountName,
-			claims.AccountName)
-
 		ctx = context.WithValue(ctx, request.CtxKeyScopes, claims.Scopes)
 
 		if claims.UserID != "" {
@@ -772,17 +825,17 @@ func (s *Server) Auth(next http.Handler) http.Handler {
 	})
 }
 
-// AccountHandler performs routing for account requests.
-func (s *Server) AccountHandler() http.Handler {
+// accountHandler performs routing for account requests.
+func (s *Server) accountHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(s.dbAvail)
 
-	r.With(s.Stat, s.Trace, s.Auth).Get("/repo", s.GetAccountRepoHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Post("/repo", s.PostAccountRepoHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/repo", s.getAccountRepoHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/repo", s.postAccountRepoHandler)
 
-	r.With(s.Stat, s.Trace, s.Auth).Get("/", s.GetAccountHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Post("/", s.PostAccountHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/", s.getAccountHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/", s.postAccountHandler)
 
 	return r
 }
@@ -790,7 +843,8 @@ func (s *Server) AccountHandler() http.Handler {
 // checkScope verifies the request has the specified scope. It returns false
 // following an error response if the required scope is missing.
 func (s *Server) checkScope(ctx context.Context, scope string) error {
-	if !request.ContextHasScope(ctx, scope) {
+	if !request.ContextHasScope(ctx, scope) &&
+		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
 		return errors.New(errors.ErrForbidden,
 			"request not authorized")
 	}
@@ -798,8 +852,8 @@ func (s *Server) checkScope(ctx context.Context, scope string) error {
 	return nil
 }
 
-// GetAccountHandler is the get handler function for accounts.
-func (s *Server) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
+// getAccountHandler is the get handler function for accounts.
+func (s *Server) getAccountHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
@@ -808,7 +862,7 @@ func (s *Server) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.GetAccount(ctx, "")
+	res, err := s.getAccount(ctx, "")
 	if err != nil {
 		s.error(err, w, r)
 
@@ -820,8 +874,8 @@ func (s *Server) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PostAccountHandler is the post handler function for accounts.
-func (s *Server) PostAccountHandler(w http.ResponseWriter, r *http.Request) {
+// postAccountHandler is the post handler function for accounts.
+func (s *Server) postAccountHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
@@ -844,7 +898,7 @@ func (s *Server) PostAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.CreateAccount(ctx, req)
+	res, err := s.createAccount(ctx, req)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -871,8 +925,8 @@ func (s *Server) PostAccountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAccountRepoHandler is the get handler function for account repos.
-func (s *Server) GetAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
+// getAccountRepoHandler is the get handler function for account repos.
+func (s *Server) getAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
@@ -881,7 +935,7 @@ func (s *Server) GetAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.GetAccountRepo(ctx)
+	res, err := s.getAccountRepo(ctx)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -893,8 +947,8 @@ func (s *Server) GetAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PostAccountRepoHandler is the post handler function for account repos.
-func (s *Server) PostAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
+// postAccountRepoHandler is the post handler function for account repos.
+func (s *Server) postAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeAccountWrite); err != nil {
@@ -917,7 +971,7 @@ func (s *Server) PostAccountRepoHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := s.SetAccountRepo(ctx, req); err != nil {
+	if err := s.setAccountRepo(ctx, req); err != nil {
 		s.error(err, w, r)
 
 		return
@@ -955,21 +1009,74 @@ type User struct {
 	Password  *string             `bson:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty"`
 }
 
-// UserHandler performs routing for user requests.
-func (s *Server) UserHandler() http.Handler {
+// hashPassword creates a hashed password.
+func hashPassword(password string) (string, error) {
+	hp, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", errors.Wrap(err, errors.ErrServer,
+			"unable to hash password")
+	}
+
+	return string(hp), nil
+}
+
+// verifyPassword verifies if a password matches a hashed password.
+func verifyPassword(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword),
+		[]byte(password))
+}
+
+// getUser retrieves a user from the database.
+func (s *Server) getUser(ctx context.Context,
+	id string,
+) (*User, error) {
+	_, _ = ctx, id
+
+	return nil, nil
+}
+
+// createUser inserts a new user in the database.
+func (s *Server) createUser(ctx context.Context,
+	req *User,
+) (*User, error) {
+	_, _ = ctx, req
+
+	return nil, nil
+}
+
+// updateUser updates a user in the database.
+func (s *Server) updateUser(ctx context.Context,
+	req *User,
+) (*User, error) {
+	_, _ = ctx, req
+
+	return nil, nil
+}
+
+// deleteUser deletes a user from the database.
+func (s *Server) deleteUser(ctx context.Context,
+	id string,
+) error {
+	_, _ = ctx, id
+
+	return nil
+}
+
+// userHandler performs routing for user requests.
+func (s *Server) userHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(s.dbAvail)
 
-	r.With(s.Stat, s.Trace, s.Auth).Get("/", s.GetUserHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Patch("/", s.PutUserHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Put("/", s.PutUserHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/", s.getUserHandler)
+	r.With(s.stat, s.trace, s.auth).Patch("/", s.putUserHandler)
+	r.With(s.stat, s.trace, s.auth).Put("/", s.putUserHandler)
 
 	return r
 }
 
-// GetUser is the get handler function for users.
-func (s *Server) GetUserHandler(w http.ResponseWriter, r *http.Request) {
+// getUserHandler is the get handler function for users.
+func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeUserRead); err != nil {
@@ -978,7 +1085,7 @@ func (s *Server) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.GetUser(ctx, "")
+	res, err := s.getUser(ctx, "")
 	if err != nil {
 		s.error(err, w, r)
 
@@ -990,8 +1097,8 @@ func (s *Server) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PutUserHandler is the put handler function for users.
-func (s *Server) PutUserHandler(w http.ResponseWriter, r *http.Request) {
+// putUserHandler is the put handler function for users.
+func (s *Server) putUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeUserWrite); err != nil {
@@ -1018,7 +1125,7 @@ func (s *Server) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 		Set: true, Valid: true, Value: "",
 	}
 
-	res, err := s.UpdateUser(ctx, req)
+	res, err := s.updateUser(ctx, req)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -1030,25 +1137,25 @@ func (s *Server) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// LoginHandler performs routing for login requests.
-func (s *Server) LoginHandler() http.Handler {
+// loginHandler performs routing for login requests.
+func (s *Server) loginHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(s.dbAvail)
 
-	r.With(s.Stat, s.Trace).Post("/token", s.PostLoginToken)
+	r.With(s.stat, s.trace).Post("/token", s.postLoginTokenHandler)
 
 	return r
 }
 
-// PostLoginToken is the post handler for password authentication to obtain an
-// API access token.
-func (s *Server) PostLoginToken(w http.ResponseWriter, r *http.Request) {
+// postLoginTokenHandler is the post handler for password authentication to
+// obtain an API access token.
+func (s *Server) postLoginTokenHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	tenant := r.Header.Get("securitytenant")
 
-	if err := s.AuthPassword(ctx,
+	if err := s.authPassword(ctx,
 		r.FormValue("username"),
 		r.FormValue("password"),
 		tenant); err != nil {
@@ -1057,7 +1164,7 @@ func (s *Server) PostLoginToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tok, err := s.CreateToken(ctx, r.FormValue("username"),
+	tok, err := s.createToken(ctx, r.FormValue("username"),
 		time.Now().Add(s.cfg.AuthTokenExpiresIn()).Unix(),
 		r.FormValue("scope"), tenant)
 	if err != nil {

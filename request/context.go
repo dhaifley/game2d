@@ -32,6 +32,9 @@ const (
 	// CtxKeyRemote is used to select a remote address from a context.
 	CtxKeyRemote
 
+	// CtxKeyNoCache is used to select the no-cache flag from a context.
+	CtxKeyNoCache
+
 	// CtxKeyJWT is used to select the authentication token from a context.
 	CtxKeyJWT
 
@@ -40,9 +43,6 @@ const (
 
 	// CtxKeyAccountID is used to select the account id from a context.
 	CtxKeyAccountID
-
-	// CtxKeyAccountName is used to select the account name from a context.
-	CtxKeyAccountName
 
 	// CtxKeyUserID is used to select the user id from a context.
 	CtxKeyUserID
@@ -103,6 +103,17 @@ func ContextRequestBody(ctx context.Context) (string, error) {
 	return body, nil
 }
 
+// ContextNoCache extracts the no cache flag from the context.
+func ContextNoCache(ctx context.Context) (bool, error) {
+	v, ok := ctx.Value(CtxKeyNoCache).(bool)
+	if !ok {
+		return false, errors.New(errors.ErrContext,
+			"unable to extract no cache flag from context")
+	}
+
+	return v, nil
+}
+
 // ContextJWT extracts the authentication token from the context.
 func ContextJWT(ctx context.Context) (string, error) {
 	token, ok := ctx.Value(CtxKeyJWT).(string)
@@ -148,17 +159,6 @@ func ContextAccountID(ctx context.Context) (string, error) {
 	return id, nil
 }
 
-// ContextAccountName extracts the account name from the context.
-func ContextAccountName(ctx context.Context) (string, error) {
-	id, ok := ctx.Value(CtxKeyAccountName).(string)
-	if !ok {
-		return "", errors.New(errors.ErrContext,
-			"unable to extract account name from context")
-	}
-
-	return id, nil
-}
-
 // ContextUserID extracts the user id from the context.
 func ContextUserID(ctx context.Context) (string, error) {
 	id, ok := ctx.Value(CtxKeyUserID).(string)
@@ -185,12 +185,11 @@ func ContextReplaceTimeout(ctx context.Context,
 	newCtx = context.WithValue(newCtx, CtxKeyTraceID, ctx.Value(CtxKeyTraceID))
 	newCtx = context.WithValue(newCtx, CtxKeySpanID, ctx.Value(CtxKeySpanID))
 	newCtx = context.WithValue(newCtx, CtxKeyRemote, ctx.Value(CtxKeyRemote))
+	newCtx = context.WithValue(newCtx, CtxKeyNoCache, ctx.Value(CtxKeyNoCache))
 	newCtx = context.WithValue(newCtx, CtxKeyJWT, ctx.Value(CtxKeyJWT))
 	newCtx = context.WithValue(newCtx, CtxKeyScopes, ctx.Value(CtxKeyScopes))
 	newCtx = context.WithValue(newCtx, CtxKeyAccountID,
 		ctx.Value(CtxKeyAccountID))
-	newCtx = context.WithValue(newCtx, CtxKeyAccountName,
-		ctx.Value(CtxKeyAccountName))
 	newCtx = context.WithValue(newCtx, CtxKeyUserID, ctx.Value(CtxKeyUserID))
 
 	return newCtx, newCancel

@@ -34,113 +34,137 @@ type Game struct {
 	UpdatedAt   request.FieldTime   `bson:"updated_at"  json:"updated_at"  yaml:"updated_at"`
 }
 
-// GetGames retrieves games based on a search query.
-func (s *Server) GetGames(ctx context.Context,
+// getGames retrieves games based on a search query.
+func (s *Server) getGames(ctx context.Context,
 	query url.Values,
 ) ([]*Game, error) {
+	_, _ = ctx, query
+
 	return nil, nil
 }
 
-// GetGame retrieves a game by ID.
-func (s *Server) GetGame(ctx context.Context,
+// getGame retrieves a game by ID.
+func (s *Server) getGame(ctx context.Context,
 	id string,
 ) (*Game, error) {
+	_, _ = ctx, id
+
 	return nil, nil
 }
 
-// CreateGame creates a new game.
-func (s *Server) CreateGame(ctx context.Context,
+// createGame creates a new game.
+func (s *Server) createGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
+	_, _ = ctx, req
+
 	return nil, nil
 }
 
-// UpdateGame updates an existing game.
-func (s *Server) UpdateGame(ctx context.Context,
+// updateGame updates an existing game.
+func (s *Server) updateGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
+	_, _ = ctx, req
+
 	return nil, nil
 }
 
-// DeleteGame deletes a game by ID.
-func (s *Server) DeleteGame(ctx context.Context,
+// deleteGame deletes a game by ID.
+func (s *Server) deleteGame(ctx context.Context,
 	id string,
 ) error {
+	_, _ = ctx, id
+
 	return nil
 }
 
-// ImportGames imports games from a source.
-func (s *Server) ImportGames(ctx context.Context,
+// importGames imports games from a source.
+func (s *Server) importGames(ctx context.Context,
 	force bool,
 ) error {
+	_, _ = ctx, force
+
 	return nil
 }
 
-// ImportGame imports a single game by ID.
-func (s *Server) ImportGame(ctx context.Context,
+// importGame imports a single game by ID.
+func (s *Server) importGame(ctx context.Context,
 	id string,
 ) error {
+	_, _ = ctx, id
+
 	return nil
 }
 
-// GetTags retrieves all game tags.
-func (s *Server) GetTags(ctx context.Context,
+// getTags retrieves all game tags.
+func (s *Server) getTags(ctx context.Context,
 ) ([]string, error) {
+	_ = ctx
+
 	return nil, nil
 }
 
-// GetGameTags retrieves tags for a specific game by ID.
-func (s *Server) GetGameTags(ctx context.Context,
+// getGameTags retrieves tags for a specific game by ID.
+func (s *Server) getGameTags(ctx context.Context,
 	id string,
 ) ([]string, error) {
+	_, _ = ctx, id
+
 	return nil, nil
 }
 
-// AddGameTags adds tags to a game by ID.
-func (s *Server) AddGameTags(ctx context.Context,
+// addGameTags adds tags to a game by ID.
+func (s *Server) addGameTags(ctx context.Context,
 	id string,
 	tags []string,
 ) ([]string, error) {
+	_, _ = ctx, id
+	_ = tags
+
 	return nil, nil
 }
 
-// DeleteGameTags deletes tags from a game by ID.
-func (s *Server) DeleteGameTags(ctx context.Context,
+// deleteGameTags deletes tags from a game by ID.
+func (s *Server) deleteGameTags(ctx context.Context,
 	id string,
 	tags []string,
 ) error {
+	_, _ = ctx, id
+	_ = tags
+
 	return nil
 }
 
-// GamesHandler performs routing for event type requests.
-func (s *Server) GamesHandler() http.Handler {
+// gamesHandler performs routing for event type requests.
+func (s *Server) gamesHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(s.dbAvail)
 
-	r.With(s.Stat, s.Trace, s.Auth).Post("/{id}/import", s.PostImportGameHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Post("/import", s.PostImportGamesHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/{id}/import", s.postImportGameHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/import", s.postImportGamesHandler)
 
-	r.With(s.Stat, s.Trace, s.Auth).Get("/tags", s.GetAllGameTagsHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Get("/{id}/tags",
-		s.GetGameTagsHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Post("/{id}/tags",
-		s.PostGameTagsHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Delete("/{id}/tags",
-		s.DeleteGameTagsHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/tags", s.getAllGameTagsHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/{id}/tags",
+		s.getGameTagsHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/{id}/tags",
+		s.postGameTagsHandler)
+	r.With(s.stat, s.trace, s.auth).Delete("/{id}/tags",
+		s.deleteGameTagsHandler)
 
-	r.With(s.Stat, s.Trace, s.Auth).Get("/", s.SearchGameHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Get("/{id}", s.GetGameHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Post("/", s.PostGameHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Patch("/{id}", s.PutGameHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Put("/{id}", s.PutGameHandler)
-	r.With(s.Stat, s.Trace, s.Auth).Delete("/{id}", s.DeleteGameHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/", s.getGamesHandler)
+	r.With(s.stat, s.trace, s.auth).Get("/{id}", s.getGameHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/", s.postGameHandler)
+	r.With(s.stat, s.trace, s.auth).Patch("/{id}", s.putGameHandler)
+	r.With(s.stat, s.trace, s.auth).Put("/{id}", s.putGameHandler)
+	r.With(s.stat, s.trace, s.auth).Delete("/{id}", s.deleteGameHandler)
 
 	return r
 }
 
-// SearchGameHandler is the search handler function for game types.
-func (s *Server) SearchGameHandler(w http.ResponseWriter, r *http.Request) {
+// getGamesHandler is the search handler function for game types.
+func (s *Server) getGamesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {
@@ -149,7 +173,7 @@ func (s *Server) SearchGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.GetGames(ctx, r.URL.Query())
+	res, err := s.getGames(ctx, r.URL.Query())
 	if err != nil {
 		s.error(err, w, r)
 
@@ -161,8 +185,8 @@ func (s *Server) SearchGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetGameHandler is the get handler function for game types.
-func (s *Server) GetGameHandler(w http.ResponseWriter, r *http.Request) {
+// getGameHandler is the get handler function for game types.
+func (s *Server) getGameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {
@@ -173,7 +197,7 @@ func (s *Server) GetGameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
-	res, err := s.GetGame(ctx, id)
+	res, err := s.getGame(ctx, id)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -185,8 +209,8 @@ func (s *Server) GetGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PostGameHandler is the post handler function for game types.
-func (s *Server) PostGameHandler(w http.ResponseWriter, r *http.Request) {
+// postGameHandler is the post handler function for game types.
+func (s *Server) postGameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
@@ -209,7 +233,7 @@ func (s *Server) PostGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.CreateGame(ctx, req)
+	res, err := s.createGame(ctx, req)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -236,8 +260,8 @@ func (s *Server) PostGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PutGameHandler is the put handler function for game types.
-func (s *Server) PutGameHandler(w http.ResponseWriter, r *http.Request) {
+// putGameHandler is the put handler function for game types.
+func (s *Server) putGameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
@@ -267,7 +291,7 @@ func (s *Server) PutGameHandler(w http.ResponseWriter, r *http.Request) {
 		Value: id,
 	}
 
-	res, err := s.UpdateGame(ctx, req)
+	res, err := s.updateGame(ctx, req)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -279,8 +303,8 @@ func (s *Server) PutGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteGameHandler is the delete handler function for game types.
-func (s *Server) DeleteGameHandler(w http.ResponseWriter, r *http.Request) {
+// deleteGameHandler is the delete handler function for game types.
+func (s *Server) deleteGameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
@@ -291,7 +315,7 @@ func (s *Server) DeleteGameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
-	if err := s.DeleteGame(ctx, id); err != nil {
+	if err := s.deleteGame(ctx, id); err != nil {
 		s.error(err, w, r)
 
 		return
@@ -300,8 +324,8 @@ func (s *Server) DeleteGameHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// PostImportGamesHandler is the post handler used to import games.
-func (s *Server) PostImportGamesHandler(w http.ResponseWriter, r *http.Request) {
+// postImportGamesHandler is the post handler used to import games.
+func (s *Server) postImportGamesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesAdmin); err != nil {
@@ -317,7 +341,7 @@ func (s *Server) PostImportGamesHandler(w http.ResponseWriter, r *http.Request) 
 		force = true
 	}
 
-	if err := s.ImportGames(ctx, force); err != nil {
+	if err := s.importGames(ctx, force); err != nil {
 		s.error(err, w, r)
 
 		return
@@ -326,8 +350,8 @@ func (s *Server) PostImportGamesHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// PostImportGameHandler is the post handler used to import a single game.
-func (s *Server) PostImportGameHandler(w http.ResponseWriter, r *http.Request) {
+// postImportGameHandler is the post handler used to import a single game.
+func (s *Server) postImportGameHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesAdmin); err != nil {
@@ -338,7 +362,7 @@ func (s *Server) PostImportGameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
-	if err := s.ImportGame(ctx, id); err != nil {
+	if err := s.importGame(ctx, id); err != nil {
 		s.error(err, w, r)
 
 		return
@@ -347,8 +371,8 @@ func (s *Server) PostImportGameHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// GetAllGameTagsHandler is the get handler function for all game tags.
-func (s *Server) GetAllGameTagsHandler(w http.ResponseWriter, r *http.Request) {
+// getAllGameTagsHandler is the get handler function for all game tags.
+func (s *Server) getAllGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {
@@ -357,7 +381,7 @@ func (s *Server) GetAllGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.GetTags(ctx)
+	res, err := s.getTags(ctx)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -369,8 +393,8 @@ func (s *Server) GetAllGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetGameTagsHandler is the get handler function for game tags.
-func (s *Server) GetGameTagsHandler(w http.ResponseWriter, r *http.Request) {
+// getGameTagsHandler is the get handler function for game tags.
+func (s *Server) getGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {
@@ -381,7 +405,7 @@ func (s *Server) GetGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	gameID := chi.URLParam(r, "id")
 
-	res, err := s.GetGameTags(ctx, gameID)
+	res, err := s.getGameTags(ctx, gameID)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -393,8 +417,8 @@ func (s *Server) GetGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PostGameTagsHandler is the post handler function for game tags.
-func (s *Server) PostGameTagsHandler(w http.ResponseWriter, r *http.Request) {
+// postGameTagsHandler is the post handler function for game tags.
+func (s *Server) postGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
@@ -419,7 +443,7 @@ func (s *Server) PostGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.AddGameTags(ctx, gameID, tags)
+	res, err := s.addGameTags(ctx, gameID, tags)
 	if err != nil {
 		s.error(err, w, r)
 
@@ -435,8 +459,8 @@ func (s *Server) PostGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteGameTagsHandler is the delete handler function for game tags.
-func (s *Server) DeleteGameTagsHandler(w http.ResponseWriter, r *http.Request) {
+// deleteGameTagsHandler is the delete handler function for game tags.
+func (s *Server) deleteGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
@@ -461,7 +485,7 @@ func (s *Server) DeleteGameTagsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.DeleteGameTags(ctx, gameID, tags); err != nil {
+	if err := s.deleteGameTags(ctx, gameID, tags); err != nil {
 		s.error(err, w, r)
 
 		return

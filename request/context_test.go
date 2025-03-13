@@ -128,15 +128,15 @@ func TestContextAccountID(t *testing.T) {
 	}
 }
 
-func TestContextAccountName(t *testing.T) {
+func TestContextNoCache(t *testing.T) {
 	t.Parallel()
 
-	exp := "test"
+	exp := true
 
 	ctx := context.WithValue(context.Background(),
-		request.CtxKeyAccountName, exp)
+		request.CtxKeyNoCache, exp)
 
-	val, err := request.ContextAccountName(ctx)
+	val, err := request.ContextNoCache(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

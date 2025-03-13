@@ -134,7 +134,7 @@ func (s *Server) addCancelFunc(cf context.CancelFunc) {
 }
 
 // Cache gets the server cache for a specific request.
-func (s *Server) Cache(r *http.Request) cache.Accessor {
+func (s *Server) Cache(ctx context.Context) cache.Accessor {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -142,32 +142,22 @@ func (s *Server) Cache(r *http.Request) cache.Accessor {
 		return nil
 	}
 
-	if r == nil {
-		return s.cache
-	}
-
-	if v := r.URL.Query().Get("no_cache"); v != "" && v != "0" &&
-		!strings.EqualFold(v, "f") && !strings.EqualFold(v, "false") {
-		return nil
-	}
-
-	if v := r.Header.Get("X-No-Cache"); v != "" && v != "0" &&
-		!strings.EqualFold(v, "f") && !strings.EqualFold(v, "false") {
+	if v, err := request.ContextNoCache(ctx); err != nil || v {
 		return nil
 	}
 
 	return s.cache
 }
 
-// DB gets the database connection pool for the server.
-func (s *Server) DB() *mongo.Client {
+// DB gets the database used by for the server.
+func (s *Server) DB() *mongo.Database {
 	s.RLock()
 	defer s.RUnlock()
 
-	return s.db
+	return s.db.Database(s.cfg.DBDatabase())
 }
 
-// SetDB sets the database connection pool for the server.
+// SetDB sets the database client for the server.
 func (s *Server) SetDB(db *mongo.Client) {
 	s.Lock()
 	defer s.Unlock()
@@ -233,7 +223,7 @@ func (s *Server) ConnectDB() {
 				ctx = context.WithValue(ctx, request.CtxKeyAccountID,
 					request.SystemAccount)
 
-				if _, err := s.CreateAccount(ctx, &Account{
+				if _, err := s.createAccount(ctx, &Account{
 					ID: request.FieldString{
 						Set: true, Valid: true, Value: s.cfg.ServiceName(),
 					},
@@ -248,7 +238,7 @@ func (s *Server) ConnectDB() {
 
 				if su := os.Getenv("SUPERUSER"); su != "" {
 					if sp := os.Getenv("SUPERUSER_PASSWORD"); sp != "" {
-						if _, err := s.CreateUser(ctx, &User{
+						if _, err := s.createUser(ctx, &User{
 							ID: request.FieldString{
 								Set: true, Valid: true, Value: su,
 							},
@@ -302,10 +292,10 @@ func (s *Server) initRouter() {
 
 	r.Mount("/healthz", s.HealthHandler())
 	r.Mount("/health", s.HealthHandler())
-	r.Mount("/account", s.AccountHandler())
-	r.Mount("/user", s.UserHandler())
-	r.Mount("/login", s.LoginHandler())
-	r.Mount("/games", s.GamesHandler())
+	r.Mount("/account", s.accountHandler())
+	r.Mount("/user", s.userHandler())
+	r.Mount("/login", s.loginHandler())
+	r.Mount("/games", s.gamesHandler())
 
 	s.initStaticRoutes(r)
 
@@ -383,7 +373,7 @@ func (s *Server) UpdateAuthConfig() {
 				time.Sleep(100 * time.Millisecond)
 			}
 
-			s.addCancelFunc(s.UpdateAuth(context.Background()))
+			s.addCancelFunc(s.updateAuth(context.Background()))
 		}()
 	})
 }
@@ -569,6 +559,16 @@ func (s *Server) context(next http.Handler) http.Handler {
 
 		if aID := r.Header.Get("X-Account-ID"); aID != "" {
 			ctx = context.WithValue(ctx, request.CtxKeyAccountID, aID)
+		}
+
+		if v := r.Header.Get("X-No-Cache"); v != "" && v != "0" &&
+			!strings.EqualFold(v, "f") && !strings.EqualFold(v, "false") {
+			ctx = context.WithValue(ctx, request.CtxKeyNoCache, true)
+		}
+
+		if v := r.URL.Query().Get("no_cache"); v != "" && v != "0" &&
+			!strings.EqualFold(v, "f") && !strings.EqualFold(v, "false") {
+			ctx = context.WithValue(ctx, request.CtxKeyNoCache, true)
 		}
 
 		if r.Body != nil {

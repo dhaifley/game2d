@@ -23,10 +23,10 @@ import (
 func (s *Server) HealthHandler() http.Handler {
 	r := chi.NewRouter()
 
-	r.With(s.Stat, s.Trace).Get("/", s.GetHealthCheck)
-	r.With(s.Stat, s.Trace, s.Auth).Post("/", s.PutHealthCheck)
-	r.With(s.Stat, s.Trace, s.Auth).Patch("/", s.PutHealthCheck)
-	r.With(s.Stat, s.Trace, s.Auth).Put("/", s.PutHealthCheck)
+	r.With(s.stat, s.trace).Get("/", s.getHealthCheckHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/", s.putHealthCheckHandler)
+	r.With(s.stat, s.trace, s.auth).Patch("/", s.putHealthCheckHandler)
+	r.With(s.stat, s.trace, s.auth).Put("/", s.putHealthCheckHandler)
 
 	return r
 }
@@ -40,8 +40,8 @@ type HealthCheck struct {
 	Health    uint32 `json:"health,omitempty"`
 }
 
-// GetHealthCheck is the handler function for the health check path.
-func (s *Server) GetHealthCheck(w http.ResponseWriter, r *http.Request) {
+// getHealthCheckHandler is the handler function for the health check path.
+func (s *Server) getHealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	res := &HealthCheck{
 		Service: s.cfg.ServiceName(),
 		Health:  s.Health(),
@@ -55,8 +55,9 @@ func (s *Server) GetHealthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PutHealthCheck is the handler function for setting the server health code.
-func (s *Server) PutHealthCheck(w http.ResponseWriter, r *http.Request) {
+// putHealthCheckHandler is the handler function for setting the server health
+// check code.
+func (s *Server) putHealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
@@ -131,8 +132,8 @@ func (s *Server) UpdateMetrics(ctx context.Context,
 	return nil
 }
 
-// Trace wraps an http handler to include tracing information.
-func (s *Server) Trace(next http.Handler) http.Handler {
+// trace wraps an http handler to include tracing information.
+func (s *Server) trace(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -207,8 +208,8 @@ func (s *Server) Trace(next http.Handler) http.Handler {
 	})
 }
 
-// Stat wraps an http handler to record server statistics.
-func (s *Server) Stat(next http.Handler) http.Handler {
+// stat wraps an http handler to record server statistics.
+func (s *Server) stat(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if mr := s.metric; mr != nil {
 			ctx := r.Context()
