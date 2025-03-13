@@ -1009,23 +1009,6 @@ type User struct {
 	Password  *string             `bson:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty"`
 }
 
-// hashPassword creates a hashed password.
-func hashPassword(password string) (string, error) {
-	hp, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", errors.Wrap(err, errors.ErrServer,
-			"unable to hash password")
-	}
-
-	return string(hp), nil
-}
-
-// verifyPassword verifies if a password matches a hashed password.
-func verifyPassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword),
-		[]byte(password))
-}
-
 // getUser retrieves a user from the database.
 func (s *Server) getUser(ctx context.Context,
 	id string,
@@ -1181,4 +1164,21 @@ func (s *Server) postLoginTokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		s.error(err, w, r)
 	}
+}
+
+// hashPassword creates a hashed password.
+func hashPassword(password string) (string, error) {
+	hp, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", errors.Wrap(err, errors.ErrServer,
+			"unable to hash password")
+	}
+
+	return string(hp), nil
+}
+
+// verifyPassword verifies if a password matches a hashed password.
+func verifyPassword(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword),
+		[]byte(password))
 }
