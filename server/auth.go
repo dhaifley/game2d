@@ -1054,6 +1054,7 @@ func (s *Server) userHandler() http.Handler {
 	r.With(s.stat, s.trace, s.auth).Get("/", s.getUserHandler)
 	r.With(s.stat, s.trace, s.auth).Patch("/", s.putUserHandler)
 	r.With(s.stat, s.trace, s.auth).Put("/", s.putUserHandler)
+	r.With(s.stat, s.trace, s.auth).Delete("/{id}", s.deleteUserHandler)
 
 	return r
 }
@@ -1118,6 +1119,27 @@ func (s *Server) putUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		s.error(err, w, r)
 	}
+}
+
+// deleteUserHandler is the delete handler function for game types.
+func (s *Server) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+
+	if err := s.deleteUser(ctx, id); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // loginHandler performs routing for login requests.
