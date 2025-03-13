@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/Shopify/go-lua"
-	"github.com/dhaifley/empty/errors"
-	"github.com/dhaifley/empty/logger"
+	"github.com/dhaifley/game2d/errors"
+	"github.com/dhaifley/game2d/logger"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -254,22 +254,26 @@ func (g *Game) Update() error {
 			switch k {
 			case ebiten.KeyQuote:
 				g.debug = !g.debug
-			case ebiten.KeyBracketRight:
-				if err := g.Save(); err != nil {
-					return errors.Wrap(err, errors.ErrClient,
-						"unable to save game")
-				}
-			case ebiten.KeyBracketLeft:
-				if err := g.Load(); err != nil {
-					return errors.Wrap(err, errors.ErrClient,
-						"unable to load game")
-				}
-			case ebiten.KeyQ:
+			case ebiten.KeyRightBracket:
 				ks := inpututil.AppendPressedKeys(nil)
 
 				for _, k := range ks {
 					if k == ebiten.KeyControl {
-						g.Quit(nil)
+						if err := g.Save(); err != nil {
+							return errors.Wrap(err, errors.ErrClient,
+								"unable to save game")
+						}
+					}
+				}
+			case ebiten.KeyLeftBracket:
+				ks := inpututil.AppendPressedKeys(nil)
+
+				for _, k := range ks {
+					if k == ebiten.KeyControl {
+						if err := g.Load(); err != nil {
+							return errors.Wrap(err, errors.ErrClient,
+								"unable to load game")
+						}
 					}
 				}
 			}
@@ -386,19 +390,6 @@ func (g *Game) Run(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// Quit exits the game.
-func (g *Game) Quit(err error) {
-	if err != nil {
-		g.log.Log(context.Background(), logger.LvlError,
-			"game error",
-			"error", err)
-
-		os.Exit(1)
-	}
-
-	os.Exit(0)
 }
 
 // pushMap adds a map to the lua stack as a table and sets it as the lua global

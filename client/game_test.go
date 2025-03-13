@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/dhaifley/empty/client"
+	"github.com/dhaifley/game2d/client"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 )

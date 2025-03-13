@@ -1,4 +1,4 @@
-module github.com/dhaifley/empty
+module github.com/dhaifley/game2d
 
 go 1.24.0
 

@@ -3,7 +3,7 @@ package assets_test
 import (
 	"testing"
 
-	"github.com/dhaifley/empty/assets"
+	"github.com/dhaifley/game2d/assets"
 )
 
 func TestGetImage(t *testing.T) {

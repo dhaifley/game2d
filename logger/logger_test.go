@@ -8,7 +8,7 @@ import (
 	"testing"
 	"testing/slogtest"
 
-	"github.com/dhaifley/empty/logger"
+	"github.com/dhaifley/game2d/logger"
 )
 
 func TestLogger(t *testing.T) {

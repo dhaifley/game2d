@@ -6,9 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/dhaifley/empty/assets"
-	"github.com/dhaifley/empty/client"
-	"github.com/dhaifley/empty/logger"
+	"github.com/dhaifley/game2d/assets"
+	"github.com/dhaifley/game2d/client"
+	"github.com/dhaifley/game2d/logger"
 )
 
 // main initializes and starts the game.
@@ -18,8 +18,8 @@ func main() {
 	log := logger.New(logger.OutStderr, logger.FmtJSON,
 		logger.LvlDebug)
 
-	g := client.NewGame(log, 800, 600, "empty", "empty",
-		"A game of emptiness.")
+	g := client.NewGame(log, 800, 600, "game2d", "game2d",
+		"2D gaming framework")
 
 	ib, err := assets.GetImage("kefka.png")
 	if err != nil {

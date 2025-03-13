@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dhaifley/empty/errors"
+	"github.com/dhaifley/game2d/errors"
 )
 
 func TestNew(t *testing.T) {

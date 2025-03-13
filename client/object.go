@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/dhaifley/empty/errors"
+	"github.com/dhaifley/game2d/errors"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
