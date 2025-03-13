@@ -1,0 +1,30 @@
+services:
+  migrate:
+    build: ..
+    environment:
+      LOG_LEVEL: debug
+      DB_CONN: mongodb://game2d:mongodb@mongodb:27017/game2d
+      CACHE_SERVERS: cache:6379
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: ["migrate"]
+  mongodb:
+    image: mongodb:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_container:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: game2d
+      MONGO_INITDB_ROOT_PASSWORD: mongodb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+  cache:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+volumes:
+  mongodb_data_container:

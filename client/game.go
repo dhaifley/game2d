@@ -17,6 +17,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+// The client version.
+var Version = ""
+
 // Game values represent the game state.
 type Game struct {
 	log       logger.Logger

@@ -6,26 +6,26 @@ import (
 )
 
 const (
-	KeyDBConn        = "db/connection"
-	KeyDBDefaultSize = "db/default_size"
-	KeyDBMaxSize     = "db/max_size"
+	KeyDBConn         = "db/connection"
+	KeyDBDMinPoolSize = "db/min_pool_size"
+	KeyDBMaxPoolSize  = "db/max_pool_size"
+	KeyDBDefaultSize  = "db/default_size"
+	KeyDBMaxSize      = "db/max_size"
 
 	DefaultDBConn        = "mongodb://localhost:27017"
+	DefaultDBMinPoolSize = 20
+	DefaultDBMaxPoolSize = 100
 	DefaultDBDefaultSize = 100
 	DefaultDBMaxSize     = 10000
 )
 
-const (
-	DBModeNormal = iota
-	DBModeMigrate
-	DBModeInit
-)
-
 // DBConfig values represent database configuration data.
 type DBConfig struct {
-	Conn        string `json:"connection,omitempty"   yaml:"connection,omitempty"`
-	DefaultSize int64  `json:"default_size,omitempty" yaml:"default_size,omitempty"`
-	MaxSize     int64  `json:"max_size,omitempty"     yaml:"max_size,omitempty"`
+	Conn        string `json:"connection,omitempty"    yaml:"connection,omitempty"`
+	MinPoolSize int    `json:"min_pool_size,omitempty" yaml:"min_pool_size,omitempty"`
+	MaxPoolSize int    `json:"max_pool_size,omitempty" yaml:"max_pool_size,omitempty"`
+	DefaultSize int64  `json:"default_size,omitempty"  yaml:"default_size,omitempty"`
+	MaxSize     int64  `json:"max_size,omitempty"      yaml:"max_size,omitempty"`
 }
 
 // Load reads configuration data from environment variables and applies defaults
@@ -37,6 +37,32 @@ func (c *DBConfig) Load() {
 
 	if c.Conn == "" {
 		c.Conn = DefaultDBConn
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyDBDMinPoolSize)); v != "" {
+		v, err := strconv.Atoi(v)
+		if err != nil {
+			v = DefaultDBMinPoolSize
+		}
+
+		c.MinPoolSize = v
+	}
+
+	if c.MinPoolSize == 0 {
+		c.MinPoolSize = DefaultDBMinPoolSize
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyDBMaxPoolSize)); v != "" {
+		v, err := strconv.Atoi(v)
+		if err != nil {
+			v = DefaultDBMaxPoolSize
+		}
+
+		c.MaxPoolSize = v
+	}
+
+	if c.MaxPoolSize == 0 {
+		c.MaxPoolSize = DefaultDBMaxPoolSize
 	}
 
 	if v := os.Getenv(ReplaceEnv(KeyDBDefaultSize)); v != "" {
@@ -77,6 +103,32 @@ func (c *Config) DBConn() string {
 	}
 
 	return c.db.Conn
+}
+
+// DBMinPoolSize returns the minimum number of connections in the database
+// connection pool.
+func (c *Config) DBMinPoolSize() int {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.db == nil {
+		return DefaultDBMinPoolSize
+	}
+
+	return c.db.MinPoolSize
+}
+
+// DBMaxPoolSize returns the maximum number of connections in the database
+// connection pool.
+func (c *Config) DBMaxPoolSize() int {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.db == nil {
+		return DefaultDBMaxPoolSize
+	}
+
+	return c.db.MaxPoolSize
 }
 
 // DBDefaultSize returns the default number of rows any query will return.

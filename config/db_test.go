@@ -17,12 +17,22 @@ func TestDatabaseConfig(t *testing.T) {
 
 	cfg.SetDB(&config.DBConfig{
 		Conn:        exp,
+		MinPoolSize: 1,
+		MaxPoolSize: 10,
 		DefaultSize: 10,
 		MaxSize:     100,
 	})
 
 	if cfg.DBConn() != exp {
 		t.Errorf("Expected connection: %v, got: %v", exp, cfg.DBConn())
+	}
+
+	if cfg.DBMinPoolSize() != 1 {
+		t.Errorf("Expected min pool size: 1, got: %v", cfg.DBMinPoolSize())
+	}
+
+	if cfg.DBMaxPoolSize() != 10 {
+		t.Errorf("Expected max pool size: 10, got: %v", cfg.DBMaxPoolSize())
 	}
 
 	if cfg.DBDefaultSize() != 10 {

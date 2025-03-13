@@ -11,7 +11,7 @@ import (
 	"github.com/dhaifley/game2d/logger"
 )
 
-// main initializes and starts the game.
+// Main entry point for the game.
 func main() {
 	ctx := context.Background()
 
