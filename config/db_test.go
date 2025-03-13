@@ -17,6 +17,7 @@ func TestDatabaseConfig(t *testing.T) {
 
 	cfg.SetDB(&config.DBConfig{
 		Conn:        exp,
+		Database:    exp,
 		MinPoolSize: 1,
 		MaxPoolSize: 10,
 		DefaultSize: 10,
@@ -25,6 +26,10 @@ func TestDatabaseConfig(t *testing.T) {
 
 	if cfg.DBConn() != exp {
 		t.Errorf("Expected connection: %v, got: %v", exp, cfg.DBConn())
+	}
+
+	if cfg.DBDatabase() != exp {
+		t.Errorf("Expected database: %v, got: %v", exp, cfg.DBDatabase())
 	}
 
 	if cfg.DBMinPoolSize() != 1 {

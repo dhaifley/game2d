@@ -7,12 +7,14 @@ import (
 
 const (
 	KeyDBConn         = "db/connection"
+	KeyDBDatabase     = "db/database"
 	KeyDBDMinPoolSize = "db/min_pool_size"
 	KeyDBMaxPoolSize  = "db/max_pool_size"
 	KeyDBDefaultSize  = "db/default_size"
 	KeyDBMaxSize      = "db/max_size"
 
-	DefaultDBConn        = "mongodb://localhost:27017"
+	DefaultDBConn        = "mongodb://localhost:27017/game2d"
+	DefaultDBDatabase    = "game2d"
 	DefaultDBMinPoolSize = 20
 	DefaultDBMaxPoolSize = 100
 	DefaultDBDefaultSize = 100
@@ -22,6 +24,7 @@ const (
 // DBConfig values represent database configuration data.
 type DBConfig struct {
 	Conn        string `json:"connection,omitempty"    yaml:"connection,omitempty"`
+	Database    string `json:"database,omitempty"      yaml:"database,omitempty"`
 	MinPoolSize int    `json:"min_pool_size,omitempty" yaml:"min_pool_size,omitempty"`
 	MaxPoolSize int    `json:"max_pool_size,omitempty" yaml:"max_pool_size,omitempty"`
 	DefaultSize int64  `json:"default_size,omitempty"  yaml:"default_size,omitempty"`
@@ -37,6 +40,14 @@ func (c *DBConfig) Load() {
 
 	if c.Conn == "" {
 		c.Conn = DefaultDBConn
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyDBDatabase)); v != "" {
+		c.Database = v
+	}
+
+	if c.Database == "" {
+		c.Database = DefaultDBDatabase
 	}
 
 	if v := os.Getenv(ReplaceEnv(KeyDBDMinPoolSize)); v != "" {
@@ -103,6 +114,19 @@ func (c *Config) DBConn() string {
 	}
 
 	return c.db.Conn
+}
+
+// DBDatabase returns the name of the database used by the primary database
+// connection pool.
+func (c *Config) DBDatabase() string {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.db == nil {
+		return DefaultDBDatabase
+	}
+
+	return c.db.Database
 }
 
 // DBMinPoolSize returns the minimum number of connections in the database
