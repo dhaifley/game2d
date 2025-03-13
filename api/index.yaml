@@ -2,11 +2,11 @@ openapi: 3.1.0
 info:
   title: game2d
   version: "0.1.1"
-  description: >
-    An application programming interface service.
+  description: 2D gaming framework
   license:
-    name: MIT License
-    url: https://choosealicense.com/licenses/mit/
+    name: GPL-3.0 license
+    identifier: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
 security:
   - OAuth2PasswordBearer: []
 paths:
