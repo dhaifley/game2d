@@ -21,29 +21,29 @@ func main() {
 	g := client.NewGame(log, 800, 600, "game2d", "game2d",
 		"2D gaming framework")
 
-	ib, err := assets.GetImage("kefka.png")
+	ib, err := assets.GetImage("avatar.png")
 	if err != nil {
 		log.Log(ctx, logger.LvlError,
 			"unable to read image",
 			"error", err,
-			"file", "kefka.png")
+			"file", "avatar.png")
 
 		os.Exit(1)
 	}
 
-	g.AddImage(client.NewImage("p1", "kefka.png", ib))
+	g.AddImage(client.NewImage("p1", "avatar.png", ib))
 
-	script, err := assets.GetScript("kefka.lua")
+	script, err := assets.GetScript("avatar.lua")
 	if err != nil {
 		log.Log(ctx, logger.LvlError,
 			"unable to read script",
 			"error", err,
-			"file", "kefka.lua")
+			"file", "avatar.lua")
 
 		os.Exit(1)
 	}
 
-	g.AddScript(client.NewScript("p1", "kefka.lua", script, []string{"image"}))
+	g.AddScript(client.NewScript("p1", "avatar.lua", script, []string{"image"}))
 
 	g.AddSubject(client.NewSubject(g, "p1", "Hello Aaron!", "p1", "p1", nil))
 

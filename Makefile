@@ -10,7 +10,7 @@ all: build
 
 clean:
 	rm -f game2d
-	rm -r game2d.test
+	rm -f game2d-api
 .PHONY: clean
 
 static/openapi.yaml: $(YAML_FILES)

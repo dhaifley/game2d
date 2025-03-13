@@ -14,7 +14,7 @@ func TestGetImage(t *testing.T) {
 	}{
 		{
 			name:     "existing file",
-			filename: "kefka.png",
+			filename: "avatar.png",
 			wantErr:  false,
 		},
 		{
@@ -49,7 +49,7 @@ func TestGetScript(t *testing.T) {
 	}{
 		{
 			name:     "existing file",
-			filename: "kefka.lua",
+			filename: "avatar.lua",
 			wantErr:  false,
 		},
 		{
