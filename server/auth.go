@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"crypto/rsa"
 	"encoding/base64"
@@ -9,6 +8,7 @@ import (
 	"log/slog"
 	"math/big"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"strings"
 	"time"
@@ -37,6 +37,91 @@ type Account struct {
 	RepoStatusData request.FieldJSON   `bson:"repo_status_data" json:"repo_status_data" yaml:"repo_status_data"`
 	Secret         request.FieldString `bson:"secret"           json:"secret"           yaml:"secret"`
 	Data           request.FieldJSON   `bson:"data"             json:"data"             yaml:"data"`
+	CreatedAt      request.FieldTime   `bson:"created_at"       json:"created_at"       yaml:"created_at"`
+	UpdatedAt      request.FieldTime   `bson:"updated_at"       json:"updated_at"       yaml:"updated_at"`
+}
+
+// Validate checks that the value contains valid data.
+func (a *Account) Validate() error {
+	if a.ID.Set {
+		if !a.ID.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"id must not be null",
+				"account", a)
+		}
+
+		if !request.ValidAccountID(a.ID.Value) {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid id",
+				"account", a)
+		}
+	}
+
+	if a.Name.Set {
+		if !a.Name.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"name must not be null",
+				"account", a)
+		}
+
+		if !request.ValidAccountName(a.Name.Value) {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid name",
+				"account", a)
+		}
+	}
+
+	if a.Status.Set {
+		if !a.Status.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"status must not be null",
+				"account", a)
+		}
+
+		switch a.Status.Value {
+		case request.StatusActive, request.StatusInactive:
+		default:
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid status",
+				"account", a)
+		}
+	}
+
+	if a.RepoStatus.Set {
+		if !a.RepoStatus.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"repo_status must not be null",
+				"account", a)
+		}
+
+		switch a.RepoStatus.Value {
+		case request.StatusActive, request.StatusInactive,
+			request.StatusError, request.StatusImporting:
+		default:
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid repo_status",
+				"account", a)
+		}
+	}
+
+	return nil
+}
+
+// ValidateCreate checks that the value contains valid data for creation.
+func (a *Account) ValidateCreate() error {
+	if !a.ID.Set {
+		return errors.New(errors.ErrInvalidRequest,
+			"missing id",
+			"account", a)
+	}
+
+	if !a.Name.Set {
+		return errors.New(errors.ErrInvalidRequest,
+			"missing name",
+			"account", a)
+	}
+
+	return a.Validate()
 }
 
 // Claims values contain token claims information.
@@ -52,6 +137,8 @@ type Claims struct {
 func (s *Server) getAccountSecret(ctx context.Context,
 	id string,
 ) ([]byte, error) {
+	ctx = context.WithValue(ctx, request.CtxKeyScopes, request.ScopeSuperuser)
+
 	a, err := s.getAccount(ctx, id)
 	if err != nil {
 		return nil, err
@@ -86,93 +173,138 @@ func (s *Server) getAccount(ctx context.Context,
 			"id", id)
 	}
 
-	if !request.ContextHasScope(ctx, request.ScopeSuperuser) && aID != id {
+	if aID != id && aID != request.SystemAccount &&
+		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
 		return nil, errors.New(errors.ErrUnauthorized,
 			"unauthorized request")
 	}
 
-	var r *Account
-
-	if s.Cache(ctx) != nil {
-		ck := cache.KeyAccount(id)
-
-		ci, err := s.Cache(ctx).Get(ctx, ck)
-		if err != nil && !errors.Has(err, errors.ErrNotFound) {
-			s.log.Log(ctx, logger.LvlError,
-				"unable to get account cache key",
-				"error", err,
-				"cache_key", ck,
-				"id", id)
-		} else if ci != nil {
-			buf := bytes.NewBuffer(ci.Value)
-
-			if err := json.NewDecoder(buf).Decode(&r); err != nil {
-				s.log.Log(ctx, logger.LvlError,
-					"unable to decode account cache value",
-					"error", err,
-					"cache_key", ck,
-					"cache_value", string(ci.Value),
-					"id", id)
-			}
-		}
+	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
+		return nil, err
 	}
 
-	if r == nil {
-		f := bson.M{"id": id}
+	var res *Account
 
-		if err := s.DB().Collection("accounts").FindOne(ctx, f,
-			options.FindOne().SetProjection(bson.M{"_id": 0})).
-			Decode(&r); err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				return nil, errors.New(errors.ErrNotFound,
-					"account not found",
-					"id", id)
+	defer func() {
+		if res != nil {
+			if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+				res.Secret = request.FieldString{}
 			}
 
-			return nil, errors.Wrap(err, errors.ErrDatabase,
-				"unable to get account",
+			if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
+				res.Repo = request.FieldString{}
+			}
+		}
+	}()
+
+	s.getCache(ctx, cache.KeyAccount(id), res)
+
+	if res != nil {
+		return res, nil
+	}
+
+	f := bson.M{"id": id, "account_id": aID}
+
+	if err := s.DB().Collection("accounts").FindOne(ctx, f,
+		options.FindOne().SetProjection(bson.M{"_id": 0})).
+		Decode(&res); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.ErrNotFound,
+				"account not found",
 				"id", id)
 		}
 
-		if s.cache != nil {
-			ck := cache.KeyAccount(r.ID.Value)
-
-			buf, err := json.Marshal(r)
-			if err != nil {
-				s.log.Log(ctx, logger.LvlError,
-					"unable to encode account cache value",
-					"error", err,
-					"cache_key", ck,
-					"cache_value", r,
-					"id", id)
-			} else if len(buf) < s.cfg.CacheMaxBytes() {
-				if err := s.Cache(ctx).Set(ctx, &cache.Item{
-					Key:        ck,
-					Value:      buf,
-					Expiration: s.cfg.CacheExpiration(),
-				}); err != nil {
-					s.log.Log(ctx, logger.LvlError,
-						"unable to set account cache value",
-						"error", err,
-						"cache_key", ck,
-						"cache_value", string(buf),
-						"expiration", s.cfg.CacheExpiration(),
-						"id", id)
-				}
-			}
-		}
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account",
+			"id", id)
 	}
 
-	return r, nil
+	s.setCache(ctx, cache.KeyAccount(res.ID.Value), res)
+
+	return res, nil
 }
 
 // createAccount inserts a new account in the database.
 func (s *Server) createAccount(ctx context.Context,
 	req *Account,
 ) (*Account, error) {
-	_, _ = ctx, req
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
 
-	return nil, nil
+	if aID != request.SystemAccount &&
+		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unauthorized request")
+	}
+
+	if req == nil {
+		return nil, errors.New(errors.ErrInvalidRequest,
+			"missing account")
+	}
+
+	if err := req.ValidateCreate(); err != nil {
+		return nil, err
+	}
+
+	var res *Account
+
+	defer func() {
+		if res != nil {
+			if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+				res.Secret = request.FieldString{}
+			}
+
+			if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
+				res.Repo = request.FieldString{}
+			}
+		}
+	}()
+
+	req.CreatedAt = request.FieldTime{
+		Set: true, Valid: true, Value: time.Now().Unix(),
+	}
+
+	req.UpdatedAt = request.FieldTime{
+		Set: true, Valid: true, Value: req.CreatedAt.Value,
+	}
+
+	f := bson.M{"id": req.ID.Value}
+
+	doc := &bson.D{}
+
+	request.SetField(doc, "id", req.ID)
+	request.SetField(doc, "name", req.Name)
+	request.SetField(doc, "status", req.Status)
+	request.SetField(doc, "status_data", req.StatusData)
+	request.SetField(doc, "repo", req.Repo)
+	request.SetField(doc, "repo_status", req.RepoStatus)
+	request.SetField(doc, "repo_status_data", req.RepoStatusData)
+	request.SetField(doc, "secret", req.Secret)
+	request.SetField(doc, "data", req.Data)
+	request.SetField(doc, "created_at", req.CreatedAt)
+	request.SetField(doc, "updated_at", req.UpdatedAt)
+
+	if err := s.DB().Collection("accounts").FindOneAndReplace(ctx, f, doc,
+		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
+			SetReturnDocument(options.After).SetUpsert(true)).
+		Decode(&res); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.ErrNotFound,
+				"account not found",
+				"req", req)
+		}
+
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to create account",
+			"req", req)
+	}
+
+	s.setCache(ctx, cache.KeyAccount(res.ID.Value), res)
+
+	return res, nil
 }
 
 // AccountRepo values represent an account import repository.
@@ -184,30 +316,778 @@ type AccountRepo struct {
 
 // getAccountRepo retrieves the account repository from the database.
 func (s *Server) getAccountRepo(ctx context.Context) (*AccountRepo, error) {
-	admin := true
-
-	if !request.ContextHasScope(ctx, request.ScopeSuperuser) &&
-		!request.ContextHasScope(ctx, request.ScopeAccountAdmin) {
-		admin = false
+	a, err := s.getAccount(ctx, "")
+	if err != nil {
+		return nil, err
 	}
 
-	_ = admin
-
-	return nil, nil
+	return &AccountRepo{
+		Repo:           a.Repo,
+		RepoStatus:     a.RepoStatus,
+		RepoStatusData: a.RepoStatusData,
+	}, nil
 }
 
 // setAccountRepo sets the account repository in the database.
 func (s *Server) setAccountRepo(ctx context.Context,
-	v *AccountRepo,
+	req *AccountRepo,
 ) error {
-	if !request.ContextHasScope(ctx, request.ScopeSuperuser) &&
-		!request.ContextHasScope(ctx, request.ScopeAccountAdmin) {
-		return errors.New(errors.ErrForbidden,
-			"unable to set account repo",
-			"repo", v)
+	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
+		return err
+	}
+
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	if req == nil {
+		return errors.New(errors.ErrInvalidRequest,
+			"missing account repo")
+	}
+
+	a, err := s.getAccount(ctx, aID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account",
+			"account_id", aID,
+			"req", req)
+	}
+
+	if a == nil {
+		return errors.New(errors.ErrNotFound,
+			"account not found",
+			"account_id", aID,
+			"req", req)
+	}
+
+	update := false
+
+	if req.Repo.Set {
+		a.Repo = req.Repo
+		update = true
+	}
+
+	if req.RepoStatus.Set {
+		a.RepoStatus = req.RepoStatus
+		update = true
+	}
+
+	if req.RepoStatusData.Set {
+		a.RepoStatusData = req.RepoStatusData
+		update = true
+	}
+
+	if !update {
+		return nil
+	}
+
+	if _, err := s.createAccount(ctx, a); err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to update account repo",
+			"account_id", aID,
+			"req", req)
 	}
 
 	return nil
+}
+
+// accountHandler performs routing for account requests.
+func (s *Server) accountHandler() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(s.dbAvail)
+
+	r.With(s.stat, s.trace, s.auth).Get("/repo", s.getAccountRepoHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/repo", s.postAccountRepoHandler)
+
+	r.With(s.stat, s.trace, s.auth).Get("/", s.getAccountHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/", s.postAccountHandler)
+
+	return r
+}
+
+// getAccountHandler is the get handler function for accounts.
+func (s *Server) getAccountHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	res, err := s.getAccount(ctx, "")
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// postAccountHandler is the post handler function for accounts.
+func (s *Server) postAccountHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	req := &Account{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		switch e := err.(type) {
+		case *errors.Error:
+			s.error(e, w, r)
+		default:
+			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to decode request"), w, r)
+		}
+
+		return
+	}
+
+	res, err := s.createAccount(ctx, req)
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	scheme := "https"
+	if strings.Contains(r.Host, "localhost") {
+		scheme = "http"
+	}
+
+	loc := &url.URL{
+		Scheme: scheme,
+		Host:   r.Host,
+		Path:   r.URL.Path,
+	}
+
+	w.Header().Set("Location", loc.String())
+
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// getAccountRepoHandler is the get handler function for account repos.
+func (s *Server) getAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	res, err := s.getAccountRepo(ctx)
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// postAccountRepoHandler is the post handler function for account repos.
+func (s *Server) postAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeAccountWrite); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	req := &AccountRepo{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		switch e := err.(type) {
+		case *errors.Error:
+			s.error(e, w, r)
+		default:
+			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to decode request"), w, r)
+		}
+
+		return
+	}
+
+	if err := s.setAccountRepo(ctx, req); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	scheme := "https"
+	if strings.Contains(r.Host, "localhost") {
+		scheme = "http"
+	}
+
+	loc := &url.URL{
+		Scheme: scheme,
+		Host:   r.Host,
+		Path:   r.URL.Path,
+	}
+
+	w.Header().Set("Location", loc.String())
+
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(req); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// User is the user object returned by the API.
+type User struct {
+	AccountID request.FieldString `bson:"account_id"         json:"account_id"         yaml:"account_id"`
+	ID        request.FieldString `bson:"id"                 json:"id"                 yaml:"id"`
+	Email     request.FieldString `bson:"email"              json:"email"              yaml:"email"`
+	LastName  request.FieldString `bson:"last_name"          json:"last_name"          yaml:"last_name"`
+	FirstName request.FieldString `bson:"first_name"         json:"first_name"         yaml:"first_name"`
+	Status    request.FieldString `bson:"status"             json:"status"             yaml:"status"`
+	Scopes    request.FieldString `bson:"scopes"             json:"scopes"             yaml:"scopes"`
+	Data      request.FieldJSON   `bson:"data"               json:"data"               yaml:"data"`
+	Password  *string             `bson:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty"`
+	CreatedAt request.FieldTime   `bson:"created_at"         json:"created_at"         yaml:"created_at"`
+	CreatedBy request.FieldString `bson:"created_by"         json:"created_by"         yaml:"created_by"`
+	UpdatedAt request.FieldTime   `bson:"updated_at"         json:"updated_at"         yaml:"updated_at"`
+	UpdatedBy request.FieldString `bson:"updated_by"         json:"updated_by"         yaml:"updated_by"`
+}
+
+// Validate checks that the value contains valid data.
+func (u *User) Validate() error {
+	if u.AccountID.Set {
+		if !u.AccountID.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"account_id must not be null",
+				"user", u)
+		}
+
+		if !request.ValidAccountID(u.AccountID.Value) {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid id",
+				"user", u)
+		}
+	}
+
+	if u.ID.Set {
+		if !u.ID.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"id must not be null",
+				"user", u)
+		}
+
+		if !request.ValidUserID(u.ID.Value) {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid id",
+				"user", u)
+		}
+	}
+
+	if u.Status.Set {
+		if !u.Status.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"status must not be null",
+				"user", u)
+		}
+
+		switch u.Status.Value {
+		case request.StatusActive, request.StatusInactive:
+		default:
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid status",
+				"user", u)
+		}
+	}
+
+	if u.Email.Set && u.Email.Valid {
+		if _, err := mail.ParseAddress(u.Email.Value); err != nil {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid email",
+				"user", u)
+		}
+	}
+
+	if u.Scopes.Set {
+		if !u.Scopes.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"scopes must not be null",
+				"user", u)
+		}
+
+		if !request.ValidScopes(u.Scopes.Value) {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid scope",
+				"user", u)
+		}
+	}
+
+	return nil
+}
+
+// ValidateCreate checks that the value contains valid data for creation.
+func (u *User) ValidateCreate() error {
+	if !u.AccountID.Set {
+		return errors.New(errors.ErrInvalidRequest,
+			"missing account_id",
+			"user", u)
+	}
+
+	if !u.ID.Set {
+		return errors.New(errors.ErrInvalidRequest,
+			"missing user_id",
+			"user", u)
+	}
+
+	return u.Validate()
+}
+
+// getUser retrieves a user from the database.
+func (s *Server) getUser(ctx context.Context,
+	id string,
+) (*User, error) {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	uID, err := request.ContextUserID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get user id from context")
+	}
+
+	if id == "" {
+		id = uID
+	}
+
+	if !request.ValidUserID(id) {
+		return nil, errors.New(errors.ErrInvalidRequest,
+			"invalid user id",
+			"id", id)
+	}
+
+	if uID != id && aID != request.SystemAccount {
+		if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := s.checkScope(ctx, request.ScopeUserRead); err != nil {
+		return nil, err
+	}
+
+	var res *User
+
+	defer func() {
+		if res != nil {
+			if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+				res.Password = nil
+			}
+		}
+	}()
+
+	s.getCache(ctx, cache.KeyUser(id), res)
+
+	if res != nil {
+		return res, nil
+	}
+
+	f := bson.M{"id": id, "account_id": aID}
+
+	if err := s.DB().Collection("users").FindOne(ctx, f,
+		options.FindOne().SetProjection(bson.M{"_id": 0})).
+		Decode(&res); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.ErrNotFound,
+				"user not found",
+				"id", id)
+		}
+
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get user",
+			"id", id)
+	}
+
+	s.setCache(ctx, cache.KeyUser(res.ID.Value), res)
+
+	return res, nil
+}
+
+// createUser inserts a new user in the database.
+func (s *Server) createUser(ctx context.Context,
+	req *User,
+) (*User, error) {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	uID, err := request.ContextUserID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get user id from context")
+	}
+
+	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
+		return nil, err
+	}
+
+	if req == nil {
+		return nil, errors.New(errors.ErrInvalidRequest,
+			"missing user")
+	}
+
+	if aID != request.SystemAccount && aID != req.AccountID.Value {
+		if !req.AccountID.Set {
+			req.AccountID = request.FieldString{
+				Set: true, Valid: true, Value: aID,
+			}
+		} else if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+			return nil, errors.New(errors.ErrUnauthorized,
+				"unauthorized request",
+				"account_id", aID,
+				"user_id", uID)
+		}
+	}
+
+	if err := req.ValidateCreate(); err != nil {
+		return nil, err
+	}
+
+	req.CreatedAt = request.FieldTime{
+		Set: true, Valid: true, Value: time.Now().Unix(),
+	}
+
+	req.CreatedBy = request.FieldString{
+		Set: true, Valid: true, Value: uID,
+	}
+
+	req.UpdatedAt = request.FieldTime{
+		Set: true, Valid: true, Value: req.CreatedAt.Value,
+	}
+
+	req.UpdatedBy = request.FieldString{
+		Set: true, Valid: true, Value: uID,
+	}
+
+	var res *User
+
+	defer func() {
+		if res != nil {
+			if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+				res.Password = nil
+			}
+		}
+	}()
+
+	f := bson.M{"id": req.ID.Value, "account_id": aID}
+
+	doc := &bson.D{}
+
+	request.SetField(doc, "id", req.ID)
+	request.SetField(doc, "account_id", req.AccountID)
+	request.SetField(doc, "email", req.Email)
+	request.SetField(doc, "last_name", req.LastName)
+	request.SetField(doc, "first_name", req.FirstName)
+	request.SetField(doc, "status", req.Status)
+	request.SetField(doc, "scopes", req.Scopes)
+	request.SetField(doc, "data", req.Data)
+	request.SetField(doc, "created_at", req.CreatedAt)
+	request.SetField(doc, "created_by", req.CreatedBy)
+	request.SetField(doc, "updated_at", req.UpdatedAt)
+	request.SetField(doc, "updated_by", req.UpdatedBy)
+
+	if req.Password != nil {
+		hp, err := hashPassword(*req.Password)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to hash password")
+		}
+
+		request.SetField(doc, "password", request.FieldString{
+			Set: true, Valid: true, Value: hp,
+		})
+	}
+
+	if err := s.DB().Collection("users").FindOneAndReplace(ctx, f, req,
+		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
+			SetReturnDocument(options.After).SetUpsert(true)).
+		Decode(&res); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.ErrNotFound,
+				"user not found",
+				"req", req)
+		}
+
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to create user",
+			"req", req)
+	}
+
+	s.setCache(ctx, cache.KeyUser(res.ID.Value), res)
+
+	return res, nil
+}
+
+// updateUser updates a user in the database.
+func (s *Server) updateUser(ctx context.Context,
+	req *User,
+) (*User, error) {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	uID, err := request.ContextUserID(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unable to get user id from context")
+	}
+
+	if err := s.checkScope(ctx, request.ScopeUserWrite); err != nil {
+		return nil, err
+	}
+
+	if req == nil {
+		return nil, errors.New(errors.ErrInvalidRequest,
+			"missing user")
+	}
+
+	if aID != request.SystemAccount && aID != req.AccountID.Value {
+		if !req.AccountID.Set {
+			req.AccountID = request.FieldString{
+				Set: true, Valid: true, Value: aID,
+			}
+		} else if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+			return nil, errors.New(errors.ErrUnauthorized,
+				"unauthorized request",
+				"account_id", aID,
+				"user_id", uID)
+		}
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	req.UpdatedAt = request.FieldTime{
+		Set: true, Valid: true, Value: req.CreatedAt.Value,
+	}
+
+	req.UpdatedBy = request.FieldString{
+		Set: true, Valid: true, Value: uID,
+	}
+
+	var res *User
+
+	defer func() {
+		if res != nil {
+			if err := s.checkScope(ctx, request.ScopeSuperuser); err != nil {
+				res.Password = nil
+			}
+		}
+	}()
+
+	f := bson.M{"id": req.ID.Value, "account_id": aID}
+
+	doc := &bson.D{}
+
+	request.SetField(doc, "email", req.Email)
+	request.SetField(doc, "last_name", req.LastName)
+	request.SetField(doc, "first_name", req.FirstName)
+	request.SetField(doc, "status", req.Status)
+	request.SetField(doc, "scopes", req.Scopes)
+	request.SetField(doc, "data", req.Data)
+	request.SetField(doc, "password", req.Password)
+	request.SetField(doc, "updated_at", req.UpdatedAt)
+	request.SetField(doc, "updated_by", req.UpdatedBy)
+
+	if req.Password != nil {
+		hp, err := hashPassword(*req.Password)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to hash password")
+		}
+
+		request.SetField(doc, "password", request.FieldString{
+			Set: true, Valid: true, Value: hp,
+		})
+	}
+
+	if err := s.DB().Collection("users").FindOneAndUpdate(ctx, f,
+		&bson.D{{Key: "$set", Value: doc}},
+		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0}).
+			SetReturnDocument(options.After).SetUpsert(false)).
+		Decode(&res); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New(errors.ErrNotFound,
+				"user not found",
+				"req", req)
+		}
+
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to update user",
+			"req", req)
+	}
+
+	s.setCache(ctx, cache.KeyUser(res.ID.Value), res)
+
+	return res, nil
+}
+
+// deleteUser deletes a user from the database.
+func (s *Server) deleteUser(ctx context.Context,
+	id string,
+) error {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
+		return err
+	}
+
+	if !request.ValidUserID(id) {
+		return errors.New(errors.ErrInvalidRequest,
+			"invalid user id",
+			"id", id)
+	}
+
+	f := bson.M{"id": id, "account_id": aID}
+
+	if res, err := s.DB().Collection("users").
+		DeleteOne(ctx, f, options.DeleteOne()); err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to delete user",
+			"id", id)
+	} else if res.DeletedCount == 0 {
+		return errors.New(errors.ErrNotFound,
+			"user not found",
+			"id", id)
+	}
+
+	s.deleteCache(ctx, cache.KeyUser(id))
+
+	return nil
+}
+
+// userHandler performs routing for user requests.
+func (s *Server) userHandler() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(s.dbAvail)
+
+	r.With(s.stat, s.trace, s.auth).Get("/", s.getUserHandler)
+	r.With(s.stat, s.trace, s.auth).Patch("/", s.putUserHandler)
+	r.With(s.stat, s.trace, s.auth).Put("/", s.putUserHandler)
+	r.With(s.stat, s.trace, s.auth).Delete("/{id}", s.deleteUserHandler)
+
+	return r
+}
+
+// getUserHandler is the get handler function for users.
+func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeUserRead); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	res, err := s.getUser(ctx, "")
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// putUserHandler is the put handler function for users.
+func (s *Server) putUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeUserWrite); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	req := &User{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		switch e := err.(type) {
+		case *errors.Error:
+			s.error(e, w, r)
+		default:
+			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to decode request"), w, r)
+		}
+
+		return
+	}
+
+	req.ID = request.FieldString{
+		Set: true, Valid: true, Value: "",
+	}
+
+	res, err := s.updateUser(ctx, req)
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// deleteUserHandler is the delete handler function for game types.
+func (s *Server) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+
+	if err := s.deleteUser(ctx, id); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // authJWT authenticates using a JWT token.
@@ -409,7 +1289,7 @@ func (s *Server) authPassword(ctx context.Context,
 			"user_id", userID)
 	}
 
-	aID := ""
+	aID := s.cfg.ServiceName()
 
 	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
@@ -422,27 +1302,21 @@ func (s *Server) authPassword(ctx context.Context,
 		}
 
 		aID = a.ID.Value
-	} else {
-		aID = s.cfg.ServiceName()
 	}
 
-	hp := new(string)
+	ctx = context.WithValue(ctx, request.CtxKeyAccountID, aID)
 
-	*hp, err = hashPassword(aID)
+	ctx = context.WithValue(ctx, request.CtxKeyScopes,
+		request.ScopeSuperuser)
+
+	u, err := s.getUser(ctx, userID)
 	if err != nil {
-		return errors.New(errors.ErrServer,
-			"unable to hash password",
-			"error", err,
-			"user_id", userID)
-	}
-
-	if /*hp == nil || */ *hp == "" {
 		return errors.New(errors.ErrUnauthorized,
-			"user cannot login",
+			"invalid user id or password",
 			"user_id", userID)
 	}
 
-	if err := verifyPassword(*hp, password); err != nil {
+	if err := verifyPassword(*u.Password, password); err != nil {
 		return errors.New(errors.ErrUnauthorized,
 			"invalid user id or password",
 			"user_id", userID)
@@ -687,7 +1561,7 @@ func (s *Server) createToken(ctx context.Context,
 	expiration int64,
 	scopes, accountID string,
 ) (string, error) {
-	aID := ""
+	aID := s.cfg.ServiceName()
 
 	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
@@ -700,8 +1574,6 @@ func (s *Server) createToken(ctx context.Context,
 		}
 
 		aID = a.ID.Value
-	} else {
-		aID = s.cfg.ServiceName()
 	}
 
 	if !request.ValidUserID(userID) {
@@ -812,9 +1684,7 @@ func (s *Server) auth(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(ctx, request.CtxKeyJWT, token)
-
 		ctx = context.WithValue(ctx, request.CtxKeyAccountID, claims.AccountID)
-
 		ctx = context.WithValue(ctx, request.CtxKeyScopes, claims.Scopes)
 
 		if claims.UserID != "" {
@@ -823,21 +1693,6 @@ func (s *Server) auth(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// accountHandler performs routing for account requests.
-func (s *Server) accountHandler() http.Handler {
-	r := chi.NewRouter()
-
-	r.Use(s.dbAvail)
-
-	r.With(s.stat, s.trace, s.auth).Get("/repo", s.getAccountRepoHandler)
-	r.With(s.stat, s.trace, s.auth).Post("/repo", s.postAccountRepoHandler)
-
-	r.With(s.stat, s.trace, s.auth).Get("/", s.getAccountHandler)
-	r.With(s.stat, s.trace, s.auth).Post("/", s.postAccountHandler)
-
-	return r
 }
 
 // checkScope verifies the request has the specified scope. It returns false
@@ -850,296 +1705,6 @@ func (s *Server) checkScope(ctx context.Context, scope string) error {
 	}
 
 	return nil
-}
-
-// getAccountHandler is the get handler function for accounts.
-func (s *Server) getAccountHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	res, err := s.getAccount(ctx, "")
-	if err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// postAccountHandler is the post handler function for accounts.
-func (s *Server) postAccountHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	req := &Account{}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		switch e := err.(type) {
-		case *errors.Error:
-			s.error(e, w, r)
-		default:
-			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
-				"unable to decode request"), w, r)
-		}
-
-		return
-	}
-
-	res, err := s.createAccount(ctx, req)
-	if err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	scheme := "https"
-	if strings.Contains(r.Host, "localhost") {
-		scheme = "http"
-	}
-
-	loc := &url.URL{
-		Scheme: scheme,
-		Host:   r.Host,
-		Path:   r.URL.Path,
-	}
-
-	w.Header().Set("Location", loc.String())
-
-	w.WriteHeader(http.StatusCreated)
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// getAccountRepoHandler is the get handler function for account repos.
-func (s *Server) getAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	res, err := s.getAccountRepo(ctx)
-	if err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// postAccountRepoHandler is the post handler function for account repos.
-func (s *Server) postAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeAccountWrite); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	req := &AccountRepo{}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		switch e := err.(type) {
-		case *errors.Error:
-			s.error(e, w, r)
-		default:
-			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
-				"unable to decode request"), w, r)
-		}
-
-		return
-	}
-
-	if err := s.setAccountRepo(ctx, req); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	scheme := "https"
-	if strings.Contains(r.Host, "localhost") {
-		scheme = "http"
-	}
-
-	loc := &url.URL{
-		Scheme: scheme,
-		Host:   r.Host,
-		Path:   r.URL.Path,
-	}
-
-	w.Header().Set("Location", loc.String())
-
-	w.WriteHeader(http.StatusCreated)
-
-	if err := json.NewEncoder(w).Encode(req); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// User is the user object returned by the API.
-type User struct {
-	ID        request.FieldString `bson:"id"                 json:"id"                 yaml:"id"`
-	Email     request.FieldString `bson:"email"              json:"email"              yaml:"email"`
-	LastName  request.FieldString `bson:"last_name"          json:"last_name"          yaml:"last_name"`
-	FirstName request.FieldString `bson:"first_name"         json:"first_name"         yaml:"first_name"`
-	Status    request.FieldString `bson:"status"             json:"status"             yaml:"status"`
-	Scopes    request.FieldString `bson:"scopes"             json:"scopes"             yaml:"scopes"`
-	Data      request.FieldJSON   `bson:"data"               json:"data"               yaml:"data"`
-	Password  *string             `bson:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty"`
-}
-
-// getUser retrieves a user from the database.
-func (s *Server) getUser(ctx context.Context,
-	id string,
-) (*User, error) {
-	_, _ = ctx, id
-
-	return nil, nil
-}
-
-// createUser inserts a new user in the database.
-func (s *Server) createUser(ctx context.Context,
-	req *User,
-) (*User, error) {
-	_, _ = ctx, req
-
-	return nil, nil
-}
-
-// updateUser updates a user in the database.
-func (s *Server) updateUser(ctx context.Context,
-	req *User,
-) (*User, error) {
-	_, _ = ctx, req
-
-	return nil, nil
-}
-
-// deleteUser deletes a user from the database.
-func (s *Server) deleteUser(ctx context.Context,
-	id string,
-) error {
-	_, _ = ctx, id
-
-	return nil
-}
-
-// userHandler performs routing for user requests.
-func (s *Server) userHandler() http.Handler {
-	r := chi.NewRouter()
-
-	r.Use(s.dbAvail)
-
-	r.With(s.stat, s.trace, s.auth).Get("/", s.getUserHandler)
-	r.With(s.stat, s.trace, s.auth).Patch("/", s.putUserHandler)
-	r.With(s.stat, s.trace, s.auth).Put("/", s.putUserHandler)
-	r.With(s.stat, s.trace, s.auth).Delete("/{id}", s.deleteUserHandler)
-
-	return r
-}
-
-// getUserHandler is the get handler function for users.
-func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeUserRead); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	res, err := s.getUser(ctx, "")
-	if err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// putUserHandler is the put handler function for users.
-func (s *Server) putUserHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeUserWrite); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	req := &User{}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		switch e := err.(type) {
-		case *errors.Error:
-			s.error(e, w, r)
-		default:
-			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
-				"unable to decode request"), w, r)
-		}
-
-		return
-	}
-
-	req.ID = request.FieldString{
-		Set: true, Valid: true, Value: "",
-	}
-
-	res, err := s.updateUser(ctx, req)
-	if err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// deleteUserHandler is the delete handler function for game types.
-func (s *Server) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	id := chi.URLParam(r, "id")
-
-	if err := s.deleteUser(ctx, id); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 }
 
 // loginHandler performs routing for login requests.

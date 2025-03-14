@@ -2,6 +2,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net"
@@ -820,4 +821,77 @@ func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
 func (s *Server) methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	s.error(errors.New(errors.ErrNotAllowed,
 		"method not allowed"), w, r)
+}
+
+// getCache is a helper function to get a value from the cache.
+func (s *Server) getCache(ctx context.Context,
+	key string,
+	value any,
+) {
+	c := s.Cache(ctx)
+	if c == nil {
+		return
+	}
+
+	ci, err := c.Get(ctx, key)
+	if err != nil && !errors.Has(err, errors.ErrNotFound) {
+		s.log.Log(ctx, logger.LvlError,
+			"unable to get account cache key",
+			"error", err,
+			"cache_key", key)
+	} else if ci != nil {
+		buf := bytes.NewBuffer(ci.Value)
+
+		if err := json.NewDecoder(buf).Decode(&value); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to decode account cache value",
+				"error", err,
+				"cache_key", key,
+				"cache_value", string(ci.Value))
+		}
+	}
+}
+
+// setCache is a helper function that sets a cache value.
+func (s *Server) setCache(ctx context.Context,
+	key string,
+	value any,
+) {
+	if c := s.Cache(ctx); c != nil {
+		buf, err := json.Marshal(value)
+		if err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to encode cache value",
+				"error", err,
+				"cache_key", key,
+				"cache_value", value)
+		} else if len(buf) < s.cfg.CacheMaxBytes() {
+			if err := c.Set(ctx, &cache.Item{
+				Key:        key,
+				Value:      buf,
+				Expiration: s.cfg.CacheExpiration(),
+			}); err != nil {
+				s.log.Log(ctx, logger.LvlError,
+					"unable to set cache value",
+					"error", err,
+					"cache_key", key,
+					"cache_value", string(buf),
+					"expiration", s.cfg.CacheExpiration())
+			}
+		}
+	}
+}
+
+// deleteCache is a helper function that deletes a cache value.
+func (s *Server) deleteCache(ctx context.Context,
+	key string,
+) {
+	if c := s.Cache(ctx); c != nil {
+		if err := c.Delete(ctx, key); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to delete cache value",
+				"error", err,
+				"cache_key", key)
+		}
+	}
 }

@@ -1,7 +1,0 @@
-# components/responses/tags_multi_assignment.yaml
-description: >
-  A response containing details about the tags multiple assignment.
-content:
-  application/json:
-    schema:
-      $ref: "../schemas/tags_multi_assignment.yaml"

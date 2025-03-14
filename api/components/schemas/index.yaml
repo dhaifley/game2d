@@ -15,8 +15,6 @@ script:
   $ref: "./script.yaml"
 tags:
   $ref: "./tags.yaml"
-tags_multi_assignment:
-  $ref: "./tags_multi_assignment.yaml"
 user:
   $ref: "./user.yaml"
 user_error:

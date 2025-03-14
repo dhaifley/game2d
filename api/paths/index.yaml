@@ -13,7 +13,5 @@
   $ref: "./game_import.yaml"
 "/api/v1/games/{id}/tags":
   $ref: "./tags.yaml"
-"/api/v1/games/tags_multi_assignments":
-  $ref: "./tags_multi_assignments.yaml"
 "/api/v1/user":
   $ref: "./user.yaml"

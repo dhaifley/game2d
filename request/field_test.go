@@ -639,99 +639,66 @@ duration: 1s
 func TestSetField(t *testing.T) {
 	t.Parallel()
 
-	sets := []string{}
+	doc := &bson.D{}
 
-	params := []any{}
-
-	request.SetField("string",
-		request.FieldString{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("string_not",
-		request.FieldString{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("string_null",
-		request.FieldString{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("int64",
-		request.FieldInt64{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("int64_not",
-		request.FieldInt64{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("int64_null",
-		request.FieldInt64{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("float64",
-		request.FieldFloat64{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("float64_not",
-		request.FieldFloat64{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("float64_null",
-		request.FieldFloat64{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("bool",
-		request.FieldBool{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("bool_not",
-		request.FieldBool{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("bool_null",
-		request.FieldBool{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("time",
-		request.FieldTime{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("time_not",
-		request.FieldTime{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("time_null",
-		request.FieldTime{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("string_array",
-		request.FieldStringArray{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("string_array_not",
-		request.FieldStringArray{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("string_array_null",
-		request.FieldStringArray{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("int64_array",
-		request.FieldInt64Array{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("int64_array_not",
-		request.FieldInt64Array{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("int64_array_null",
-		request.FieldInt64Array{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("json",
-		request.FieldJSON{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("json_not",
-		request.FieldJSON{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("json_null",
-		request.FieldJSON{Set: true, Valid: false},
-		&sets, &params)
-	request.SetField("duration",
-		request.FieldDuration{Set: true, Valid: true},
-		&sets, &params)
-	request.SetField("duration_not",
-		request.FieldDuration{Set: false, Valid: true},
-		&sets, &params)
-	request.SetField("duration_null",
-		request.FieldDuration{Set: true, Valid: false},
-		&sets, &params)
+	request.SetField(doc, "string",
+		request.FieldString{Set: true, Valid: true})
+	request.SetField(doc, "string_not",
+		request.FieldString{Set: false, Valid: true})
+	request.SetField(doc, "string_null",
+		request.FieldString{Set: true, Valid: false})
+	request.SetField(doc, "int64",
+		request.FieldInt64{Set: true, Valid: true})
+	request.SetField(doc, "int64_not",
+		request.FieldInt64{Set: false, Valid: true})
+	request.SetField(doc, "int64_null",
+		request.FieldInt64{Set: true, Valid: false})
+	request.SetField(doc, "float64",
+		request.FieldFloat64{Set: true, Valid: true})
+	request.SetField(doc, "float64_not",
+		request.FieldFloat64{Set: false, Valid: true})
+	request.SetField(doc, "float64_null",
+		request.FieldFloat64{Set: true, Valid: false})
+	request.SetField(doc, "bool",
+		request.FieldBool{Set: true, Valid: true})
+	request.SetField(doc, "bool_not",
+		request.FieldBool{Set: false, Valid: true})
+	request.SetField(doc, "bool_null",
+		request.FieldBool{Set: true, Valid: false})
+	request.SetField(doc, "time",
+		request.FieldTime{Set: true, Valid: true})
+	request.SetField(doc, "time_not",
+		request.FieldTime{Set: false, Valid: true})
+	request.SetField(doc, "time_null",
+		request.FieldTime{Set: true, Valid: false})
+	request.SetField(doc, "string_array",
+		request.FieldStringArray{Set: true, Valid: true})
+	request.SetField(doc, "string_array_not",
+		request.FieldStringArray{Set: false, Valid: true})
+	request.SetField(doc, "string_array_null",
+		request.FieldStringArray{Set: true, Valid: false})
+	request.SetField(doc, "int64_array",
+		request.FieldInt64Array{Set: true, Valid: true})
+	request.SetField(doc, "int64_array_not",
+		request.FieldInt64Array{Set: false, Valid: true})
+	request.SetField(doc, "int64_array_null",
+		request.FieldInt64Array{Set: true, Valid: false})
+	request.SetField(doc, "json",
+		request.FieldJSON{Set: true, Valid: true})
+	request.SetField(doc, "json_not",
+		request.FieldJSON{Set: false, Valid: true})
+	request.SetField(doc, "json_null",
+		request.FieldJSON{Set: true, Valid: false})
+	request.SetField(doc, "duration",
+		request.FieldDuration{Set: true, Valid: true})
+	request.SetField(doc, "duration_not",
+		request.FieldDuration{Set: false, Valid: true})
+	request.SetField(doc, "duration_null",
+		request.FieldDuration{Set: true, Valid: false})
 
 	exp := 18
 
-	if len(sets) != exp {
-		t.Errorf("Expected sets length: %v, got: %v", exp, len(sets))
-	}
-
-	if len(params) != exp {
-		t.Errorf("Expected params length: %v, got: %v", exp, len(params))
+	if len(*doc) != exp {
+		t.Errorf("Expected sets length: %v, got: %v", exp, len(*doc))
 	}
 }

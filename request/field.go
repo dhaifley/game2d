@@ -1283,108 +1283,88 @@ func (f *FieldDuration) String() string {
 	return f.Value.String()
 }
 
-// SetField adds the name and value for a field to the provided set lists.
-func SetField(name string, field any,
-	sets *[]string, params *[]any,
-) {
-	if sets == nil || params == nil {
+// SetField adds the name and value for a field to the provided set document.
+func SetField(doc *bson.D, name string, field any) {
+	if field == nil || doc == nil {
 		return
 	}
 
 	switch f := field.(type) {
 	case FieldString:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldInt64:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldFloat64:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldBool:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldTime:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldStringArray:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldInt64Array:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldJSON:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
 				b, err := json.Marshal(f.Value)
 				if err == nil {
-					*params = append(*params, b)
+					*doc = append(*doc, bson.E{Key: name, Value: b})
 				} else {
-					*params = append(*params, []byte("{}"))
+					*doc = append(*doc, bson.E{Key: name, Value: []byte("{}")})
 				}
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	case FieldDuration:
 		if f.Set {
-			*sets = append(*sets, name)
-
 			if f.Valid {
-				*params = append(*params, f.Value)
+				*doc = append(*doc, bson.E{Key: name, Value: f.Value})
 			} else {
-				*params = append(*params, nil)
+				*doc = append(*doc, bson.E{Key: name, Value: nil})
 			}
 		}
 	}

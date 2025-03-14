@@ -9,8 +9,6 @@ games:
   $ref: "./games.yaml"
 tags:
   $ref: "./tags.yaml"
-tags_multi_assignment:
-  $ref: "./tags_multi_assignment.yaml"
 user:
   $ref: "./user.yaml"
 user_error:
