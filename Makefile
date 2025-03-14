@@ -11,6 +11,7 @@ all: build
 clean:
 	rm -f game2d
 	rm -f game2d-api
+	rm -rf app/dist
 .PHONY: clean
 
 static/openapi.yaml: $(YAML_FILES)
@@ -24,7 +25,15 @@ game2d: $(GO_FILES)
 	-ldflags="-X github.com/dhaifley/game2d/client.Version=${VERSION}" \
 	./cmd/game2d
 
-game2d-api: $(GO_FILES) Dockerfile tests/docker-compose.yml static/*
+app/dist/index.html:
+	cd app && \
+	npm run build && \
+	cd ..
+
+game2d-app: app/dist/index.html
+.PHONY: game2d-app	
+
+game2d-api: $(GO_FILES) Dockerfile tests/docker-compose.yml static/* game2d-app
 	CGO_ENABLED=0 go build -v -o game2d-api \
 	-ldflags="-X github.com/dhaifley/game2d/server.Version=${VERSION}" \
 	./cmd/game2d-api

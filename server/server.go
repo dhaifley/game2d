@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/dhaifley/game2d/app"
 	"github.com/dhaifley/game2d/cache"
 	"github.com/dhaifley/game2d/config"
 	"github.com/dhaifley/game2d/errors"
@@ -513,7 +515,7 @@ func (s *Server) initRouter() {
 	r.Mount("/login", s.loginHandler())
 	r.Mount("/games", s.gamesHandler())
 
-	s.initStaticRoutes(r)
+	s.initStaticRoutes(base)
 
 	s.Lock()
 
@@ -524,25 +526,62 @@ func (s *Server) initRouter() {
 
 // initStaticRoutes initializes routing for embedded static games.
 func (s *Server) initStaticRoutes(r chi.Router) {
-	r.Get("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
-		v, err := static.FS.ReadFile("openapi.json")
-		if err != nil {
-			s.error(err, w, r)
+	r.Get(path.Join(s.cfg.ServerPathPrefix(), "openapi.json"),
+		func(w http.ResponseWriter, r *http.Request) {
+			v, err := static.FS.ReadFile("openapi.json")
+			if err != nil {
+				s.error(err, w, r)
 
-			return
-		}
+				return
+			}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		if _, err := w.Write(v); err != nil {
-			s.error(err, w, r)
+			if _, err := w.Write(v); err != nil {
+				s.error(err, w, r)
 
-			return
-		}
-	})
+				return
+			}
+		})
 
-	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-		v, err := static.FS.ReadFile("openapi.yaml")
+	r.Get(path.Join(s.cfg.ServerPathPrefix(), "openapi.yaml"),
+		func(w http.ResponseWriter, r *http.Request) {
+			v, err := static.FS.ReadFile("openapi.yaml")
+			if err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
+			if _, err := w.Write(v); err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+		})
+
+	r.Get(path.Join(s.cfg.ServerPathPrefix(), "docs"),
+		func(w http.ResponseWriter, r *http.Request) {
+			v, err := static.FS.ReadFile("index.html")
+			if err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
+			if _, err := w.Write(v); err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+		})
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		v, err := app.FS.ReadFile("dist/index.html")
 		if err != nil {
 			s.error(err, w, r)
 
@@ -558,20 +597,41 @@ func (s *Server) initStaticRoutes(r chi.Router) {
 		}
 	})
 
-	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-		v, err := static.FS.ReadFile("index.html")
+	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		filePath := "dist" + r.URL.Path
+
+		content, err := app.FS.ReadFile(filePath)
 		if err != nil {
 			s.error(err, w, r)
 
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+		contentType := "application/octet-stream"
 
-		if _, err := w.Write(v); err != nil {
+		switch {
+		case strings.HasSuffix(filePath, ".html"):
+			contentType = "text/html; charset=UTF-8"
+		case strings.HasSuffix(filePath, ".css"):
+			contentType = "text/css; charset=UTF-8"
+		case strings.HasSuffix(filePath, ".js"):
+			contentType = "application/javascript; charset=UTF-8"
+		case strings.HasSuffix(filePath, ".json"):
+			contentType = "application/json; charset=UTF-8"
+		case strings.HasSuffix(filePath, ".png"):
+			contentType = "image/png"
+		case strings.HasSuffix(filePath, ".jpg"), strings.HasSuffix(filePath, ".jpeg"):
+			contentType = "image/jpeg"
+		case strings.HasSuffix(filePath, ".svg"):
+			contentType = "image/svg+xml"
+		case strings.HasSuffix(filePath, ".ico"):
+			contentType = "image/x-icon"
+		}
+
+		w.Header().Set("Content-Type", contentType)
+
+		if _, err := w.Write(content); err != nil {
 			s.error(err, w, r)
-
-			return
 		}
 	})
 }
