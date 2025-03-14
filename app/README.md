@@ -24,18 +24,22 @@ prompts, and display dialog history for the currently selected game definition.
 
 ### Requirements
 
-- Node.js (v20 or later)
-- npm package manager
+- [node.js](https://nodejs.org/)
+- [npm](https://www.npmjs.com/)
+- [typescript](https://www.typescriptlang.org/)
+- [react](https://react.dev/)
+- [react router](https://reactrouter.com/)
+- [vite](https://vite.dev/)
 
 ### Installation
 
 1. Change into this app directory:
-   ```bash
+   ```sh
    cd game2d/app
    ```
 
 2. Install dependencies:
-   ```bash
+   ```sh
    npm install
    ```
 
@@ -43,25 +47,25 @@ prompts, and display dialog history for the currently selected game definition.
 
 To run the application in development mode:
 
-```bash
+```sh
 npm run dev
 ```
 
 This will start the development server, usually at http://localhost:5173
 
-### Building for Production
+### Building
 
-To create a production build:
+To create a build:
 
-```bash
+```sh
 npm run build
 ```
 
-### Running Production Build
+### Running
 
-To preview the production build locally:
+To preview the build locally:
 
-```bash
+```sh
 npm run preview
 ```
 
