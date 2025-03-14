@@ -5,13 +5,15 @@ This is a basic framework providing an interface for accessing the ebitengine
 2D game engine. It is implemented using a declarative schema with embedded Lua
 scripting and game assets.
 
-## Requirements
+## Getting Started
 
-* [go](https://go.dev/dl/)
-* [docker](https://docs.docker.com/get-docker/)
-* [make](https://www.gnu.org/software/make/)
+### Requirements
 
-## Building and Testing
+- [go](https://go.dev/dl/)
+- [docker](https://docs.docker.com/get-docker/)
+- [make](https://www.gnu.org/software/make/)
+
+### Building and Testing
 
 To build the service locally:
 
@@ -54,4 +56,5 @@ $ make stop
 
 While the service is running locally, interactive documentation, which can be
 used for testing requests to the service, can be accessed using:
-* http://localhost:8080/api/v1/docs
+
+- http://localhost:8080/api/v1/docs
