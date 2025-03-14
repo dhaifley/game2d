@@ -35,6 +35,7 @@ type Account struct {
 	Repo           request.FieldString `bson:"repo"             json:"repo"             yaml:"repo"`
 	RepoStatus     request.FieldString `bson:"repo_status"      json:"repo_status"      yaml:"repo_status"`
 	RepoStatusData request.FieldJSON   `bson:"repo_status_data" json:"repo_status_data" yaml:"repo_status_data"`
+	GameCommitHash request.FieldString `bson:"game_commit_hash" json:"game_commit_hash" yaml:"game_commit_hash"`
 	Secret         request.FieldString `bson:"secret"           json:"secret"           yaml:"secret"`
 	Data           request.FieldJSON   `bson:"data"             json:"data"             yaml:"data"`
 	CreatedAt      request.FieldTime   `bson:"created_at"       json:"created_at"       yaml:"created_at"`
@@ -132,6 +133,48 @@ type Claims struct {
 	Scopes      string `json:"scopes"`
 }
 
+// getAllAccounts retrieves a list of all active account ID's.
+func (s *Server) getAllAccounts(ctx context.Context) ([]string, error) {
+	ctx = context.WithValue(ctx, request.CtxKeyAccountID, request.SystemAccount)
+
+	res := []string{}
+
+	f := bson.M{"status": request.StatusActive}
+
+	pro := bson.M{"id": 1}
+
+	cur, err := s.DB().Collection("accounts").Find(ctx, f,
+		options.Find().SetProjection(pro))
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to find all accounts",
+			"filter", f)
+	}
+
+	defer func() {
+		if err := cur.Close(ctx); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to close cursor",
+				"err", err,
+				"filter", f)
+		}
+	}()
+
+	if err := cur.All(ctx, &res); err != nil {
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get all accounts",
+			"filter", f)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get all accounts",
+			"filter", f)
+	}
+
+	return res, nil
+}
+
 // getAccountSecret retrieves an encryption secret from the database by
 // account ID.
 func (s *Server) getAccountSecret(ctx context.Context,
@@ -177,10 +220,6 @@ func (s *Server) getAccount(ctx context.Context,
 		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
 		return nil, errors.New(errors.ErrUnauthorized,
 			"unauthorized request")
-	}
-
-	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
-		return nil, err
 	}
 
 	var res *Account
@@ -332,10 +371,6 @@ func (s *Server) getAccountRepo(ctx context.Context) (*AccountRepo, error) {
 func (s *Server) setAccountRepo(ctx context.Context,
 	req *AccountRepo,
 ) error {
-	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
-		return err
-	}
-
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
 		return errors.New(errors.ErrUnauthorized,
@@ -350,7 +385,7 @@ func (s *Server) setAccountRepo(ctx context.Context,
 	a, err := s.getAccount(ctx, aID)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrDatabase,
-			"unable to get account",
+			"unable to get account repo",
 			"account_id", aID,
 			"req", req)
 	}
@@ -507,7 +542,7 @@ func (s *Server) getAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) postAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if err := s.checkScope(ctx, request.ScopeAccountWrite); err != nil {
+	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
 		s.error(err, w, r)
 
 		return
@@ -690,10 +725,6 @@ func (s *Server) getUser(ctx context.Context,
 		}
 	}
 
-	if err := s.checkScope(ctx, request.ScopeUserRead); err != nil {
-		return nil, err
-	}
-
 	var res *User
 
 	defer func() {
@@ -745,10 +776,6 @@ func (s *Server) createUser(ctx context.Context,
 	if err != nil {
 		return nil, errors.New(errors.ErrUnauthorized,
 			"unable to get user id from context")
-	}
-
-	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
-		return nil, err
 	}
 
 	if req == nil {
@@ -864,10 +891,6 @@ func (s *Server) updateUser(ctx context.Context,
 			"unable to get user id from context")
 	}
 
-	if err := s.checkScope(ctx, request.ScopeUserWrite); err != nil {
-		return nil, err
-	}
-
 	if req == nil {
 		return nil, errors.New(errors.ErrInvalidRequest,
 			"missing user")
@@ -963,10 +986,6 @@ func (s *Server) deleteUser(ctx context.Context,
 	if err != nil {
 		return errors.New(errors.ErrUnauthorized,
 			"unable to get account id from context")
-	}
-
-	if err := s.checkScope(ctx, request.ScopeUserAdmin); err != nil {
-		return err
 	}
 
 	if !request.ValidUserID(id) {

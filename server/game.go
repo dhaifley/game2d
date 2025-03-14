@@ -3,9 +3,12 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dhaifley/game2d/cache"
@@ -13,9 +16,11 @@ import (
 	"github.com/dhaifley/game2d/logger"
 	"github.com/dhaifley/game2d/request"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"gopkg.in/yaml.v3"
 )
 
 // CtxKeyMinData is the context key used to indicate that minimal data should be
@@ -122,10 +127,6 @@ func (s *Server) getGames(ctx context.Context,
 			"unable to get account id from context")
 	}
 
-	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {
-		return nil, err
-	}
-
 	if query == nil {
 		query = request.NewQuery()
 	}
@@ -169,7 +170,7 @@ func (s *Server) getGames(ctx context.Context,
 		SetSort(srt).SetProjection(pro))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrDatabase,
-			"unable to get games",
+			"unable to find games",
 			"query", query)
 	}
 
@@ -202,7 +203,7 @@ func (s *Server) getGames(ctx context.Context,
 
 	if err := cur.Err(); err != nil {
 		return nil, errors.Wrap(err, errors.ErrDatabase,
-			"unable to iterate games",
+			"unable to get games",
 			"query", query)
 	}
 
@@ -229,10 +230,6 @@ func (s *Server) getGame(ctx context.Context,
 		return nil, errors.New(errors.ErrInvalidRequest,
 			"invalid game id",
 			"id", id)
-	}
-
-	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {
-		return nil, err
 	}
 
 	var res *Game
@@ -291,10 +288,6 @@ func (s *Server) createGame(ctx context.Context,
 	if err != nil {
 		return nil, errors.New(errors.ErrUnauthorized,
 			"unable to get user id from context")
-	}
-
-	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
-		return nil, err
 	}
 
 	if req == nil {
@@ -397,10 +390,6 @@ func (s *Server) updateGame(ctx context.Context,
 			"unable to get user id from context")
 	}
 
-	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
-		return nil, err
-	}
-
 	if req == nil {
 		return nil, errors.New(errors.ErrInvalidRequest,
 			"missing game")
@@ -484,10 +473,6 @@ func (s *Server) deleteGame(ctx context.Context,
 			"unable to get account id from context")
 	}
 
-	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
-		return err
-	}
-
 	if id == "" {
 		return errors.New(errors.ErrInvalidRequest,
 			"missing game id",
@@ -522,18 +507,500 @@ func (s *Server) deleteGame(ctx context.Context,
 func (s *Server) importGames(ctx context.Context,
 	force bool,
 ) error {
-	_, _ = ctx, force
+	ctx = context.WithValue(ctx, request.CtxKeyUserID, request.SystemUser)
+	ctx = context.WithValue(ctx, request.CtxKeyScopes, request.ScopeSuperuser)
+
+	ar, err := s.getAccountRepo(ctx)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account repository")
+	}
+
+	if !force && ar.RepoStatus.Value == request.StatusImporting {
+		if pli, ok := ar.RepoStatusData.Value["games_last_imported"]; ok {
+			if i, ok := pli.(int64); ok && i > time.Now().Unix()-120 {
+				return errors.Wrap(err, errors.ErrImport,
+					"unable to import games, another import in progress")
+			}
+		}
+	}
+
+	ar.RepoStatus = request.FieldString{
+		Set: true, Valid: true, Value: request.StatusImporting,
+	}
+
+	dm := ar.RepoStatusData.Value
+
+	if dm == nil {
+		dm = map[string]any{}
+	}
+
+	dm["games_last_imported"] = time.Now().Unix()
+
+	ar.RepoStatusData = request.FieldJSON{
+		Set: true, Valid: true, Value: dm,
+	}
+
+	if err := s.setAccountRepo(ctx, ar); err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to set account repository status")
+	}
+
+	updated, deleted, iErr := s.importRepoGames(ctx, ar, force)
+
+	ar, err = s.getAccountRepo(ctx)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account repository")
+	}
+
+	ar.RepoStatus = request.FieldString{
+		Set: true, Valid: true, Value: request.StatusActive,
+	}
+
+	dm = ar.RepoStatusData.Value
+
+	if dm == nil {
+		dm = map[string]any{}
+	}
+
+	dm["games_updated"] = updated
+
+	dm["games_deleted"] = deleted
+
+	if iErr != nil {
+		ar.RepoStatus.Value = request.StatusError
+
+		dm["games_last_error"] = iErr.Error()
+	} else {
+		delete(dm, "games_last_error")
+	}
+
+	ar.RepoStatusData = request.FieldJSON{
+		Set: true, Valid: true, Value: dm,
+	}
+
+	if err := s.setAccountRepo(ctx, ar); err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to set account repository status")
+	}
+
+	if iErr != nil {
+		return iErr
+	}
 
 	return nil
 }
 
-// importGame imports a single game by ID.
-func (s *Server) importGame(ctx context.Context,
-	id string,
+// getAccountGameCommitHash retrieves the current account commit hash.
+func (s *Server) getAccountGameCommitHash(ctx context.Context,
+) (string, error) {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return "", errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	a, err := s.getAccount(ctx, "")
+	if err != nil {
+		return "", errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account game commit hash",
+			"account_id", aID)
+	}
+
+	return a.GameCommitHash.Value, nil
+}
+
+// setAccountGameCommitHash sets the current account commit hash.
+func (s *Server) setAccountGameCommitHash(ctx context.Context,
+	commit string,
 ) error {
-	_, _ = ctx, id
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	a, err := s.getAccount(ctx, aID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account game commit hash",
+			"account_id", aID)
+	}
+
+	if a == nil {
+		return errors.New(errors.ErrNotFound,
+			"account not found",
+			"account_id", aID)
+	}
+
+	a.GameCommitHash = request.FieldString{
+		Set: true, Valid: true, Value: commit,
+	}
+
+	if _, err := s.createAccount(ctx, a); err != nil {
+		return errors.Wrap(err, errors.ErrDatabase,
+			"unable to update account game commit hash",
+			"account_id", aID)
+	}
 
 	return nil
+}
+
+// deleteRepoGames deletes all imported games that do not have the specified
+// commit hash.
+func (s *Server) deleteRepoGames(ctx context.Context,
+	commit string,
+) (int, error) {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return 0, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	f := bson.M{
+		"account_id":  aID,
+		"source":      "git",
+		"commit_hash": bson.M{"$ne": commit},
+	}
+
+	pro := bson.M{"id": 1}
+
+	cur, err := s.DB().Collection("games").Find(ctx, f,
+		options.Find().SetProjection(pro))
+	if err != nil {
+		return 0, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get games to delete",
+			"filter", f)
+	}
+
+	defer func() {
+		if err := cur.Close(ctx); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to close cursor",
+				"err", err)
+		}
+	}()
+
+	n := 0
+
+	for cur.Next(ctx) {
+		var g *Game
+
+		if err := cur.Decode(&g); err != nil {
+			return n, errors.Wrap(err, errors.ErrDatabase,
+				"unable to decode game")
+		}
+
+		if g == nil {
+			continue
+		}
+
+		df := bson.M{
+			"account_id": aID,
+			"id":         g.ID.Value,
+			"source":     "git",
+		}
+
+		if _, err := s.DB().Collection("games").
+			DeleteOne(ctx, df, options.DeleteOne()); err != nil {
+			return n, errors.Wrap(err, errors.ErrDatabase,
+				"unable to delete imported game",
+				"filter", df)
+		}
+
+		s.deleteCache(ctx, cache.KeyGame(g.ID.Value))
+
+		n++
+	}
+
+	if err := cur.Err(); err != nil {
+		return n, errors.Wrap(err, errors.ErrDatabase,
+			"unable to delete imported games",
+			"filter", f)
+	}
+
+	return n, nil
+}
+
+// importRepoGames updates the games based on the contents of the account
+// import repository.
+func (s *Server) importRepoGames(ctx context.Context,
+	ar *AccountRepo,
+	force bool,
+) (int, int, error) {
+	ctx, cancel := request.ContextReplaceTimeout(ctx, s.cfg.ServerTimeout())
+
+	defer cancel()
+
+	cli, err := s.getRepoClient(ar.Repo.Value)
+	if err != nil {
+		return 0, 0, errors.Wrap(err, errors.ErrImport,
+			"unable to create repository client")
+	}
+
+	newHash, err := cli.Commit(ctx)
+	if err != nil {
+		return 0, 0, errors.Wrap(err, errors.ErrImport,
+			"unable to get repository commit hash")
+	}
+
+	ch, err := s.getAccountGameCommitHash(ctx)
+	if err != nil {
+		return 0, 0, errors.Wrap(err, errors.ErrImport,
+			"unable to get account commit_hash")
+	}
+
+	if !force && ch == newHash {
+		s.log.Log(ctx, logger.LvlDebug,
+			"game import completed, commit unchanged",
+			"updated", 0,
+			"deleted", 0)
+
+		return 0, 0, nil
+	}
+
+	res, err := cli.ListAll(ctx, "games/")
+	if err != nil {
+		return 0, 0, errors.Wrap(err, errors.ErrImport,
+			"unable to list repository path",
+			"path", "games/")
+	}
+
+	updated := 0
+
+	errs := errors.New(errors.ErrImport,
+		"unable to import games")
+
+	for _, i := range res {
+		if i.Type == "file" || i.Type == "commit_file" {
+			ctx, cancel := request.ContextReplaceTimeout(ctx,
+				s.cfg.ServerTimeout())
+
+			defer cancel()
+
+			gID := strings.TrimPrefix(strings.TrimPrefix(i.Path, "/"), "games/")
+
+			ext := filepath.Ext(gID)
+
+			gID = strings.TrimSuffix(gID, ext)
+
+			g, err := s.getGame(ctx, gID)
+			if err != nil && !errors.Has(err, errors.ErrNotFound) {
+				errs.Errors = append(errs.Errors, errors.Wrap(err,
+					errors.ErrDatabase,
+					"unable to get current game",
+					"game_id", gID))
+
+				continue
+			}
+
+			if g != nil && (!force && g.Version.Value == i.Commit) {
+				if g.CommitHash.Value != newHash {
+					g.CommitHash = request.FieldString{
+						Set: true, Valid: true, Value: newHash,
+					}
+
+					if _, err := s.updateGame(ctx, g); err != nil {
+						errs.Errors = append(errs.Errors, errors.Wrap(err,
+							errors.ErrDatabase,
+							"unable to update repository game",
+							"game", g))
+
+						continue
+					}
+
+					updated++
+				}
+
+				continue
+			}
+
+			vb, err := cli.Get(ctx, "games/"+gID+ext)
+			if err != nil {
+				errs.Errors = append(errs.Errors, errors.Wrap(err,
+					errors.ErrImport,
+					"unable to get game repository file",
+					"game_id", gID))
+
+				continue
+			}
+
+			if err := yaml.Unmarshal(vb, &g); err != nil {
+				errs.Errors = append(errs.Errors, errors.Wrap(err,
+					errors.ErrImport,
+					"unable to parse game repository file",
+					"game_id", gID))
+
+				continue
+			}
+
+			g.ID = request.FieldString{
+				Set: true, Valid: true, Value: gID,
+			}
+
+			g.Version = request.FieldString{
+				Set: true, Valid: true, Value: newHash,
+			}
+
+			g.Status = request.FieldString{
+				Set: true, Valid: true, Value: request.StatusActive,
+			}
+
+			g.Source = request.FieldString{
+				Set: true, Valid: true, Value: "git",
+			}
+
+			g.CommitHash = request.FieldString{
+				Set: true, Valid: true, Value: newHash,
+			}
+
+			if _, err := s.createGame(ctx, g); err != nil {
+				errs.Errors = append(errs.Errors, errors.Wrap(err,
+					errors.ErrDatabase,
+					"unable to create imported game",
+					"game", g))
+
+				continue
+			}
+
+			updated++
+		}
+	}
+
+	if len(errs.Errors) > 0 {
+		s.log.Log(ctx, logger.LvlWarn,
+			"unable to complete game import",
+			"updated", updated,
+			"errors", errs.Errors)
+
+		return updated, 0, errs
+	}
+
+	ctx, cancel = request.ContextReplaceTimeout(ctx, s.cfg.ServerTimeout())
+
+	defer cancel()
+
+	deleted := 0
+
+	if newHash != "" {
+		err := s.setAccountGameCommitHash(ctx, newHash)
+		if err != nil {
+			errs.Errors = append(errs.Errors, errors.Wrap(err,
+				errors.ErrDatabase,
+				"unable to set account game_commit_hash"))
+		} else {
+			deleted, err = s.deleteRepoGames(ctx, newHash)
+			if err != nil {
+				errs.Errors = append(errs.Errors, errors.Wrap(err,
+					errors.ErrDatabase,
+					"unable to delete removed repository games",
+					"commit_hash", newHash))
+			}
+		}
+	}
+
+	if len(errs.Errors) > 0 {
+		s.log.Log(ctx, logger.LvlWarn,
+			"unable to complete game import",
+			"updated", updated,
+			"deleted", deleted,
+			"errors", errs.Errors)
+
+		return updated, deleted, errs
+	}
+
+	s.log.Log(ctx, logger.LvlInfo,
+		"game import completed",
+		"updated", updated,
+		"deleted", deleted)
+
+	return updated, deleted, nil
+}
+
+// checkImportRepoGames periodically imports game data.
+func (s *Server) checkImportRepoGames(ctx context.Context,
+) context.CancelFunc {
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func(ctx context.Context) {
+		tick := time.NewTimer(0)
+
+		adj := time.Duration(0)
+
+		retries := 0
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				accounts, err := s.getAllAccounts(ctx)
+				if err != nil {
+					s.log.Log(ctx, logger.LvlError,
+						"unable to get accounts to update resources",
+						"error", err)
+
+					break
+				}
+
+				var wg sync.WaitGroup
+
+				for _, aID := range accounts {
+					wg.Add(1)
+
+					go func(ctx context.Context, accountID string) {
+						ctx = context.WithValue(ctx, request.CtxKeyAccountID,
+							accountID)
+						ctx = context.WithValue(ctx, request.CtxKeyUserID,
+							request.SystemUser)
+						ctx = context.WithValue(ctx, request.CtxKeyScopes,
+							request.ScopeSuperuser)
+
+						if tu, err := uuid.NewRandom(); err == nil {
+							ctx = context.WithValue(ctx, request.CtxKeyTraceID,
+								tu.String())
+						}
+
+						if err := s.importGames(ctx, false); err != nil {
+							lvl := logger.LvlError
+							if errors.ErrorHas(err,
+								"another import in progress") {
+								lvl = logger.LvlDebug
+							}
+
+							s.log.Log(ctx, lvl,
+								"unable to import resources",
+								"error", err)
+
+							adj = s.cfg.ImportInterval()*
+								time.Duration(retries) +
+								time.Duration(float64(
+									s.cfg.ImportInterval())*rand.Float64())
+
+							retries++
+
+							if retries > 10 {
+								retries = 10
+							}
+						} else {
+							retries = 0
+						}
+
+						wg.Done()
+					}(ctx, aID)
+				}
+
+				wg.Wait()
+			}
+
+			tick = time.NewTimer(s.cfg.ImportInterval() + adj)
+
+			adj = 0
+		}
+	}(ctx)
+
+	return cancel
 }
 
 // getAllGameTags retrieves all game tags.
@@ -666,7 +1133,6 @@ func (s *Server) gamesHandler() http.Handler {
 
 	r.Use(s.dbAvail)
 
-	r.With(s.stat, s.trace, s.auth).Post("/{id}/import", s.postImportGameHandler)
 	r.With(s.stat, s.trace, s.auth).Post("/import", s.postImportGamesHandler)
 
 	r.With(s.stat, s.trace, s.auth).Get("/tags", s.getAllGameTagsHandler)
@@ -873,27 +1339,6 @@ func (s *Server) postImportGamesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := s.importGames(ctx, force); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-// postImportGameHandler is the post handler used to import a single game.
-func (s *Server) postImportGameHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeGamesAdmin); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	id := chi.URLParam(r, "id")
-
-	if err := s.importGame(ctx, id); err != nil {
 		s.error(err, w, r)
 
 		return

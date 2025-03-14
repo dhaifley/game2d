@@ -20,6 +20,7 @@ import (
 	"github.com/dhaifley/game2d/errors"
 	"github.com/dhaifley/game2d/logger"
 	"github.com/dhaifley/game2d/metric"
+	"github.com/dhaifley/game2d/repo"
 	"github.com/dhaifley/game2d/request"
 	"github.com/dhaifley/game2d/static"
 	"github.com/go-chi/chi/v5"
@@ -38,18 +39,19 @@ var Version = ""
 type Server struct {
 	http.Server
 	sync.RWMutex
-	health   uint32
-	addr     []string
-	cancels  []context.CancelFunc
-	cfg      *config.Config
-	log      logger.Logger
-	metric   metric.Recorder
-	tracer   trace.Tracer
-	r        chi.Router
-	db       *mongo.Client
-	cache    cache.Accessor
-	dbOnce   sync.Once
-	authOnce sync.Once
+	health        uint32
+	addr          []string
+	cancels       []context.CancelFunc
+	cfg           *config.Config
+	log           logger.Logger
+	metric        metric.Recorder
+	tracer        trace.Tracer
+	r             chi.Router
+	db            *mongo.Client
+	cache         cache.Accessor
+	dbOnce        sync.Once
+	authOnce      sync.Once
+	getRepoClient func(repoURL string) (repo.Client, error)
 }
 
 // NewServer creates a new HTTP server.
@@ -102,6 +104,10 @@ func NewServer(cfg *config.Config,
 			"servers", s.cfg.CacheServers())
 	}
 
+	s.getRepoClient = func(repoURL string) (repo.Client, error) {
+		return repo.NewClient(repoURL, s.metric, s.tracer)
+	}
+
 	s.initRouter()
 
 	s.Server.Handler = s.r
@@ -132,6 +138,13 @@ func (s *Server) addCancelFunc(cf context.CancelFunc) {
 	defer s.Unlock()
 
 	s.cancels = append(s.cancels, cf)
+}
+
+// SetRepoClient sets the git repository client to be used for imports.
+func (s *Server) SetRepoClient(cli repo.Client) {
+	s.getRepoClient = func(repoURL string) (repo.Client, error) {
+		return cli, nil
+	}
 }
 
 // Cache gets the server cache for a specific request.
