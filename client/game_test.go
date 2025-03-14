@@ -17,12 +17,14 @@ const (
 )
 
 func TestNewGame(t *testing.T) {
-	game := client.NewGame(nil, 800, 600, TestID, TestName, TestDesc)
+	game := client.NewGame(nil, client.DefaultGameWidth,
+		client.DefaultGameHeight, TestID, TestName, TestDesc)
 	assert.NotNil(t, game, "Game should not be nil")
 }
 
 func TestUpdate(t *testing.T) {
-	game := client.NewGame(nil, 800, 600, TestID, TestName, TestDesc)
+	game := client.NewGame(nil, client.DefaultGameWidth,
+		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
 	game.AddScript(client.NewScript(TestID, TestName, TestScript, nil))
 	game.AddImage(client.NewImage(TestID, TestName, TestImage))
@@ -36,21 +38,27 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDraw(t *testing.T) {
-	game := client.NewGame(nil, 800, 600, TestID, TestName, TestDesc)
+	game := client.NewGame(nil, client.DefaultGameWidth,
+		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
-	game.Draw(ebiten.NewImage(640, 480))
+	game.Draw(ebiten.NewImage(client.DefaultGameWidth,
+		client.DefaultGameHeight))
 }
 
 func TestLayout(t *testing.T) {
-	game := client.NewGame(nil, 800, 600, TestID, TestName, TestDesc)
+	game := client.NewGame(nil, client.DefaultGameWidth,
+		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
-	w, h := game.Layout(800, 600)
-	assert.Equal(t, 800, w, "Width should be 800")
-	assert.Equal(t, 600, h, "Height should be 600")
+	w, h := game.Layout(client.DefaultGameWidth, client.DefaultGameHeight)
+	assert.Equal(t, client.DefaultGameWidth, w, "Width should be %d",
+		client.DefaultGameWidth)
+	assert.Equal(t, client.DefaultGameHeight, h, "Height should be %d",
+		client.DefaultGameHeight)
 }
 
 func TestGameJSONMarshaling(t *testing.T) {
-	originalGame := client.NewGame(nil, 800, 600, TestID, TestName, TestDesc)
+	originalGame := client.NewGame(nil, client.DefaultGameWidth,
+		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
 	data, err := json.Marshal(originalGame)
 	assert.NoError(t, err, "Marshal should not return an error")
@@ -71,7 +79,8 @@ func TestGameJSONMarshaling(t *testing.T) {
 }
 
 func TestGameSaveLoad(t *testing.T) {
-	game := client.NewGame(nil, 800, 600, TestID, TestName, TestDesc)
+	game := client.NewGame(nil, client.DefaultGameWidth,
+		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
 	game.AddScript(client.NewScript(TestID, TestName, TestScript, nil))
 	game.AddImage(client.NewImage(TestID, TestName, TestImage))

@@ -98,18 +98,15 @@ func (s *Service) Start(ctx context.Context) error {
 	}
 
 	go func(ctx context.Context, svr *server.Server) {
-		// Start emitting metrics.
 		if err := svr.UpdateMetrics(ctx); err != nil {
 			s.log.Log(ctx, logger.LvlError,
 				"unable to emit server metrics",
 				"error", err)
 		}
 
-		// Connect to the database.
 		svr.ConnectDB()
-
-		// Get and update authentication configuration data.
 		svr.UpdateAuthConfig()
+		svr.UpdateGameImports()
 	}(ctx, s.svr)
 
 	return s.svr.Serve()

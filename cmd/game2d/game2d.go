@@ -18,7 +18,7 @@ func main() {
 	log := logger.New(logger.OutStderr, logger.FmtJSON,
 		logger.LvlDebug)
 
-	g := client.NewGame(log, 800, 600, "game2d", "game2d",
+	g := client.NewGame(log, -1, -1, "game2d", "game2d",
 		"2D gaming framework")
 
 	ib, err := assets.GetImage("avatar.png")

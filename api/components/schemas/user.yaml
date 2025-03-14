@@ -5,7 +5,7 @@ properties:
   user_id:
     type: string
     description: The ID of the user.
-    examples: [1234567890abcdef]
+    examples: [test@test.com]
   email:
     type: string
     description: The email address of the user.
@@ -39,7 +39,7 @@ properties:
   created_by:
     type: string
     description: The ID of the user that created the user.
-    examples: [1234567890abcdef]
+    examples: [test@test.com]
   updated_at:
     type: integer
     description: The Unix epoch timestamp for when the user was last updated.
@@ -47,4 +47,4 @@ properties:
   updated_by:
     type: string
     description: The ID of the user that last updated the user.
-    examples: [1234567890abcdef]
+    examples: [test@test.com]

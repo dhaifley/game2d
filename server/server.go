@@ -51,6 +51,7 @@ type Server struct {
 	cache         cache.Accessor
 	dbOnce        sync.Once
 	authOnce      sync.Once
+	gameOnce      sync.Once
 	getRepoClient func(repoURL string) (repo.Client, error)
 }
 
@@ -131,15 +132,6 @@ func (s *Server) SetHealth(code uint32) {
 	s.health = code
 }
 
-// addCancelFunc adds a context cancellation function to the list of cancel
-// functions the server needs to call when closing.
-func (s *Server) addCancelFunc(cf context.CancelFunc) {
-	s.Lock()
-	defer s.Unlock()
-
-	s.cancels = append(s.cancels, cf)
-}
-
 // SetRepoClient sets the git repository client to be used for imports.
 func (s *Server) SetRepoClient(cli repo.Client) {
 	s.getRepoClient = func(repoURL string) (repo.Client, error) {
@@ -161,6 +153,21 @@ func (s *Server) Cache(ctx context.Context) cache.Accessor {
 	}
 
 	return s.cache
+}
+
+// SetCache sets the database client for the server.
+func (s *Server) SetCache(cache cache.Accessor) {
+	s.Lock()
+	defer s.Unlock()
+
+	if cache == nil || (reflect.ValueOf(cache).Kind() == reflect.Ptr &&
+		reflect.ValueOf(cache).IsNil()) {
+		s.cache = nil
+
+		return
+	}
+
+	s.cache = cache
 }
 
 // DB gets the database used by for the server.
@@ -279,105 +286,6 @@ func (s *Server) ConnectDB() {
 	})
 }
 
-// initRouter configures the server routing.
-func (s *Server) initRouter() {
-	base := chi.NewRouter()
-
-	r := chi.NewRouter()
-
-	base.Mount(s.cfg.ServerPathPrefix(), r)
-
-	r.Use(
-		s.context,
-		s.header,
-		s.logger,
-	)
-
-	r.NotFound(s.notFound)
-	r.MethodNotAllowed(s.methodNotAllowed)
-
-	r.Get("/debug/cmdline", pprof.Cmdline)
-	r.Get("/debug/profile", pprof.Profile)
-	r.Get("/debug/symbol", pprof.Symbol)
-	r.Get("/debug/trace", pprof.Trace)
-	r.Get("/debug/goroutine", pprof.Handler("goroutine").ServeHTTP)
-	r.Get("/debug/heap", pprof.Handler("heap").ServeHTTP)
-	r.Get("/debug/allocs", pprof.Handler("allocs").ServeHTTP)
-	r.Get("/debug/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
-	r.Get("/debug/block", pprof.Handler("block").ServeHTTP)
-	r.Get("/debug/mutex", pprof.Handler("mutex").ServeHTTP)
-	r.Get("/debug/pprof", pprof.Index)
-
-	r.Mount("/healthz", s.HealthHandler())
-	r.Mount("/health", s.HealthHandler())
-	r.Mount("/account", s.accountHandler())
-	r.Mount("/user", s.userHandler())
-	r.Mount("/login", s.loginHandler())
-	r.Mount("/games", s.gamesHandler())
-
-	s.initStaticRoutes(r)
-
-	s.Lock()
-
-	s.r = base
-
-	s.Unlock()
-}
-
-// initStaticRoutes initializes routing for embedded static games.
-func (s *Server) initStaticRoutes(r chi.Router) {
-	r.Get("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
-		v, err := static.FS.ReadFile("openapi.json")
-		if err != nil {
-			s.error(err, w, r)
-
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-		if _, err := w.Write(v); err != nil {
-			s.error(err, w, r)
-
-			return
-		}
-	})
-
-	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-		v, err := static.FS.ReadFile("openapi.yaml")
-		if err != nil {
-			s.error(err, w, r)
-
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-
-		if _, err := w.Write(v); err != nil {
-			s.error(err, w, r)
-
-			return
-		}
-	})
-
-	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-		v, err := static.FS.ReadFile("index.html")
-		if err != nil {
-			s.error(err, w, r)
-
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-
-		if _, err := w.Write(v); err != nil {
-			s.error(err, w, r)
-
-			return
-		}
-	})
-}
-
 // UpdateAuthConfig retrieves and begins periodic update of authentication
 // configuration data, if configured to do so.
 func (s *Server) UpdateAuthConfig() {
@@ -391,7 +299,20 @@ func (s *Server) UpdateAuthConfig() {
 				time.Sleep(100 * time.Millisecond)
 			}
 
-			s.addCancelFunc(s.updateAuth(context.Background()))
+			s.addCancelFunc(s.updateAuthConfig(context.Background()))
+		}()
+	})
+}
+
+// UpdateGameImports periodically checks the import repository for game updates.
+func (s *Server) UpdateGameImports() {
+	s.gameOnce.Do(func() {
+		go func() {
+			for s.db == nil {
+				time.Sleep(100 * time.Millisecond)
+			}
+
+			s.addCancelFunc(s.updateGameImports(context.Background()))
 		}()
 	})
 }
@@ -543,6 +464,187 @@ func (s *Server) Shutdown(ctx context.Context) {
 			s.log.Log(ctx, logger.LvlError,
 				"error during database disconnect",
 				"error", err)
+		}
+	}
+}
+
+// addCancelFunc adds a context cancellation function to the list of cancel
+// functions the server needs to call when closing.
+func (s *Server) addCancelFunc(cf context.CancelFunc) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.cancels = append(s.cancels, cf)
+}
+
+// initRouter configures the server routing.
+func (s *Server) initRouter() {
+	base := chi.NewRouter()
+
+	r := chi.NewRouter()
+
+	base.Mount(s.cfg.ServerPathPrefix(), r)
+
+	r.Use(
+		s.context,
+		s.header,
+		s.logger,
+	)
+
+	r.NotFound(s.notFound)
+	r.MethodNotAllowed(s.methodNotAllowed)
+
+	r.Get("/debug/cmdline", pprof.Cmdline)
+	r.Get("/debug/profile", pprof.Profile)
+	r.Get("/debug/symbol", pprof.Symbol)
+	r.Get("/debug/trace", pprof.Trace)
+	r.Get("/debug/goroutine", pprof.Handler("goroutine").ServeHTTP)
+	r.Get("/debug/heap", pprof.Handler("heap").ServeHTTP)
+	r.Get("/debug/allocs", pprof.Handler("allocs").ServeHTTP)
+	r.Get("/debug/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+	r.Get("/debug/block", pprof.Handler("block").ServeHTTP)
+	r.Get("/debug/mutex", pprof.Handler("mutex").ServeHTTP)
+	r.Get("/debug/pprof", pprof.Index)
+
+	r.Mount("/healthz", s.HealthHandler())
+	r.Mount("/health", s.HealthHandler())
+	r.Mount("/account", s.accountHandler())
+	r.Mount("/user", s.userHandler())
+	r.Mount("/login", s.loginHandler())
+	r.Mount("/games", s.gamesHandler())
+
+	s.initStaticRoutes(r)
+
+	s.Lock()
+
+	s.r = base
+
+	s.Unlock()
+}
+
+// initStaticRoutes initializes routing for embedded static games.
+func (s *Server) initStaticRoutes(r chi.Router) {
+	r.Get("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
+		v, err := static.FS.ReadFile("openapi.json")
+		if err != nil {
+			s.error(err, w, r)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		if _, err := w.Write(v); err != nil {
+			s.error(err, w, r)
+
+			return
+		}
+	})
+
+	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+		v, err := static.FS.ReadFile("openapi.yaml")
+		if err != nil {
+			s.error(err, w, r)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
+		if _, err := w.Write(v); err != nil {
+			s.error(err, w, r)
+
+			return
+		}
+	})
+
+	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		v, err := static.FS.ReadFile("index.html")
+		if err != nil {
+			s.error(err, w, r)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
+		if _, err := w.Write(v); err != nil {
+			s.error(err, w, r)
+
+			return
+		}
+	})
+}
+
+// getCache is a helper function to get a value from the cache.
+func (s *Server) getCache(ctx context.Context,
+	key string,
+	value any,
+) {
+	c := s.Cache(ctx)
+	if c == nil {
+		return
+	}
+
+	ci, err := c.Get(ctx, key)
+	if err != nil && !errors.Has(err, errors.ErrNotFound) {
+		s.log.Log(ctx, logger.LvlError,
+			"unable to get account cache key",
+			"error", err,
+			"cache_key", key)
+	} else if ci != nil {
+		buf := bytes.NewBuffer(ci.Value)
+
+		if err := json.NewDecoder(buf).Decode(&value); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to decode account cache value",
+				"error", err,
+				"cache_key", key,
+				"cache_value", string(ci.Value))
+		}
+	}
+}
+
+// setCache is a helper function that sets a cache value.
+func (s *Server) setCache(ctx context.Context,
+	key string,
+	value any,
+) {
+	if c := s.Cache(ctx); c != nil {
+		buf, err := json.Marshal(value)
+		if err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to encode cache value",
+				"error", err,
+				"cache_key", key,
+				"cache_value", value)
+		} else if len(buf) < s.cfg.CacheMaxBytes() {
+			if err := c.Set(ctx, &cache.Item{
+				Key:        key,
+				Value:      buf,
+				Expiration: s.cfg.CacheExpiration(),
+			}); err != nil {
+				s.log.Log(ctx, logger.LvlError,
+					"unable to set cache value",
+					"error", err,
+					"cache_key", key,
+					"cache_value", string(buf),
+					"expiration", s.cfg.CacheExpiration())
+			}
+		}
+	}
+}
+
+// deleteCache is a helper function that deletes a cache value.
+func (s *Server) deleteCache(ctx context.Context,
+	key string,
+) {
+	if c := s.Cache(ctx); c != nil {
+		if err := c.Delete(ctx, key); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to delete cache value",
+				"error", err,
+				"cache_key", key)
 		}
 	}
 }
@@ -834,77 +936,4 @@ func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
 func (s *Server) methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	s.error(errors.New(errors.ErrNotAllowed,
 		"method not allowed"), w, r)
-}
-
-// getCache is a helper function to get a value from the cache.
-func (s *Server) getCache(ctx context.Context,
-	key string,
-	value any,
-) {
-	c := s.Cache(ctx)
-	if c == nil {
-		return
-	}
-
-	ci, err := c.Get(ctx, key)
-	if err != nil && !errors.Has(err, errors.ErrNotFound) {
-		s.log.Log(ctx, logger.LvlError,
-			"unable to get account cache key",
-			"error", err,
-			"cache_key", key)
-	} else if ci != nil {
-		buf := bytes.NewBuffer(ci.Value)
-
-		if err := json.NewDecoder(buf).Decode(&value); err != nil {
-			s.log.Log(ctx, logger.LvlError,
-				"unable to decode account cache value",
-				"error", err,
-				"cache_key", key,
-				"cache_value", string(ci.Value))
-		}
-	}
-}
-
-// setCache is a helper function that sets a cache value.
-func (s *Server) setCache(ctx context.Context,
-	key string,
-	value any,
-) {
-	if c := s.Cache(ctx); c != nil {
-		buf, err := json.Marshal(value)
-		if err != nil {
-			s.log.Log(ctx, logger.LvlError,
-				"unable to encode cache value",
-				"error", err,
-				"cache_key", key,
-				"cache_value", value)
-		} else if len(buf) < s.cfg.CacheMaxBytes() {
-			if err := c.Set(ctx, &cache.Item{
-				Key:        key,
-				Value:      buf,
-				Expiration: s.cfg.CacheExpiration(),
-			}); err != nil {
-				s.log.Log(ctx, logger.LvlError,
-					"unable to set cache value",
-					"error", err,
-					"cache_key", key,
-					"cache_value", string(buf),
-					"expiration", s.cfg.CacheExpiration())
-			}
-		}
-	}
-}
-
-// deleteCache is a helper function that deletes a cache value.
-func (s *Server) deleteCache(ctx context.Context,
-	key string,
-) {
-	if c := s.Cache(ctx); c != nil {
-		if err := c.Delete(ctx, key); err != nil {
-			s.log.Log(ctx, logger.LvlError,
-				"unable to delete cache value",
-				"error", err,
-				"cache_key", key)
-		}
-	}
 }

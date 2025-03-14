@@ -15,7 +15,8 @@ func TestNewObject(t *testing.T) {
 }
 
 func TestObjectUpdate(t *testing.T) {
-	object := client.NewObject(client.NewGame(nil, 800, 600,
+	object := client.NewObject(client.NewGame(nil,
+		client.DefaultGameWidth, client.DefaultGameHeight,
 		TestID, TestName, TestDesc), TestID, TestName, "", "", nil)
 
 	err := object.Update()
@@ -25,13 +26,14 @@ func TestObjectUpdate(t *testing.T) {
 func TestObjectDraw(t *testing.T) {
 	object := client.NewObject(nil, TestID, TestName, "", "", nil)
 
-	object.Draw(ebiten.NewImage(640, 480))
+	object.Draw(ebiten.NewImage(client.DefaultGameWidth,
+		client.DefaultGameHeight))
 }
 
 func TestObjectLayout(t *testing.T) {
 	object := client.NewObject(nil, TestID, TestName, "", "", nil)
 
-	w, h := object.Layout(800, 600)
+	w, h := object.Layout(client.DefaultGameWidth, client.DefaultGameHeight)
 	assert.Equal(t, 0, w, "Width should be 0")
 	assert.Equal(t, 0, h, "Height should be 0")
 }

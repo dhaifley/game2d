@@ -20,6 +20,12 @@ import (
 // The client version.
 var Version = ""
 
+// Game defaults.
+const (
+	DefaultGameWidth  = 640
+	DefaultGameHeight = 480
+)
+
 // Game values represent the game state.
 type Game struct {
 	log       logger.Logger
@@ -45,6 +51,26 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 	if log == nil || (reflect.ValueOf(log).Kind() == reflect.Ptr &&
 		reflect.ValueOf(log).IsNil()) {
 		log = logger.NullLog
+	}
+
+	if w < 0 {
+		w = DefaultGameWidth
+
+		if ws := os.Getenv("GAME_WIDTH"); ws != "" {
+			if i, err := strconv.Atoi(ws); err == nil {
+				w = i
+			}
+		}
+	}
+
+	if h < 0 {
+		h = DefaultGameHeight
+
+		if hs := os.Getenv("GAME_HEIGHT"); hs != "" {
+			if i, err := strconv.Atoi(hs); err == nil {
+				h = i
+			}
+		}
 	}
 
 	l := lua.NewState()

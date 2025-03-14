@@ -918,8 +918,8 @@ func (s *Server) importRepoGames(ctx context.Context,
 	return updated, deleted, nil
 }
 
-// checkImportRepoGames periodically imports game data.
-func (s *Server) checkImportRepoGames(ctx context.Context,
+// updateGameImports periodically imports game data.
+func (s *Server) updateGameImports(ctx context.Context,
 ) context.CancelFunc {
 	ctx, cancel := context.WithCancel(ctx)
 

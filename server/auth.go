@@ -1344,8 +1344,8 @@ func (s *Server) authPassword(ctx context.Context,
 	return nil
 }
 
-// updateAuth periodically updates authentication data.
-func (s *Server) updateAuth(ctx context.Context) context.CancelFunc {
+// updateAuthConfig periodically updates authentication configuration data.
+func (s *Server) updateAuthConfig(ctx context.Context) context.CancelFunc {
 	ctx, cancel := context.WithCancel(ctx)
 
 	if tu, err := uuid.NewRandom(); err == nil {
