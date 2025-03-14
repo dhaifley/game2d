@@ -154,6 +154,10 @@ func (s *Server) DB() *mongo.Database {
 	s.RLock()
 	defer s.RUnlock()
 
+	if s.db == nil {
+		return nil
+	}
+
 	return s.db.Database(s.cfg.DBDatabase())
 }
 
