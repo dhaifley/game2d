@@ -105,6 +105,12 @@ func (a *Account) Validate() error {
 		}
 	}
 
+	if a.Secret.Set && !a.Secret.Valid {
+		return errors.New(errors.ErrInvalidRequest,
+			"secret must not be null",
+			"account", a)
+	}
+
 	return nil
 }
 
@@ -180,6 +186,7 @@ func (s *Server) getAllAccounts(ctx context.Context) ([]string, error) {
 func (s *Server) getAccountSecret(ctx context.Context,
 	id string,
 ) ([]byte, error) {
+	ctx = context.WithValue(ctx, request.CtxKeyAccountID, id)
 	ctx = context.WithValue(ctx, request.CtxKeyScopes, request.ScopeSuperuser)
 
 	a, err := s.getAccount(ctx, id)
@@ -242,7 +249,7 @@ func (s *Server) getAccount(ctx context.Context,
 		return res, nil
 	}
 
-	f := bson.M{"id": id, "account_id": aID}
+	f := bson.M{"id": id}
 
 	if err := s.DB().Collection("accounts").FindOne(ctx, f,
 		options.FindOne().SetProjection(bson.M{"_id": 0})).
@@ -616,7 +623,7 @@ func (u *User) Validate() error {
 
 		if !request.ValidAccountID(u.AccountID.Value) {
 			return errors.New(errors.ErrInvalidRequest,
-				"invalid id",
+				"invalid account_id",
 				"user", u)
 		}
 	}
@@ -855,7 +862,7 @@ func (s *Server) createUser(ctx context.Context,
 		})
 	}
 
-	if err := s.DB().Collection("users").FindOneAndReplace(ctx, f, req,
+	if err := s.DB().Collection("users").FindOneAndReplace(ctx, f, doc,
 		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
 			SetReturnDocument(options.After).SetUpsert(true)).
 		Decode(&res); err != nil {
@@ -906,6 +913,12 @@ func (s *Server) updateUser(ctx context.Context,
 				"unauthorized request",
 				"account_id", aID,
 				"user_id", uID)
+		}
+	}
+
+	if req.ID.Value == "" {
+		req.ID = request.FieldString{
+			Set: true, Valid: true, Value: uID,
 		}
 	}
 
@@ -1188,7 +1201,8 @@ func (s *Server) authJWT(ctx context.Context,
 	if err != nil {
 		s.log.Log(ctx, logger.LvlDebug,
 			"unable to parse authentication token",
-			"error", err)
+			"error", err,
+			"token", token)
 
 		return nil, errors.New(errors.ErrUnauthorized,
 			"invalid authentication token",
@@ -1324,6 +1338,8 @@ func (s *Server) authPassword(ctx context.Context,
 	}
 
 	ctx = context.WithValue(ctx, request.CtxKeyAccountID, aID)
+
+	ctx = context.WithValue(ctx, request.CtxKeyUserID, userID)
 
 	ctx = context.WithValue(ctx, request.CtxKeyScopes,
 		request.ScopeSuperuser)

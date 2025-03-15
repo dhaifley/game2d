@@ -13,7 +13,7 @@ const (
 	KeyDBDefaultSize  = "db/default_size"
 	KeyDBMaxSize      = "db/max_size"
 
-	DefaultDBConn        = "mongodb://localhost:27017/game2d"
+	DefaultDBConn        = "mongodb://game2d:mongodb@localhost:27017/game2d?authSource=admin"
 	DefaultDBDatabase    = "game2d"
 	DefaultDBMinPoolSize = 20
 	DefaultDBMaxPoolSize = 100

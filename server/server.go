@@ -245,19 +245,29 @@ func (s *Server) ConnectDB() {
 
 				s.Unlock()
 
+				s.log.Log(ctx, logger.LvlInfo,
+					"connected to database",
+					"database", s.cfg.DBDatabase())
+
 				ctx = context.WithValue(ctx, request.CtxKeyScopes,
 					request.ScopeSuperuser)
 				ctx = context.WithValue(ctx, request.CtxKeyAccountID,
 					request.SystemAccount)
+				ctx = context.WithValue(ctx, request.CtxKeyUserID,
+					request.SystemUser)
 
-				if _, err := s.createAccount(ctx, &Account{
+				a, err := s.createAccount(ctx, &Account{
 					ID: request.FieldString{
 						Set: true, Valid: true, Value: s.cfg.ServiceName(),
 					},
 					Name: request.FieldString{
 						Set: true, Valid: true, Value: s.cfg.ServiceName(),
 					},
-				}); err != nil {
+					Secret: request.FieldString{
+						Set: true, Valid: true, Value: uuid.NewString(),
+					},
+				})
+				if err != nil {
 					s.log.Log(ctx, logger.LvlError,
 						"unable to create account",
 						"error", err)
@@ -265,19 +275,24 @@ func (s *Server) ConnectDB() {
 
 				if su := os.Getenv("SUPERUSER"); su != "" {
 					if sp := os.Getenv("SUPERUSER_PASSWORD"); sp != "" {
-						if _, err := s.createUser(ctx, &User{
-							ID: request.FieldString{
-								Set: true, Valid: true, Value: su,
-							},
-							Scopes: request.FieldString{
-								Set: true, Valid: true,
-								Value: request.ScopeSuperuser,
-							},
-							Password: &sp,
-						}); err != nil {
-							s.log.Log(ctx, logger.LvlError,
-								"unable to create initial superuser",
-								"error", err)
+						if a != nil {
+							if _, err := s.createUser(ctx, &User{
+								AccountID: request.FieldString{
+									Set: true, Valid: true, Value: a.ID.Value,
+								},
+								ID: request.FieldString{
+									Set: true, Valid: true, Value: su,
+								},
+								Scopes: request.FieldString{
+									Set: true, Valid: true,
+									Value: request.ScopeSuperuser,
+								},
+								Password: &sp,
+							}); err != nil {
+								s.log.Log(ctx, logger.LvlError,
+									"unable to create initial superuser",
+									"error", err)
+							}
 						}
 					}
 				}

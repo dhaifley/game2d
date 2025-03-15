@@ -33,7 +33,7 @@ app/dist/index.html:
 game2d-app: app/dist/index.html
 .PHONY: game2d-app	
 
-game2d-api: $(GO_FILES) Dockerfile tests/docker-compose.yml static/* game2d-app
+game2d-api: $(GO_FILES) static/* game2d-app
 	CGO_ENABLED=0 go build -v -o game2d-api \
 	-ldflags="-X github.com/dhaifley/game2d/server.Version=${VERSION}" \
 	./cmd/game2d-api
@@ -60,7 +60,7 @@ clean-certs:
 	@rm -f certs/*.crt certs/*.key certs/*.csr certs/*.srl
 .PHONY: clean-certs
 
-start.test: build build-docker build-certs
+start.test: build-certs
 	docker compose -f tests/docker-compose.yml up -d --force-recreate
 	@touch start.test
 	@echo "Test services started."
@@ -68,7 +68,7 @@ start.test: build build-docker build-certs
 start: start.test
 .PHONY: start
 
-stop: clean-certs
+stop:
 	docker compose -f tests/docker-compose.yml down --remove-orphans --volumes
 	@rm -f start.test
 	@echo "All test services stopped."
@@ -76,14 +76,24 @@ stop: clean-certs
 
 test:
 	@make start
-	go test -race -cover ./...
+	@echo "set -a && . ./tests/.env && go test -race -cover ./..." | ${SHELL}
 	@make stop
 .PHONY: test
+
+test-no-cache:
+	@make start
+	@echo "set -a && . ./tests/.env && go test -count=1 -race -cover ./..." | ${SHELL}
+	@make stop
+.PHONY: test-no-cache
 
 test-quick:
 	go test -race -cover -short ./...
 .PHONY: test-quick
 
+test-quick-no-cache:
+	go test -count=1 -race -cover -short ./...
+.PHONY: test-quick-no-cache
+
 run: build start
-	@echo "set -a && . ./tests/.env && ./game2d" | ${SHELL}
+	@echo "set -a && . ./tests/.env && ./game2d-api" | ${SHELL}
 .PHONY: run

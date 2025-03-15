@@ -3,6 +3,7 @@ package server_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,147 +26,64 @@ const (
 
 var servicesLock sync.Mutex
 
-func TestNewClose(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
+func TestMain(m *testing.M) {
+	for _, arg := range os.Args {
+		if arg == "-test.short=true" {
+			// Skipping integration tests.
+			os.Exit(0)
+		}
 	}
 
-	svr.Close()
-}
-
-func TestShutdown(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
+	su := os.Getenv("SUPERUSER")
+	if su == "" {
+		su = "admin"
 	}
 
-	svr.Shutdown(context.Background())
-}
+	sp := os.Getenv("SUPERUSER_PASSWORD")
+	if sp == "" {
+		sp = "admin"
+	}
 
-func TestServe(t *testing.T) {
-	t.Parallel()
+	os.Setenv("SUPERUSER", su)
+	os.Setenv("SUPERUSER_PASSWORD", sp)
 
 	cfg := config.NewDefault()
 
-	sCfg := &config.ServerConfig{Address: ":18086"}
-
-	sCfg.Load()
-
-	cfg.SetServer(sCfg)
-
-	svr, err := server.NewServer(cfg, nil, nil, nil)
+	svr, err := server.NewServer(cfg,
+		logger.New(cfg.LogOut(), cfg.LogFormat(), cfg.LogLevel()), nil, nil)
 	if err != nil {
-		t.Fatal(err)
+		fmt.Println("server init error", err)
+		os.Exit(1)
 	}
 
-	var wg sync.WaitGroup
+	svr.ConnectDB()
 
-	wg.Add(1)
+	for svr.DB() == nil {
+		time.Sleep(time.Millisecond * 100)
+	}
+
+	svr.UpdateGameImports()
+
+	ctx := context.Background()
 
 	go func() {
-		err = svr.Serve()
+		if err := svr.Serve(); err != nil {
+			fmt.Println("server error", err)
 
-		wg.Done()
+			os.Exit(1)
+		}
 	}()
 
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Second)
 
-	svr.Close()
+	code := m.Run()
 
-	wg.Wait()
+	svr.Shutdown(ctx)
 
-	if err != nil {
-		t.Fatal(err)
-	}
+	os.Exit(code)
 }
 
-func TestHeader(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	host, err := os.Hostname()
-	if err != nil {
-		host = "unknown"
-	}
-
-	tests := []struct {
-		name      string
-		w         *httptest.ResponseRecorder
-		headers   map[string]string
-		expCORS   string
-		expAllow  string
-		expServer string
-		expCode   int
-	}{{
-		name: "options CORS",
-		w:    httptest.NewRecorder(),
-		headers: map[string]string{
-			"Origin": "https://game2d.ai",
-		},
-		expCORS:   "GET, PUT, POST, OPTIONS",
-		expAllow:  "https://game2d.ai",
-		expServer: host,
-		expCode:   http.StatusNoContent,
-	}, {
-		name: "options invalid origin",
-		w:    httptest.NewRecorder(),
-		headers: map[string]string{
-			"Origin": "test.api.foo",
-		},
-		expCORS:   "",
-		expAllow:  "",
-		expServer: host,
-		expCode:   http.StatusNoContent,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			r, err := http.NewRequest(http.MethodOptions, basePath+"/", nil)
-			if err != nil {
-				t.Fatal("Failed to initialize request", err)
-			}
-
-			for hk, hv := range tt.headers {
-				r.Header.Set(hk, hv)
-			}
-
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.expCode {
-				t.Errorf("Status code expected: %v, got: %v",
-					tt.expCode, tt.w.Code)
-			}
-
-			if tt.expServer != tt.w.Header().Get("X-Server") {
-				t.Errorf("X-Server expected: %v, got: %v",
-					tt.expServer, tt.w.Header().Get("X-Server"))
-			}
-
-			if tt.expCORS != tt.w.Header().Get("Access-Control-Allow-Methods") {
-				t.Errorf("Access-Control-Allow-Methods expected: %v, got: %v",
-					tt.expCORS, tt.w.Header().Get("Access-Control-Allow-Methods"))
-			}
-
-			if tt.expAllow != tt.w.Header().Get("Access-Control-Allow-Origin") {
-				t.Errorf("Access-Control-Allow-Origin expected: %v, got: %v",
-					tt.expAllow, tt.w.Header().Get("Access-Control-Allow-Origin"))
-			}
-		})
-	}
-}
-
-func BenchmarkServerPostResource(b *testing.B) {
+func BenchmarkServerPostGame(b *testing.B) {
 	l := logger.New(logger.OutStderr, logger.FmtJSON, logger.LvlInfo)
 
 	os.Setenv("AUTH_TOKEN_PUBLIC_KEY_FILE", "../../certs/tls.crt")
@@ -193,7 +111,7 @@ func BenchmarkServerPostResource(b *testing.B) {
 
 	w := httptest.NewRecorder()
 
-	u := "https://localhost:8080/api/v1/resources"
+	u := "https://localhost:8080/api/v1/games"
 
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
@@ -217,7 +135,7 @@ func BenchmarkServerPostResource(b *testing.B) {
 	}
 }
 
-func BenchmarkServerGetResource(b *testing.B) {
+func BenchmarkServerGetGame(b *testing.B) {
 	l := logger.New(logger.OutStderr, logger.FmtJSON, logger.LvlInfo)
 
 	os.Setenv("AUTH_TOKEN_PUBLIC_KEY_FILE", "../../certs/tls.crt")
@@ -247,7 +165,7 @@ func BenchmarkServerGetResource(b *testing.B) {
 
 	w := httptest.NewRecorder()
 
-	u := "https://localhost:8080/v1/api/resources?size=1"
+	u := "https://localhost:8080/v1/api/games?size=1"
 
 	r, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {

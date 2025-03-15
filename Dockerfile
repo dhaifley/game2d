@@ -10,7 +10,7 @@ ADD . .
 
 RUN go mod download
 
-RUN CGO_ENABLED=1 go build -v -o /go/bin/game2d \
+RUN CGO_ENABLED=0 go build -v -o /go/bin/game2d-api \
     -ldflags="-X github.com/dhaifley/game2d/server.Version=$VERSION" \
   $MAIN_PACKAGE
 
@@ -26,10 +26,10 @@ WORKDIR /
 
 COPY --from=certs-stage /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY --from=build-stage /go/bin/game2d /
+COPY --from=build-stage /go/bin/game2d-api /
 
 COPY --from=build-stage /go/src/github.com/dhaifley/game2d/certs/* /certs/
 
 EXPOSE $PORT/tcp
 
-ENTRYPOINT ["/game2d"]
+ENTRYPOINT ["/game2d-api"]

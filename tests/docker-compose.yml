@@ -1,16 +1,6 @@
 services:
-  migrate:
-    build: ..
-    environment:
-      LOG_LEVEL: debug
-      DB_CONN: mongodb://game2d:mongodb@mongodb:27017/game2d
-      CACHE_SERVERS: cache:6379
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    command: ["migrate"]
-  mongodb:
-    image: mongodb:latest
+  db:
+    image: mongo
     restart: always
     ports:
       - "27017:27017"

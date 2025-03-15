@@ -57,13 +57,13 @@ func (g *Game) Validate() error {
 		if !g.AccountID.Valid {
 			return errors.New(errors.ErrInvalidRequest,
 				"account_id must not be null",
-				"user", g)
+				"game", g)
 		}
 
 		if !request.ValidAccountID(g.AccountID.Value) {
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid id",
-				"user", g)
+				"game", g)
 		}
 	}
 
@@ -71,13 +71,13 @@ func (g *Game) Validate() error {
 		if !g.ID.Valid {
 			return errors.New(errors.ErrInvalidRequest,
 				"id must not be null",
-				"user", g)
+				"game", g)
 		}
 
 		if !request.ValidGameID(g.ID.Value) {
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid id",
-				"user", g)
+				"game", g)
 		}
 	}
 
@@ -85,7 +85,7 @@ func (g *Game) Validate() error {
 		if !g.Status.Valid {
 			return errors.New(errors.ErrInvalidRequest,
 				"status must not be null",
-				"user", g)
+				"game", g)
 		}
 
 		switch g.Status.Value {
@@ -93,7 +93,7 @@ func (g *Game) Validate() error {
 		default:
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid status",
-				"user", g)
+				"game", g)
 		}
 	}
 
@@ -101,20 +101,20 @@ func (g *Game) Validate() error {
 }
 
 // ValidateCreate checks that the value contains valid data for creation.
-func (u *Game) ValidateCreate() error {
-	if !u.AccountID.Set {
+func (g *Game) ValidateCreate() error {
+	if !g.AccountID.Set {
 		return errors.New(errors.ErrInvalidRequest,
 			"missing account_id",
-			"user", u)
+			"game", g)
 	}
 
-	if !u.ID.Set {
+	if !g.ID.Set {
 		return errors.New(errors.ErrInvalidRequest,
-			"missing user_id",
-			"user", u)
+			"missing id",
+			"game", g)
 	}
 
-	return u.Validate()
+	return g.Validate()
 }
 
 // getGames retrieves games based on a search query.
@@ -292,7 +292,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	if req == nil {
 		return nil, errors.New(errors.ErrInvalidRequest,
-			"missing user")
+			"missing game")
 	}
 
 	if aID != request.SystemAccount && aID != req.AccountID.Value {
@@ -354,7 +354,7 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
-	if err := s.DB().Collection("games").FindOneAndReplace(ctx, f, req,
+	if err := s.DB().Collection("games").FindOneAndReplace(ctx, f, doc,
 		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
 			SetReturnDocument(options.After).SetUpsert(true)).
 		Decode(&res); err != nil {
@@ -938,7 +938,7 @@ func (s *Server) updateGameImports(ctx context.Context,
 				accounts, err := s.getAllAccounts(ctx)
 				if err != nil {
 					s.log.Log(ctx, logger.LvlError,
-						"unable to get accounts to update resources",
+						"unable to get accounts to import games",
 						"error", err)
 
 					break

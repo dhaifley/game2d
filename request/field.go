@@ -91,11 +91,13 @@ func (f *FieldString) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldString) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	_, val, err := bson.MarshalValue(f.Value)
+	_, val, err := bson.MarshalValue(v)
 	if err != nil {
 		return nil, err
 	}
@@ -246,11 +248,13 @@ func (f *FieldInt64) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldInt64) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	_, val, err := bson.MarshalValue(f.Value)
+	_, val, err := bson.MarshalValue(v)
 	if err != nil {
 		return nil, err
 	}
@@ -400,11 +404,13 @@ func (f *FieldFloat64) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldFloat64) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	_, val, err := bson.MarshalValue(f.Value)
+	_, val, err := bson.MarshalValue(v)
 	if err != nil {
 		return nil, err
 	}
@@ -552,11 +558,13 @@ func (f *FieldBool) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldBool) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	_, val, err := bson.MarshalValue(f.Value)
+	_, val, err := bson.MarshalValue(v)
 	if err != nil {
 		return nil, err
 	}
@@ -699,11 +707,13 @@ func (f *FieldTime) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldTime) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	_, val, err := bson.MarshalValue(f.Value)
+	_, val, err := bson.MarshalValue(v)
 	if err != nil {
 		return nil, err
 	}
@@ -820,9 +830,9 @@ func (f *FieldStringArray) UnmarshalBSON(b []byte) error {
 		return nil
 	}
 
-	var v *bson.D
+	var v []any
 
-	if err := bson.Unmarshal(b, &v); err != nil {
+	if err := bson.UnmarshalValue(bson.TypeArray, b, &v); err != nil {
 		return err
 	}
 
@@ -832,8 +842,8 @@ func (f *FieldStringArray) UnmarshalBSON(b []byte) error {
 		return nil
 	}
 
-	for _, sv := range *v {
-		if tv, ok := sv.Value.(string); ok {
+	for _, sv := range v {
+		if tv, ok := sv.(string); ok {
 			f.Value = append(f.Value, tv)
 		} else {
 			return errors.New(errors.ErrInvalidRequest,
@@ -847,11 +857,18 @@ func (f *FieldStringArray) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldStringArray) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	return bson.Marshal(f.Value)
+	_, val, err := bson.MarshalValue(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return val, nil
 }
 
 // UnmarshalYAML decodes a YAML format byte slice into this value.
@@ -945,9 +962,9 @@ func (f *FieldInt64Array) UnmarshalBSON(b []byte) error {
 		return nil
 	}
 
-	var v *bson.D
+	var v []any
 
-	if err := bson.Unmarshal(b, &v); err != nil {
+	if err := bson.UnmarshalValue(bson.TypeArray, b, &v); err != nil {
 		return err
 	}
 
@@ -957,8 +974,8 @@ func (f *FieldInt64Array) UnmarshalBSON(b []byte) error {
 		return nil
 	}
 
-	for _, sv := range *v {
-		switch tv := sv.Value.(type) {
+	for _, sv := range v {
+		switch tv := sv.(type) {
 		case int64:
 			f.Value = append(f.Value, tv)
 		case float64:
@@ -976,11 +993,18 @@ func (f *FieldInt64Array) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldInt64Array) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	return bson.Marshal(f.Value)
+	_, val, err := bson.MarshalValue(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return val, nil
 }
 
 // UnmarshalYAML decodes a YAML format byte slice into this value.
@@ -1041,27 +1065,49 @@ func (f *FieldJSON) MarshalJSON() ([]byte, error) {
 // UnmarshalBSON decodes a BSON format byte slice into this value.
 func (f *FieldJSON) UnmarshalBSON(b []byte) error {
 	f.Set = true
+	f.Valid = true
 
 	if len(b) == 0 {
 		return nil
 	}
 
-	if err := bson.Unmarshal(b, &f.Value); err != nil {
-		return err
+	var v map[string]any
+
+	if err := bson.Unmarshal(b, &v); err != nil {
+		if errors.ErrorHas(err, "invalid document length") {
+			if err := json.Unmarshal(b[5:], &v); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 
-	f.Valid = (f.Value != nil)
+	if v == nil {
+		f.Valid = false
+
+		return nil
+	}
+
+	f.Value = v
 
 	return nil
 }
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldJSON) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	return bson.Marshal(f.Value)
+	_, val, err := bson.MarshalValue(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return val, nil
 }
 
 // UnmarshalYAML decodes a YAML format byte slice into this value.
@@ -1226,11 +1272,13 @@ func (f *FieldDuration) UnmarshalBSON(b []byte) error {
 
 // MarshalBSON encodes this value into a BSON format byte slice.
 func (f *FieldDuration) MarshalBSON() ([]byte, error) {
-	if !f.Set || !f.Valid {
-		return bson.Marshal(nil)
+	var v any
+
+	if f.Set && f.Valid {
+		v = f.Value
 	}
 
-	_, val, err := bson.MarshalValue(f.Value.String())
+	_, val, err := bson.MarshalValue(v)
 	if err != nil {
 		return nil, err
 	}

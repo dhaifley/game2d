@@ -2,9 +2,12 @@ package server_test
 
 import (
 	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
-	"net/http/httptest"
+	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/dhaifley/game2d/request"
@@ -89,371 +92,545 @@ var TestUser = server.User{
 	},
 }
 
-func TestAuth(t *testing.T) {
+func TestAccountServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration tests")
+	}
+
 	t.Parallel()
 
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	data := map[string]any{}
+
+	dataLock := sync.Mutex{}
 
 	tests := []struct {
 		name   string
-		w      *httptest.ResponseRecorder
 		url    string
+		method string
 		header map[string]string
-		code   int
-		resp   string
+		body   map[string]any
+		resp   func(t *testing.T, res *http.Response)
 	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/account",
+		name:   "unauthorized",
+		url:    "http://localhost:8080/api/v1/account",
+		method: http.MethodGet,
 		header: map[string]string{"Authorization": "test"},
-		code:   http.StatusOK,
-		resp:   `"account_id":"` + TestID + `"`,
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusUnauthorized
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"Unauthorized"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
+	}, {
+		name:   "password login",
+		url:    "http://localhost:8080/api/v1/login/token",
+		method: http.MethodPost,
+		header: map[string]string{
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
+		body: map[string]any{
+			"username": "admin",
+			"password": "admin",
+			"scope":    "superuser",
+		},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			json.Unmarshal(b, &m)
+			if err != nil {
+				t.Errorf("Unexpected error decoding response: %v", err)
+			}
+
+			at, ok := m["access_token"].(string)
+			if !ok {
+				t.Errorf("Unexpected response: %v", m)
+			}
+
+			if len(at) < 8 {
+				t.Errorf("Expected access token, got: %v", at)
+			}
+
+			dataLock.Lock()
+
+			data["access_token"] = at
+
+			dataLock.Unlock()
+		},
+	}, {
+		name:   "get account",
+		url:    "http://localhost:8080/api/v1/account",
+		method: http.MethodGet,
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"id":"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
+	}, {
+		name:   "post account",
+		url:    "http://localhost:8080/api/v1/account",
+		method: http.MethodPost,
+		body: map[string]any{
+			"id":     "test-account",
+			"name":   "test-account",
+			"status": "active",
+			"secret": "test",
+			"data": map[string]any{
+				"test": "test",
+			},
+		},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusCreated
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"id":"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
+	}, {
+		name:   "create account repo",
+		url:    "http://localhost:8080/api/v1/account/repo",
+		method: http.MethodPost,
+		body: map[string]any{
+			"repo":        "https://github.com/test/test.git",
+			"repo_status": "active",
+			"repo_status_data": map[string]any{
+				"test": "test",
+			},
+		},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusCreated
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			if err := json.Unmarshal(b, &m); err != nil {
+				t.Errorf("Unexpected error decoding response: %v", err)
+			}
+
+			if _, ok := m["repo_status"].(string); !ok {
+				t.Errorf("Expected repo_status field in response: %v", m)
+			}
+		},
+	}, {
+		name:   "get account repo",
+		url:    "http://localhost:8080/api/v1/account/repo",
+		method: http.MethodGet,
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			if err := json.Unmarshal(b, &m); err != nil {
+				t.Errorf("Unexpected error decoding response: %v", err)
+			}
+
+			if _, ok := m["repo_status"].(string); !ok {
+				t.Errorf("Expected repo_status field in response: %v", m)
+			}
+		},
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			buf := &bytes.Buffer{}
 
-			r, err := http.NewRequest(http.MethodGet, tt.url, nil)
+			if len(tt.body) > 0 {
+				if ct, ok := tt.header["Content-Type"]; ok {
+					if !strings.Contains("json", ct) {
+						form := url.Values{}
+
+						for k, v := range tt.body {
+							switch vv := v.(type) {
+							case string:
+								form.Add(k, vv)
+							default:
+								b, err := json.Marshal(vv)
+								if err != nil {
+									t.Error(err)
+								}
+
+								form.Add(k, string(b))
+							}
+						}
+
+						buf = bytes.NewBufferString(form.Encode())
+					}
+				}
+
+				if buf.Len() == 0 {
+					b, err := json.Marshal(tt.body)
+					if err != nil {
+						t.Error(err)
+					}
+
+					buf = bytes.NewBuffer(b)
+				}
+			}
+
+			var br io.Reader
+
+			if buf.Len() > 0 {
+				br = buf
+			}
+
+			r, err := http.NewRequest(tt.method, tt.url, br)
 			if err != nil {
 				t.Fatal("Failed to initialize request", err)
+			}
+
+			dataLock.Lock()
+
+			at, _ := data["access_token"].(string)
+
+			dataLock.Unlock()
+
+			if at != "" {
+				if tt.header == nil {
+					tt.header = map[string]string{}
+				}
+
+				tt.header["Authorization"] = "Bearer " + at
 			}
 
 			for th, tv := range tt.header {
 				r.Header.Set(th, tv)
 			}
 
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
+			res, err := http.DefaultClient.Do(r)
+			if err != nil {
+				t.Errorf("Unexpected client error: %v", err)
 			}
 
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
+			defer res.Body.Close()
+
+			tt.resp(t, res)
 		})
 	}
 }
 
-func TestGetAccount(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
+func TestUserServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration tests")
 	}
+
+	data := map[string]any{}
+
+	dataLock := sync.Mutex{}
 
 	tests := []struct {
 		name   string
-		w      *httptest.ResponseRecorder
 		url    string
+		method string
 		header map[string]string
-		code   int
-		resp   string
+		body   map[string]any
+		resp   func(t *testing.T, res *http.Response)
 	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/account",
+		name:   "unauthorized",
+		url:    "http://localhost:8080/api/v1/user",
+		method: http.MethodGet,
 		header: map[string]string{"Authorization": "test"},
-		code:   http.StatusOK,
-		resp:   `"account_id":"` + TestID + `"`,
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusUnauthorized
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"Unauthorized"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
+	}, {
+		name:   "password login",
+		url:    "http://localhost:8080/api/v1/login/token",
+		method: http.MethodPost,
+		header: map[string]string{
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
+		body: map[string]any{
+			"username": "admin",
+			"password": "admin",
+			"scope":    "superuser",
+		},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			json.Unmarshal(b, &m)
+			if err != nil {
+				t.Errorf("Unexpected error decoding response: %v", err)
+			}
+
+			at, ok := m["access_token"].(string)
+			if !ok {
+				t.Errorf("Unexpected response: %v", m)
+			}
+
+			if len(at) < 8 {
+				t.Errorf("Expected access token, got: %v", at)
+			}
+
+			dataLock.Lock()
+
+			data["access_token"] = at
+
+			dataLock.Unlock()
+		},
+	}, {
+		name:   "get user",
+		url:    "http://localhost:8080/api/v1/user",
+		method: http.MethodGet,
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"id":"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
+	}, {
+		name:   "patch user",
+		url:    "http://localhost:8080/api/v1/user",
+		method: http.MethodPatch,
+		body: map[string]any{
+			"data": map[string]any{
+				"test": "test",
+			},
+		},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"id":"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
+	}, {
+		name:   "put user",
+		url:    "http://localhost:8080/api/v1/user",
+		method: http.MethodPut,
+		body: map[string]any{
+			"email":      "test@test.com",
+			"first_name": "Test",
+			"last_name":  "User",
+			"status":     "active",
+			"scopes":     "user:read user:write",
+			"data": map[string]any{
+				"test": "test",
+			},
+		},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusOK
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			expB := `"id":"`
+
+			if !strings.Contains(string(b), expB) {
+				t.Errorf("Expected body to contain: %v, got: %v",
+					expB, string(b))
+			}
+		},
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			buf := &bytes.Buffer{}
 
-			r, err := http.NewRequest(http.MethodGet, tt.url, nil)
+			if len(tt.body) > 0 {
+				if ct, ok := tt.header["Content-Type"]; ok {
+					if !strings.Contains("json", ct) {
+						form := url.Values{}
+
+						for k, v := range tt.body {
+							switch vv := v.(type) {
+							case string:
+								form.Add(k, vv)
+							default:
+								b, err := json.Marshal(vv)
+								if err != nil {
+									t.Error(err)
+								}
+
+								form.Add(k, string(b))
+							}
+						}
+
+						buf = bytes.NewBufferString(form.Encode())
+					}
+				}
+
+				if buf.Len() == 0 {
+					b, err := json.Marshal(tt.body)
+					if err != nil {
+						t.Error(err)
+					}
+
+					buf = bytes.NewBuffer(b)
+				}
+			}
+
+			var br io.Reader
+
+			if buf.Len() > 0 {
+				br = buf
+			}
+
+			r, err := http.NewRequest(tt.method, tt.url, br)
 			if err != nil {
 				t.Fatal("Failed to initialize request", err)
+			}
+
+			dataLock.Lock()
+
+			at, _ := data["access_token"].(string)
+
+			dataLock.Unlock()
+
+			if at != "" {
+				if tt.header == nil {
+					tt.header = map[string]string{}
+				}
+
+				tt.header["Authorization"] = "Bearer " + at
 			}
 
 			for th, tv := range tt.header {
 				r.Header.Set(th, tv)
 			}
 
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
-			}
-
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
-		})
-	}
-}
-
-func TestPostAccount(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name   string
-		w      *httptest.ResponseRecorder
-		url    string
-		header map[string]string
-		body   string
-		code   int
-		resp   string
-	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/account",
-		header: map[string]string{"Authorization": "admin"},
-		body:   `{"account_id":"` + TestID + `"}`,
-		code:   http.StatusCreated,
-		resp:   `"account_id":"` + TestID + `"`,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			buf := bytes.NewBufferString(tt.body)
-
-			r, err := http.NewRequest(http.MethodPost, tt.url, buf)
+			res, err := http.DefaultClient.Do(r)
 			if err != nil {
-				t.Fatal("Failed to initialize request", err)
+				t.Errorf("Unexpected client error: %v", err)
 			}
 
-			for th, tv := range tt.header {
-				r.Header.Set(th, tv)
-			}
+			defer res.Body.Close()
 
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
-			}
-
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
-		})
-	}
-}
-
-func TestGetAccountRepo(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name   string
-		w      *httptest.ResponseRecorder
-		url    string
-		header map[string]string
-		code   int
-		resp   string
-	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/account/repo",
-		header: map[string]string{"Authorization": "test"},
-		code:   http.StatusOK,
-		resp:   `"repo_status":"active"`,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			r, err := http.NewRequest(http.MethodGet, tt.url, nil)
-			if err != nil {
-				t.Fatal("Failed to initialize request", err)
-			}
-
-			for th, tv := range tt.header {
-				r.Header.Set(th, tv)
-			}
-
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
-			}
-
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
-		})
-	}
-}
-
-func TestPostAccountRepo(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name   string
-		w      *httptest.ResponseRecorder
-		url    string
-		header map[string]string
-		body   string
-		code   int
-		resp   string
-	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/account/repo",
-		header: map[string]string{"Authorization": "admin"},
-		body:   `{"repo":"test://test:test@test/test/test#test"}`,
-		code:   http.StatusCreated,
-		resp:   "test://",
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			buf := bytes.NewBufferString(tt.body)
-
-			r, err := http.NewRequest(http.MethodPost, tt.url, buf)
-			if err != nil {
-				t.Fatal("Failed to initialize request", err)
-			}
-
-			for th, tv := range tt.header {
-				r.Header.Set(th, tv)
-			}
-
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
-			}
-
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
-		})
-	}
-}
-
-func TestGetUser(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name   string
-		w      *httptest.ResponseRecorder
-		url    string
-		header map[string]string
-		code   int
-		resp   string
-	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/user",
-		header: map[string]string{"Authorization": "test"},
-		code:   http.StatusOK,
-		resp:   `"user_id":"` + TestUUID + `"`,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			r, err := http.NewRequest(http.MethodGet, tt.url, nil)
-			if err != nil {
-				t.Fatal("Failed to initialize request", err)
-			}
-
-			for th, tv := range tt.header {
-				r.Header.Set(th, tv)
-			}
-
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
-			}
-
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
-		})
-	}
-}
-
-func TestPutUser(t *testing.T) {
-	t.Parallel()
-
-	svr, err := server.NewServer(nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name   string
-		w      *httptest.ResponseRecorder
-		url    string
-		header map[string]string
-		body   string
-		code   int
-		resp   string
-	}{{
-		name:   "success",
-		w:      httptest.NewRecorder(),
-		url:    basePath + "/user",
-		header: map[string]string{"Authorization": "test"},
-		body:   `{"user_id":"` + TestUUID + `"}`,
-		code:   http.StatusOK,
-		resp:   `"user_id":"` + TestUUID + `"`,
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			buf := bytes.NewBufferString(tt.body)
-
-			r, err := http.NewRequest(http.MethodPut, tt.url, buf)
-			if err != nil {
-				t.Fatal("Failed to initialize request", err)
-			}
-
-			for th, tv := range tt.header {
-				r.Header.Set(th, tv)
-			}
-
-			svr.Mux(tt.w, r)
-
-			if tt.w.Code != tt.code {
-				t.Errorf("Code expected: %v, got: %v", tt.code, tt.w.Code)
-			}
-
-			res := tt.w.Body.String()
-			if !strings.Contains(res, tt.resp) {
-				t.Errorf("Expected body to contain: %v, got: %v", tt.resp, res)
-			}
+			tt.resp(t, res)
 		})
 	}
 }
