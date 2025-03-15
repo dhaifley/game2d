@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 
 	"github.com/Shopify/go-lua"
@@ -240,11 +241,28 @@ func (g *Game) Update() error {
 		"objects":     objects,
 	}
 
+	debug, save, load := false, false, false
+
 	if keys := inpututil.AppendPressedKeys(nil); len(keys) > 0 {
 		keyMap := map[string]any{}
 
-		for i, k := range keys {
-			keyMap[strconv.Itoa(i)] = int(k)
+		if slices.Contains(keys, ebiten.KeyControl) {
+			if jpk := inpututil.AppendJustPressedKeys(nil); len(jpk) > 0 {
+				for _, jk := range jpk {
+					switch jk {
+					case ebiten.KeyQuote:
+						debug = true
+					case ebiten.KeyS:
+						save = true
+					case ebiten.KeyL:
+						load = true
+					}
+				}
+			}
+		} else {
+			for i, k := range keys {
+				keyMap[strconv.Itoa(i)] = int(k)
+			}
 		}
 
 		d["keys"] = keyMap
@@ -278,34 +296,21 @@ func (g *Game) Update() error {
 			"unable to update game state from lua")
 	}
 
-	if keys := inpututil.AppendJustPressedKeys(nil); len(keys) > 0 {
-		for _, k := range keys {
-			switch k {
-			case ebiten.KeyQuote:
-				g.debug = !g.debug
-			case ebiten.KeyRightBracket:
-				ks := inpututil.AppendPressedKeys(nil)
+	if debug {
+		g.debug = !g.debug
+	}
 
-				for _, k := range ks {
-					if k == ebiten.KeyControl {
-						if err := g.Save(); err != nil {
-							return errors.Wrap(err, errors.ErrClient,
-								"unable to save game")
-						}
-					}
-				}
-			case ebiten.KeyLeftBracket:
-				ks := inpututil.AppendPressedKeys(nil)
+	if save {
+		if err := g.Save(); err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to save game")
+		}
+	}
 
-				for _, k := range ks {
-					if k == ebiten.KeyControl {
-						if err := g.Load(); err != nil {
-							return errors.Wrap(err, errors.ErrClient,
-								"unable to load game")
-						}
-					}
-				}
-			}
+	if load {
+		if err := g.Load(); err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to load game")
 		}
 	}
 
