@@ -145,7 +145,7 @@ func TestAccountServer(t *testing.T) {
 		body: map[string]any{
 			"username": "admin",
 			"password": "admin",
-			"scope":    "superuser",
+			"scope":    request.ScopeSuperuser,
 		},
 		resp: func(t *testing.T, res *http.Response) {
 			expC := http.StatusOK
@@ -431,7 +431,7 @@ func TestUserServer(t *testing.T) {
 		body: map[string]any{
 			"username": "admin",
 			"password": "admin",
-			"scope":    "superuser",
+			"scope":    request.ScopeSuperuser,
 		},
 		resp: func(t *testing.T, res *http.Response) {
 			expC := http.StatusOK
@@ -530,7 +530,7 @@ func TestUserServer(t *testing.T) {
 			"first_name": "Test",
 			"last_name":  "User",
 			"status":     "active",
-			"scopes":     "user:read user:write",
+			"scopes":     request.ScopeSuperuser,
 			"data": map[string]any{
 				"test": "test",
 			},

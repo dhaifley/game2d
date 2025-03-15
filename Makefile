@@ -25,7 +25,7 @@ game2d: $(GO_FILES)
 	-ldflags="-X github.com/dhaifley/game2d/client.Version=${VERSION}" \
 	./cmd/game2d
 
-app/dist/index.html: app/src/* app/index.html
+app/dist/index.html: app/index.html $(shell find app/src -type f)
 	cd app && \
 	npm run build && \
 	cd ..

@@ -118,7 +118,7 @@ func TestGamesServer(t *testing.T) {
 		body: map[string]any{
 			"username": "admin",
 			"password": "admin",
-			"scope":    "superuser",
+			"scope":    request.ScopeSuperuser,
 		},
 		resp: func(t *testing.T, res *http.Response) {
 			expC := http.StatusOK

@@ -1314,27 +1314,29 @@ func (s *Server) authJWT(ctx context.Context,
 // authPassword authenticates using a user password.
 func (s *Server) authPassword(ctx context.Context,
 	userID, password, accountID string,
-) error {
+) (*Claims, error) {
 	var err error
 
 	if !request.ValidUserID(userID) {
-		return errors.New(errors.ErrInvalidParameter, "invalid user_id",
+		return nil, errors.New(errors.ErrInvalidParameter,
+			"invalid user_id",
 			"user_id", userID)
 	}
 
-	aID := s.cfg.ServiceName()
+	aID, aName := s.cfg.ServiceName(), s.cfg.ServiceName()
 
 	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
 
 		a, err := s.getAccount(aCtx, accountID)
 		if err != nil {
-			return errors.New(errors.ErrUnauthorized,
+			return nil, errors.New(errors.ErrUnauthorized,
 				"invalid account",
 				"account_id", accountID)
 		}
 
 		aID = a.ID.Value
+		aName = a.Name.Value
 	}
 
 	ctx = context.WithValue(ctx, request.CtxKeyAccountID, aID)
@@ -1346,18 +1348,23 @@ func (s *Server) authPassword(ctx context.Context,
 
 	u, err := s.getUser(ctx, userID)
 	if err != nil {
-		return errors.New(errors.ErrUnauthorized,
+		return nil, errors.New(errors.ErrUnauthorized,
 			"invalid user id or password",
 			"user_id", userID)
 	}
 
 	if err := verifyPassword(*u.Password, password); err != nil {
-		return errors.New(errors.ErrUnauthorized,
+		return nil, errors.New(errors.ErrUnauthorized,
 			"invalid user id or password",
 			"user_id", userID)
 	}
 
-	return nil
+	return &Claims{
+		AccountID:   aID,
+		AccountName: aName,
+		UserID:      userID,
+		Scopes:      u.Scopes.Value,
+	}, nil
 }
 
 // updateAuthConfig periodically updates authentication configuration data.
@@ -1760,18 +1767,17 @@ func (s *Server) postLoginTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	tenant := r.Header.Get("securitytenant")
 
-	if err := s.authPassword(ctx,
-		r.FormValue("username"),
-		r.FormValue("password"),
-		tenant); err != nil {
+	claims, err := s.authPassword(ctx, r.FormValue("username"),
+		r.FormValue("password"), tenant)
+	if err != nil {
 		s.error(err, w, r)
 
 		return
 	}
 
-	tok, err := s.createToken(ctx, r.FormValue("username"),
+	tok, err := s.createToken(ctx, claims.UserID,
 		time.Now().Add(s.cfg.AuthTokenExpiresIn()).Unix(),
-		r.FormValue("scope"), tenant)
+		claims.Scopes, tenant)
 	if err != nil {
 		s.error(err, w, r)
 

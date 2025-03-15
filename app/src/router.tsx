@@ -1,7 +1,10 @@
-import { createBrowserRouter, RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
+import Login from './pages/Login';
+import Welcome from './pages/Welcome';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Define the routes
 const routes: RouteObject[] = [
@@ -11,7 +14,19 @@ const routes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <Home />,
+        element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'login',
+        element: <Login />
+      },
+      {
+        path: 'welcome',
+        element: <Welcome />
       },
       {
         path: '*',
@@ -19,6 +34,11 @@ const routes: RouteObject[] = [
       },
     ],
   },
+  // Redirect root access to welcome for unauthenticated users
+  {
+    path: '/',
+    element: <Navigate to="/welcome" replace />
+  }
 ];
 
 // Create the router
