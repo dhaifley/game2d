@@ -334,10 +334,8 @@ func (s *Server) createGame(ctx context.Context,
 
 	doc := &bson.D{}
 
-	request.SetField(doc, "account_id", req.AccountID)
 	request.SetField(doc, "w", req.W)
 	request.SetField(doc, "h", req.H)
-	request.SetField(doc, "id", req.ID)
 	request.SetField(doc, "name", req.Name)
 	request.SetField(doc, "version", req.Version)
 	request.SetField(doc, "description", req.Description)
@@ -349,13 +347,20 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "scripts", req.Scripts)
 	request.SetField(doc, "source", req.Source)
 	request.SetField(doc, "commit_hash", req.CommitHash)
-	request.SetField(doc, "created_at", req.CreatedAt)
-	request.SetField(doc, "created_by", req.CreatedBy)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
-	if err := s.DB().Collection("games").FindOneAndReplace(ctx, f, doc,
-		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
+	cDoc := &bson.D{}
+
+	request.SetField(cDoc, "id", req.ID)
+	request.SetField(doc, "account_id", req.AccountID)
+	request.SetField(cDoc, "created_at", req.CreatedAt)
+	request.SetField(cDoc, "created_by", req.CreatedBy)
+
+	doc = &bson.D{{Key: "$set", Value: doc}, {Key: "$setOnInsert", Value: cDoc}}
+
+	if err := s.DB().Collection("games").FindOneAndUpdate(ctx, f, doc,
+		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0}).
 			SetReturnDocument(options.After).SetUpsert(true)).
 		Decode(&res); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

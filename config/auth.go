@@ -26,7 +26,7 @@ const (
 	DefaultAuthTokenWellKnown        = ""
 	DefaultAuthTokenExpiresIn        = time.Hour * 24
 	DefaultAuthTokenRefreshExpiresIn = time.Hour * 24 * 30
-	DefaultAuthTokenIssuer           = "api"
+	DefaultAuthTokenIssuer           = "game2d"
 	DefaultAuthUpdateInterval        = time.Second * 30
 	DefaultAuthIdentityDomain        = ""
 )

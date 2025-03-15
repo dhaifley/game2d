@@ -4,7 +4,7 @@ GO_FILES := $(shell find . -name "*.go")
 
 YAML_FILES := $(shell find ./api -name "*.yaml")
 
--include ./tests/.env
+-include ./.env
 
 all: build
 
@@ -76,13 +76,13 @@ stop:
 
 test:
 	@make start
-	@echo "set -a && . ./tests/.env && go test -race -cover ./..." | ${SHELL}
+	@echo "set -a && . ./.env && go test -race -cover ./..." | ${SHELL}
 	@make stop
 .PHONY: test
 
 test-no-cache:
 	@make start
-	@echo "set -a && . ./tests/.env && go test -count=1 -race -cover ./..." | ${SHELL}
+	@echo "set -a && . ./.env && go test -count=1 -race -cover ./..." | ${SHELL}
 	@make stop
 .PHONY: test-no-cache
 
@@ -95,5 +95,5 @@ test-quick-no-cache:
 .PHONY: test-quick-no-cache
 
 run: build start
-	@echo "set -a && . ./tests/.env && ./game2d-api" | ${SHELL}
+	@echo "set -a && . ./.env && ./game2d-api" | ${SHELL}
 .PHONY: run

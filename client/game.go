@@ -1,9 +1,13 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"slices"
@@ -302,15 +306,17 @@ func (g *Game) Update() error {
 
 	if save {
 		if err := g.Save(); err != nil {
-			return errors.Wrap(err, errors.ErrClient,
-				"unable to save game")
+			g.log.Log(context.Background(), logger.LvlError,
+				"unable to save game",
+				"error", err)
 		}
 	}
 
 	if load {
 		if err := g.Load(); err != nil {
-			return errors.Wrap(err, errors.ErrClient,
-				"unable to load game")
+			g.log.Log(context.Background(), logger.LvlError,
+				"unable to load game",
+				"error", err)
 		}
 	}
 
@@ -359,28 +365,143 @@ func (g *Game) Layout(w, h int) (int, int) {
 
 // Save persists a game state.
 func (g *Game) Save() error {
+	ebiten.SetWindowTitle(g.name + " (saving...)")
+
 	b, err := json.MarshalIndent(&g, "", "  ")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrClient,
 			"unable to encode game save")
 	}
 
-	if err := os.WriteFile(g.name+".json", b, 0o644); err != nil {
-		return errors.Wrap(err, errors.ErrClient,
-			"unable to write game save",
-			"file", g.name+".json")
+	if apiURL := os.Getenv("GAME2D_API_URL"); apiURL != "" {
+		u, err := url.Parse(apiURL)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to parse game2d API URL",
+				"api_url", apiURL)
+		}
+
+		u = u.JoinPath("games")
+		apiURL = u.String()
+
+		req, err := http.NewRequest(http.MethodPost, apiURL,
+			bytes.NewBuffer(b))
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to create save request",
+				"api_url", apiURL)
+		}
+
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("User-Agent", "game2d")
+		req.Header.Set("X-Game-ID", g.id)
+
+		if apiToken := os.Getenv("GAME2D_API_TOKEN"); apiToken != "" {
+			req.Header.Set("Authorization", "Bearer "+apiToken)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to save game",
+				"api_url", apiURL)
+		}
+
+		defer resp.Body.Close()
+
+		rb, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to read save game response",
+				"api_url", apiURL)
+		}
+
+		if resp.StatusCode != http.StatusCreated &&
+			resp.StatusCode != http.StatusOK {
+			return errors.New(errors.ErrClient,
+				"unable to save game",
+				"api_url", apiURL,
+				"status_code", resp.StatusCode,
+				"response", string(rb))
+		}
+	} else {
+		if err := os.WriteFile(g.name+".json", b, 0o644); err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to write game save",
+				"file", g.name+".json")
+		}
 	}
+
+	ebiten.SetWindowTitle(g.name)
 
 	return nil
 }
 
 // Load retrieves a persisted game state.
 func (g *Game) Load() error {
-	b, err := os.ReadFile(g.name + ".json")
-	if err != nil {
-		return errors.Wrap(err, errors.ErrClient,
-			"unable to read game save",
-			"file", g.name+".json")
+	var b []byte
+
+	ebiten.SetWindowTitle(g.name + " (loading...)")
+
+	if apiURL := os.Getenv("GAME2D_API_URL"); apiURL != "" {
+		u, err := url.Parse(apiURL)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to parse game2d API URL",
+				"api_url", apiURL)
+		}
+
+		u = u.JoinPath("games", g.id)
+		apiURL = u.String()
+
+		req, err := http.NewRequest(http.MethodGet, apiURL, nil)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to create load request",
+				"api_url", apiURL)
+		}
+
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("User-Agent", "game2d")
+		req.Header.Set("X-Game-ID", g.id)
+
+		if apiToken := os.Getenv("GAME2D_API_TOKEN"); apiToken != "" {
+			req.Header.Set("Authorization", "Bearer "+apiToken)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to load game",
+				"api_url", apiURL)
+		}
+
+		defer resp.Body.Close()
+
+		rb, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to read load game response",
+				"api_url", apiURL)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return errors.New(errors.ErrClient,
+				"unable to load game",
+				"api_url", apiURL,
+				"status_code", resp.StatusCode,
+				"response", string(rb))
+		}
+
+		b = rb
+	} else {
+		if fb, err := os.ReadFile(g.name + ".json"); err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to load game",
+				"file", g.name+".json")
+		} else {
+			b = fb
+		}
 	}
 
 	var g2 Game
@@ -409,6 +530,8 @@ func (g *Game) Load() error {
 
 	g.lua = lua.NewState()
 	lua.OpenLibraries(g.lua)
+
+	ebiten.SetWindowTitle(g.name)
 
 	return nil
 }

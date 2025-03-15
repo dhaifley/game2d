@@ -2,8 +2,6 @@ package request
 
 import (
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 // Valid status field values.
@@ -110,11 +108,7 @@ func ValidUserID(id string) bool {
 
 // ValidGameID checks whether a string is a valid external game ID.
 func ValidGameID(id string) bool {
-	if _, err := uuid.Parse(id); err != nil {
-		return false
-	}
-
-	return true
+	return ValidAccountID(id)
 }
 
 // ValidScope checks whether a string is a valid scope.
