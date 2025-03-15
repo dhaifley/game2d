@@ -41,8 +41,6 @@ directly within the user interface.
 - [npm](https://www.npmjs.com/)
 - [typescript](https://www.typescriptlang.org/)
 - [react](https://react.dev/)
-- [react router](https://reactrouter.com/)
-- [vite](https://vite.dev/)
 
 ### Building and Testing
 

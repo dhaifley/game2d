@@ -11,10 +11,10 @@
 *.swp
 *.tmp
 *.log
-*.json
 .DS_Store
 .vscode
 go.work
 go.work.sum
+/game2d.json
 /game2d
 /game2d-api
