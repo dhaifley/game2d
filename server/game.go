@@ -33,6 +33,7 @@ type Game struct {
 	W           request.FieldInt64       `bson:"w"           json:"w"           yaml:"w"`
 	H           request.FieldInt64       `bson:"h"           json:"h"           yaml:"h"`
 	ID          request.FieldString      `bson:"id"          json:"id"          yaml:"id"`
+	PreviousID  request.FieldString      `bson:"previous_id" json:"previous_id" yaml:"previous_id"`
 	Name        request.FieldString      `bson:"name"        json:"name"        yaml:"name"`
 	Version     request.FieldString      `bson:"version"     json:"version"     yaml:"version"`
 	Description request.FieldString      `bson:"description" json:"description" yaml:"description"`
@@ -77,6 +78,14 @@ func (g *Game) Validate() error {
 		if !request.ValidGameID(g.ID.Value) {
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid id",
+				"game", g)
+		}
+	}
+
+	if g.ID.Set && g.ID.Valid {
+		if !request.ValidGameID(g.ID.Value) {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid previous_id",
 				"game", g)
 		}
 	}
@@ -145,6 +154,10 @@ func (s *Server) getGames(ctx context.Context,
 
 	if f == nil {
 		f = bson.M{}
+	}
+
+	if _, ok := f["status"]; !ok {
+		f["status"] = request.StatusActive
 	}
 
 	f["account_id"] = aID
@@ -278,6 +291,8 @@ func (s *Server) getGame(ctx context.Context,
 func (s *Server) createGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
+	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
 		return nil, errors.New(errors.ErrUnauthorized,
@@ -305,6 +320,18 @@ func (s *Server) createGame(ctx context.Context,
 				"unauthorized request",
 				"account_id", aID,
 				"user_id", uID)
+		}
+	}
+
+	if !req.ID.Set {
+		req.ID = request.FieldString{
+			Set: true, Valid: true, Value: uuid.NewString(),
+		}
+	}
+
+	if !req.Status.Set {
+		req.Status = request.FieldString{
+			Set: true, Valid: true, Value: request.StatusActive,
 		}
 	}
 
@@ -353,6 +380,7 @@ func (s *Server) createGame(ctx context.Context,
 	cDoc := &bson.D{}
 
 	request.SetField(cDoc, "id", req.ID)
+	request.SetField(cDoc, "previous_id", req.PreviousID)
 	request.SetField(doc, "account_id", req.AccountID)
 	request.SetField(cDoc, "created_at", req.CreatedAt)
 	request.SetField(cDoc, "created_by", req.CreatedBy)
@@ -376,6 +404,41 @@ func (s *Server) createGame(ctx context.Context,
 
 	s.setCache(ctx, cache.KeyGame(res.ID.Value), res)
 
+	if res.PreviousID.Value != "" {
+		pg, err := s.getGame(ctx, res.PreviousID.Value)
+		if err != nil && !errors.Has(err, errors.ErrNotFound) {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to get previous game",
+				"req", req,
+				"previous_id", res.PreviousID.Value)
+		}
+
+		if pg.Status.Value != request.StatusInactive {
+			pg.Status = request.FieldString{
+				Set: true, Valid: true, Value: request.StatusInactive,
+			}
+
+			if pgID := pg.PreviousID.Value; pgID != "" {
+				if err := s.deleteGame(ctx, pgID); err != nil {
+					return nil, errors.Wrap(err, errors.ErrDatabase,
+						"unable to delete previous game",
+						"previous_id", res.PreviousID.Value)
+				}
+
+				pg.PreviousID = request.FieldString{
+					Set: true, Valid: true, Value: "",
+				}
+			}
+
+			if _, err := s.updateGame(ctx, pg); err != nil {
+				return nil, errors.Wrap(err, errors.ErrDatabase,
+					"unable to update previous game status",
+					"req", req,
+					"previous_id", res.PreviousID.Value)
+			}
+		}
+	}
+
 	return res, nil
 }
 
@@ -383,6 +446,8 @@ func (s *Server) createGame(ctx context.Context,
 func (s *Server) updateGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
+	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
 		return nil, errors.New(errors.ErrUnauthorized,

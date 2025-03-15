@@ -9,6 +9,7 @@ import (
 	"github.com/dhaifley/game2d/assets"
 	"github.com/dhaifley/game2d/client"
 	"github.com/dhaifley/game2d/logger"
+	"github.com/google/uuid"
 )
 
 // Main entry point for the game.
@@ -19,6 +20,10 @@ func main() {
 		logger.LvlDebug)
 
 	gameID := os.Getenv("GAME2D_GAME_ID")
+
+	if gameID == "" {
+		gameID = uuid.NewString()
+	}
 
 	g := client.NewGame(log, -1, -1, gameID, "game2d", "2D gaming framework")
 

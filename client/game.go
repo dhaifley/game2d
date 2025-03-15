@@ -81,6 +81,10 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 	l := lua.NewState()
 	lua.OpenLibraries(l)
 
+	if _, err := uuid.Parse(id); err != nil {
+		id = ""
+	}
+
 	if id == "" {
 		id = uuid.NewString()
 	}
@@ -515,6 +519,7 @@ func (g *Game) Load() error {
 	g.w = g2.w
 	g.h = g2.h
 	g.id = g2.id
+	g.ver = g2.ver
 	g.name = g2.name
 	g.desc = g2.desc
 	g.img = g2.img
