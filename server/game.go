@@ -29,27 +29,36 @@ const CtxKeyMinData = "min_data"
 
 // Game is the game type for the game service.
 type Game struct {
-	AccountID   request.FieldString      `bson:"account_id"  json:"account_id"  yaml:"account_id"`
-	W           request.FieldInt64       `bson:"w"           json:"w"           yaml:"w"`
-	H           request.FieldInt64       `bson:"h"           json:"h"           yaml:"h"`
-	ID          request.FieldString      `bson:"id"          json:"id"          yaml:"id"`
-	PreviousID  request.FieldString      `bson:"previous_id" json:"previous_id" yaml:"previous_id"`
-	Name        request.FieldString      `bson:"name"        json:"name"        yaml:"name"`
-	Version     request.FieldString      `bson:"version"     json:"version"     yaml:"version"`
-	Description request.FieldString      `bson:"description" json:"description" yaml:"description"`
-	Status      request.FieldString      `bson:"status"      json:"status"      yaml:"status"`
-	StatusData  request.FieldJSON        `bson:"status_data" json:"status_data" yaml:"status_data"`
-	Subject     request.FieldJSON        `bson:"subject"     json:"subject"     yaml:"subject"`
-	Objects     request.FieldJSON        `bson:"objects"     json:"objects"     yaml:"objects"`
-	Images      request.FieldJSON        `bson:"images"      json:"images"      yaml:"images"`
-	Scripts     request.FieldJSON        `bson:"scripts"     json:"scripts"     yaml:"scripts"`
-	Source      request.FieldString      `bson:"source"      json:"source"      yaml:"source"`
-	CommitHash  request.FieldString      `bson:"commit_hash" json:"commit_hash" yaml:"commit_hash"`
-	Tags        request.FieldStringArray `bson:"tags"        json:"tags"        yaml:"tags"`
-	CreatedAt   request.FieldTime        `bson:"created_at"  json:"created_at"  yaml:"created_at"`
-	CreatedBy   request.FieldString      `bson:"created_by"  json:"created_by"  yaml:"created_by"`
-	UpdatedAt   request.FieldTime        `bson:"updated_at"  json:"updated_at"  yaml:"updated_at"`
-	UpdatedBy   request.FieldString      `bson:"updated_by"  json:"updated_by"  yaml:"updated_by"`
+	AccountID   request.FieldString      `bson:"account_id"        json:"account_id"        yaml:"account_id"`
+	W           request.FieldInt64       `bson:"w"                 json:"w"                 yaml:"w"`
+	H           request.FieldInt64       `bson:"h"                 json:"h"                 yaml:"h"`
+	ID          request.FieldString      `bson:"id"                json:"id"                yaml:"id"`
+	PreviousID  request.FieldString      `bson:"previous_id"       json:"previous_id"       yaml:"previous_id"`
+	Name        request.FieldString      `bson:"name"              json:"name"              yaml:"name"`
+	Version     request.FieldString      `bson:"version"           json:"version"           yaml:"version"`
+	Description request.FieldString      `bson:"description"       json:"description"       yaml:"description"`
+	Status      request.FieldString      `bson:"status"            json:"status"            yaml:"status"`
+	StatusData  request.FieldJSON        `bson:"status_data"       json:"status_data"       yaml:"status_data"`
+	Subject     request.FieldJSON        `bson:"subject"           json:"subject"           yaml:"subject"`
+	Objects     request.FieldJSON        `bson:"objects"           json:"objects"           yaml:"objects"`
+	Images      request.FieldJSON        `bson:"images"            json:"images"            yaml:"images"`
+	Scripts     request.FieldJSON        `bson:"scripts"           json:"scripts"           yaml:"scripts"`
+	Source      request.FieldString      `bson:"source"            json:"source"            yaml:"source"`
+	CommitHash  request.FieldString      `bson:"commit_hash"       json:"commit_hash"       yaml:"commit_hash"`
+	Tags        request.FieldStringArray `bson:"tags"              json:"tags"              yaml:"tags"`
+	AIData      *AIData                  `bson:"ai_data,omitempty" json:"ai_data,omitempty" yaml:"ai_data,omitempty"`
+	CreatedAt   request.FieldTime        `bson:"created_at"        json:"created_at"        yaml:"created_at"`
+	CreatedBy   request.FieldString      `bson:"created_by"        json:"created_by"        yaml:"created_by"`
+	UpdatedAt   request.FieldTime        `bson:"updated_at"        json:"updated_at"        yaml:"updated_at"`
+	UpdatedBy   request.FieldString      `bson:"updated_by"        json:"updated_by"        yaml:"updated_by"`
+}
+
+// AIData values contain the AI data for a game.
+type AIData struct {
+	Prompt   request.FieldString `bson:"prompt"   json:"prompt"   yaml:"prompt"`
+	Response request.FieldString `bson:"response" json:"response" yaml:"response"`
+	Data     request.FieldJSON   `bson:"data"     json:"data"     yaml:"data"`
+	Error    request.FieldJSON   `bson:"error"    json:"error"    yaml:"error"`
 }
 
 // Validate checks that the value contains valid data.
