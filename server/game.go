@@ -39,6 +39,7 @@ type Game struct {
 	Name        request.FieldString      `bson:"name"              json:"name"              yaml:"name"`
 	Version     request.FieldString      `bson:"version"           json:"version"           yaml:"version"`
 	Description request.FieldString      `bson:"description"       json:"description"       yaml:"description"`
+	Icon        request.FieldString      `bson:"icon"              json:"icon"              yaml:"icon"`
 	Status      request.FieldString      `bson:"status"            json:"status"            yaml:"status"`
 	StatusData  request.FieldJSON        `bson:"status_data"       json:"status_data"       yaml:"status_data"`
 	Subject     request.FieldJSON        `bson:"subject"           json:"subject"           yaml:"subject"`
@@ -385,6 +386,7 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "name", req.Name)
 	request.SetField(doc, "version", req.Version)
 	request.SetField(doc, "description", req.Description)
+	request.SetField(doc, "icon", req.Icon)
 	request.SetField(doc, "status", req.Status)
 	request.SetField(doc, "status_data", req.StatusData)
 	request.SetField(doc, "subject", req.Subject)
@@ -520,6 +522,7 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "name", req.Name)
 	request.SetField(doc, "version", req.Version)
 	request.SetField(doc, "description", req.Description)
+	request.SetField(doc, "icon", req.Icon)
 	request.SetField(doc, "status", req.Status)
 	request.SetField(doc, "status_data", req.StatusData)
 	request.SetField(doc, "subject", req.Subject)

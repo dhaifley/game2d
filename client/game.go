@@ -33,24 +33,21 @@ const (
 
 // Game values represent the game state.
 type Game struct {
-	log       logger.Logger
-	debug     bool
-	w, h      int
-	id        string
-	name      string
-	ver       string
-	desc      string
-	apiURL    string
-	apiToken  string
-	lua       *lua.State
-	sub       *Object
-	obj       map[string]*Object
-	img       map[string]*Image
-	src       map[string]*Script
-	createdBy string
-	createdAt int64
-	updatedBy string
-	updatedAt int64
+	log      logger.Logger
+	debug    bool
+	w, h     int
+	id       string
+	name     string
+	ver      string
+	desc     string
+	icon     string
+	apiURL   string
+	apiToken string
+	lua      *lua.State
+	sub      *Object
+	obj      map[string]*Object
+	img      map[string]*Image
+	src      map[string]*Script
 }
 
 // NewGame creates and initializes a new Game object.
@@ -110,24 +107,22 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		ID          string             `json:"id"`
 		Name        string             `json:"name"`
-		Version     string             `json:"version"`
-		Description string             `json:"description"`
-		Debug       bool               `json:"debug"`
+		Version     string             `json:"version,omitempty"`
+		Description string             `json:"description,omitempty"`
+		Icon        string             `json:"icon,omitempty"`
+		Debug       bool               `json:"debug,omitempty"`
 		W           int                `json:"w"`
 		H           int                `json:"h"`
 		Subject     *Object            `json:"subject,omitempty"`
 		Objects     map[string]*Object `json:"objects,omitempty"`
 		Images      map[string]*Image  `json:"images,omitempty"`
 		Scripts     map[string]*Script `json:"scripts,omitempty"`
-		CreatedAt   int64              `json:"created_at,omitempty"`
-		CreatedBy   string             `json:"created_by,omitempty"`
-		UpdatedAt   int64              `json:"updated_at,omitempty"`
-		UpdatedBy   string             `json:"updated_by,omitempty"`
 	}{
 		ID:          g.id,
 		Name:        g.name,
 		Version:     g.ver,
 		Description: g.desc,
+		Icon:        g.icon,
 		Debug:       g.debug,
 		W:           g.w,
 		H:           g.h,
@@ -135,10 +130,6 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Objects:     g.obj,
 		Images:      g.img,
 		Scripts:     g.src,
-		CreatedAt:   g.createdAt,
-		CreatedBy:   g.createdBy,
-		UpdatedAt:   g.updatedAt,
-		UpdatedBy:   g.updatedBy,
 	})
 }
 
@@ -147,19 +138,16 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 	v := &struct {
 		ID          string             `json:"id"`
 		Name        string             `json:"name"`
-		Version     string             `json:"version"`
-		Description string             `json:"description"`
-		Debug       bool               `json:"debug"`
+		Version     string             `json:"version,omitempty"`
+		Description string             `json:"description,omitempty"`
+		Icon        string             `json:"icon,omitempty"`
+		Debug       bool               `json:"debug,omitempty"`
 		W           int                `json:"w"`
 		H           int                `json:"h"`
 		Subject     *Object            `json:"subject,omitempty"`
 		Objects     map[string]*Object `json:"objects,omitempty"`
 		Images      map[string]*Image  `json:"images,omitempty"`
 		Scripts     map[string]*Script `json:"scripts,omitempty"`
-		CreatedAt   int64              `json:"created_at,omitempty"`
-		CreatedBy   string             `json:"created_by,omitempty"`
-		UpdatedAt   int64              `json:"updated_at,omitempty"`
-		UpdatedBy   string             `json:"updated_by,omitempty"`
 	}{}
 
 	if err := json.Unmarshal(data, &v); err != nil {
@@ -168,7 +156,9 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 
 	g.id = v.ID
 	g.name = v.Name
+	g.ver = v.Version
 	g.desc = v.Description
+	g.icon = v.Icon
 	g.debug = v.Debug
 	g.w = v.W
 	g.h = v.H
@@ -176,10 +166,6 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 	g.obj = v.Objects
 	g.img = v.Images
 	g.src = v.Scripts
-	g.createdAt = v.CreatedAt
-	g.createdBy = v.CreatedBy
-	g.updatedAt = v.UpdatedAt
-	g.updatedBy = v.UpdatedBy
 
 	g.lua = lua.NewState()
 	lua.OpenLibraries(g.lua)
