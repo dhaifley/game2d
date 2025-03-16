@@ -40,7 +40,15 @@ directly within the user interface.
 - [node.js](https://nodejs.org/)
 - [npm](https://www.npmjs.com/)
 - [typescript](https://www.typescriptlang.org/)
+
+### Other Tools and Libraries
+
+- [ebitengine](https://ebitengine.org/)
+- [lua](https://www.lua.org/)
+- [wasm](https://webassembly.org/)
 - [react](https://react.dev/)
+- [react router](https://reactrouter.com/)
+- [vite](https://vite.dev/)
 
 ### Building and Testing
 
