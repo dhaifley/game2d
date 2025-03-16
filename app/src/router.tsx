@@ -1,8 +1,9 @@
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
-import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome';
+import Help from './pages/Help';
+import Games from './pages/Games';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -16,7 +17,7 @@ const routes: RouteObject[] = [
         index: true,
         element: (
           <ProtectedRoute>
-            <Home />
+            <Games />
           </ProtectedRoute>
         ),
       },
@@ -27,6 +28,10 @@ const routes: RouteObject[] = [
       {
         path: 'welcome',
         element: <Welcome />
+      },
+      {
+        path: 'help',
+        element: <Help />
       },
       {
         path: '*',
