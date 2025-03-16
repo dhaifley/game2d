@@ -23,9 +23,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// CtxKeyMinData is the context key used to indicate that minimal data should be
-// returned for a game.
-const CtxKeyMinData = "min_data"
+// Context keys.
+const (
+	CtxKeyGameMinData         = "game_min_data"
+	CtxKeyGameAllowPreviousID = "game_allow_previous_id"
+)
 
 // Game is the game type for the game service.
 type Game struct {
@@ -266,7 +268,7 @@ func (s *Server) getGame(ctx context.Context,
 
 	pro := bson.M{"_id": 0}
 
-	if v := ctx.Value(CtxKeyMinData); v != nil {
+	if v := ctx.Value(CtxKeyGameMinData); v != nil {
 		pro = bson.M{
 			"_id":     0,
 			"subject": 0,
@@ -289,7 +291,7 @@ func (s *Server) getGame(ctx context.Context,
 			"id", id)
 	}
 
-	if v := ctx.Value(CtxKeyMinData); v == nil {
+	if v := ctx.Value(CtxKeyGameMinData); v == nil {
 		s.setCache(ctx, cache.KeyGame(res.ID.Value), res)
 	}
 
@@ -300,7 +302,7 @@ func (s *Server) getGame(ctx context.Context,
 func (s *Server) createGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
-	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
@@ -329,6 +331,14 @@ func (s *Server) createGame(ctx context.Context,
 				"unauthorized request",
 				"account_id", aID,
 				"user_id", uID)
+		}
+	}
+
+	if req.PreviousID.Set {
+		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"previous_id not allowed",
+				"req", req)
 		}
 	}
 
@@ -413,7 +423,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	s.setCache(ctx, cache.KeyGame(res.ID.Value), res)
 
-	if res.PreviousID.Value != "" {
+	if req.PreviousID.Set {
 		pg, err := s.getGame(ctx, res.PreviousID.Value)
 		if err != nil && !errors.Has(err, errors.ErrNotFound) {
 			return nil, errors.Wrap(err, errors.ErrDatabase,
@@ -455,7 +465,7 @@ func (s *Server) createGame(ctx context.Context,
 func (s *Server) updateGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
-	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
@@ -1110,7 +1120,7 @@ func (s *Server) getAllGameTags(ctx context.Context,
 func (s *Server) getGameTags(ctx context.Context,
 	id string,
 ) ([]string, error) {
-	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 
 	g, err := s.getGame(ctx, id)
 	if err != nil {
@@ -1125,7 +1135,7 @@ func (s *Server) addGameTags(ctx context.Context,
 	id string,
 	tags []string,
 ) ([]string, error) {
-	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 
 	g, err := s.getGame(ctx, id)
 	if err != nil {
@@ -1167,7 +1177,7 @@ func (s *Server) deleteGameTags(ctx context.Context,
 	id string,
 	tags []string,
 ) error {
-	ctx = context.WithValue(ctx, CtxKeyMinData, true)
+	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 
 	g, err := s.getGame(ctx, id)
 	if err != nil {
