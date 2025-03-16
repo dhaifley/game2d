@@ -1,9 +1,5 @@
 VERSION="0.1.1"
 
-GO_FILES := $(shell find . -name "*.go")
-
-YAML_FILES := $(shell find ./api -name "*.yaml")
-
 -include ./.env
 
 all: build
@@ -14,18 +10,18 @@ clean:
 	rm -rf app/dist
 .PHONY: clean
 
-static/openapi.yaml: $(YAML_FILES)
+static/openapi.yaml: $(shell find ./api -name "*.yaml")
 	@./api/generate.sh
 
 docs: static/openapi.yaml
 .PHONY: docs
 
-game2d: $(GO_FILES)
+game2d: $(shell find cmd/game2d -type f) $(shell find client -type f) $(shell find assets -type f)
 	CGO_ENABLED=1 go build -v -o game2d \
 	-ldflags="-X github.com/dhaifley/game2d/client.Version=${VERSION}" \
 	./cmd/game2d
 
-static/game2d.wasm: $(GO_FILES)
+static/game2d.wasm: $(shell find cmd/game2d -type f) $(shell find client -type f) $(shell find assets -type f)
 	CGO_ENABLED=1 GOOS=js GOARCH=wasm go build -v -o static/game2d.wasm \
 	-ldflags="-X github.com/dhaifley/game2d/client.Version=${VERSION}" \
 	./cmd/game2d
@@ -41,7 +37,7 @@ app/dist/index.html: app/index.html $(shell find app/src -type f)
 game2d-app: app/dist/index.html
 .PHONY: game2d-app	
 
-game2d-api: $(GO_FILES) $(shell find static -type f) game2d-app game2d-wasm
+game2d-api: $(shell find . -name "*.go") $(shell find static -type f) game2d-app game2d-wasm
 	CGO_ENABLED=0 go build -v -o game2d-api \
 	-ldflags="-X github.com/dhaifley/game2d/server.Version=${VERSION}" \
 	./cmd/game2d-api

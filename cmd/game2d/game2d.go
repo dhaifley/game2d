@@ -69,8 +69,8 @@ func main() {
 
 	g.AddImage(client.NewImage("bg", "bg.png", ibb))
 
-	for i := -6; i < 7; i++ {
-		for j := -4; j < 6; j++ {
+	for i := -4; i <= 4; i++ {
+		for j := -3; j <= 3; j++ {
 			ids := "bg_" + strconv.Itoa(i) + "_" + strconv.Itoa(j)
 
 			obj := client.NewObject(g, ids, ids, "", "bg", nil)
