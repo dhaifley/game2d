@@ -391,16 +391,16 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "objects", req.Objects)
 	request.SetField(doc, "images", req.Images)
 	request.SetField(doc, "scripts", req.Scripts)
-	request.SetField(doc, "source", req.Source)
 	request.SetField(doc, "commit_hash", req.CommitHash)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
 	cDoc := &bson.D{}
 
+	request.SetField(doc, "account_id", req.AccountID)
 	request.SetField(cDoc, "id", req.ID)
 	request.SetField(cDoc, "previous_id", req.PreviousID)
-	request.SetField(doc, "account_id", req.AccountID)
+	request.SetField(doc, "source", req.Source)
 	request.SetField(cDoc, "created_at", req.CreatedAt)
 	request.SetField(cDoc, "created_by", req.CreatedBy)
 
@@ -526,7 +526,6 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "objects", req.Objects)
 	request.SetField(doc, "images", req.Images)
 	request.SetField(doc, "scripts", req.Scripts)
-	request.SetField(doc, "source", req.Source)
 	request.SetField(doc, "commit_hash", req.CommitHash)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
