@@ -29,7 +29,7 @@ const (
 	CtxKeyGameAllowPreviousID = "game_allow_previous_id"
 )
 
-// Game is the game type for the game service.
+// Game values represent game state data.
 type Game struct {
 	AccountID   request.FieldString      `bson:"account_id"        json:"account_id"        yaml:"account_id"`
 	W           request.FieldInt64       `bson:"w"                 json:"w"                 yaml:"w"`

@@ -26,7 +26,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Account is the account object returned by the API.
+// Account values represent account data.
 type Account struct {
 	ID             request.FieldString `bson:"id"               json:"id"               yaml:"id"`
 	Name           request.FieldString `bson:"name"             json:"name"             yaml:"name"`
@@ -353,7 +353,7 @@ func (s *Server) createAccount(ctx context.Context,
 	return res, nil
 }
 
-// AccountRepo values represent an account import repository.
+// AccountRepo values represent account repository data.
 type AccountRepo struct {
 	Repo           request.FieldString `json:"repo"`
 	RepoStatus     request.FieldString `json:"repo_status"`
@@ -595,7 +595,7 @@ func (s *Server) postAccountRepoHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// User is the user object returned by the API.
+// User values represent user data.
 type User struct {
 	AccountID request.FieldString `bson:"account_id"         json:"account_id"         yaml:"account_id"`
 	ID        request.FieldString `bson:"id"                 json:"id"                 yaml:"id"`
