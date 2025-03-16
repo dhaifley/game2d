@@ -40,6 +40,8 @@ type Game struct {
 	name      string
 	ver       string
 	desc      string
+	apiURL    string
+	apiToken  string
 	lua       *lua.State
 	sub       *Object
 	obj       map[string]*Object
@@ -61,7 +63,7 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 	if w < 0 {
 		w = DefaultGameWidth
 
-		if ws := os.Getenv("GAME_WIDTH"); ws != "" {
+		if ws := os.Getenv("GAME2D_GAME_WIDTH"); ws != "" {
 			if i, err := strconv.Atoi(ws); err == nil {
 				w = i
 			}
@@ -71,7 +73,7 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 	if h < 0 {
 		h = DefaultGameHeight
 
-		if hs := os.Getenv("GAME_HEIGHT"); hs != "" {
+		if hs := os.Getenv("GAME2D_GAME_HEIGHT"); hs != "" {
 			if i, err := strconv.Atoi(hs); err == nil {
 				h = i
 			}
@@ -183,6 +185,66 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 	lua.OpenLibraries(g.lua)
 
 	return nil
+}
+
+// ID returns the game ID.
+func (g *Game) ID() string {
+	return g.id
+}
+
+// SetID sets the game ID.
+func (g *Game) SetID(id string) {
+	g.id = id
+}
+
+// Name returns the game name.
+func (g *Game) Name() string {
+	return g.name
+}
+
+// SetName sets the game name.
+func (g *Game) SetName(name string) {
+	g.name = name
+}
+
+// W returns the game width.
+func (g *Game) W() int {
+	return g.w
+}
+
+// SetW sets the game width.
+func (g *Game) SetW(w int) {
+	g.w = w
+}
+
+// H returns the game height.
+func (g *Game) H() int {
+	return g.h
+}
+
+// SetH sets the game height.
+func (g *Game) SetH(h int) {
+	g.h = h
+}
+
+// APIURL returns the API URL.
+func (g *Game) APIURL() string {
+	return g.apiURL
+}
+
+// SetAPIURL sets the API URL.
+func (g *Game) SetAPIURL(apiURL string) {
+	g.apiURL = apiURL
+}
+
+// APIToken returns the API token.
+func (g *Game) APIToken() string {
+	return g.apiToken
+}
+
+// SetAPIToken sets the API token.
+func (g *Game) SetAPIToken(apiToken string) {
+	g.apiToken = apiToken
 }
 
 // AddSubject adds a subject to the game.
@@ -377,16 +439,17 @@ func (g *Game) Save() error {
 			"unable to encode game save")
 	}
 
-	if apiURL := os.Getenv("GAME2D_API_URL"); apiURL != "" {
-		u, err := url.Parse(apiURL)
+	if g.apiURL != "" {
+		u, err := url.Parse(g.apiURL)
 		if err != nil {
 			return errors.Wrap(err, errors.ErrClient,
 				"unable to parse game2d API URL",
-				"api_url", apiURL)
+				"api_url", g.apiURL)
 		}
 
 		u = u.JoinPath("games")
-		apiURL = u.String()
+
+		apiURL := u.String()
 
 		req, err := http.NewRequest(http.MethodPost, apiURL,
 			bytes.NewBuffer(b))
@@ -400,8 +463,8 @@ func (g *Game) Save() error {
 		req.Header.Set("User-Agent", "game2d")
 		req.Header.Set("X-Game-ID", g.id)
 
-		if apiToken := os.Getenv("GAME2D_API_TOKEN"); apiToken != "" {
-			req.Header.Set("Authorization", "Bearer "+apiToken)
+		if g.apiToken != "" {
+			req.Header.Set("Authorization", "Bearer "+g.apiToken)
 		}
 
 		resp, err := http.DefaultClient.Do(req)
@@ -447,16 +510,17 @@ func (g *Game) Load() error {
 
 	ebiten.SetWindowTitle(g.name + " (loading...)")
 
-	if apiURL := os.Getenv("GAME2D_API_URL"); apiURL != "" {
-		u, err := url.Parse(apiURL)
+	if g.apiURL != "" {
+		u, err := url.Parse(g.apiURL)
 		if err != nil {
 			return errors.Wrap(err, errors.ErrClient,
 				"unable to parse game2d API URL",
-				"api_url", apiURL)
+				"api_url", g.apiURL)
 		}
 
 		u = u.JoinPath("games", g.id)
-		apiURL = u.String()
+
+		apiURL := u.String()
 
 		req, err := http.NewRequest(http.MethodGet, apiURL, nil)
 		if err != nil {
@@ -469,8 +533,8 @@ func (g *Game) Load() error {
 		req.Header.Set("User-Agent", "game2d")
 		req.Header.Set("X-Game-ID", g.id)
 
-		if apiToken := os.Getenv("GAME2D_API_TOKEN"); apiToken != "" {
-			req.Header.Set("Authorization", "Bearer "+apiToken)
+		if g.apiToken != "" {
+			req.Header.Set("Authorization", "Bearer "+g.apiToken)
 		}
 
 		resp, err := http.DefaultClient.Do(req)

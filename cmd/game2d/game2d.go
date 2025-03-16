@@ -27,6 +27,10 @@ func main() {
 
 	g := client.NewGame(log, -1, -1, gameID, "game2d", "2D gaming framework")
 
+	g.SetAPIURL(os.Getenv("GAME2D_API_URL"))
+	g.SetAPIToken(os.Getenv("GAME2D_API_TOKEN"))
+	initJS(g)
+
 	ib, err := assets.GetImage("avatar.png")
 	if err != nil {
 		log.Log(ctx, logger.LvlError,

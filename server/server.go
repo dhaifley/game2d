@@ -595,6 +595,60 @@ func (s *Server) initStaticRoutes(r chi.Router) {
 			}
 		})
 
+	r.Get("/scripts/wasm_exec.js",
+		func(w http.ResponseWriter, r *http.Request) {
+			v, err := static.FS.ReadFile("scripts/wasm_exec.js")
+			if err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/javascript; charset=UTF-8")
+
+			if _, err := w.Write(v); err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+		})
+
+	r.Get("/game2d.wasm",
+		func(w http.ResponseWriter, r *http.Request) {
+			v, err := static.FS.ReadFile("game2d.wasm")
+			if err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/wasm")
+
+			if _, err := w.Write(v); err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+		})
+
+	r.Get("/client",
+		func(w http.ResponseWriter, r *http.Request) {
+			v, err := static.FS.ReadFile("client.html")
+			if err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
+			if _, err := w.Write(v); err != nil {
+				s.error(err, w, r)
+
+				return
+			}
+		})
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		v, err := app.FS.ReadFile("dist/index.html")
 		if err != nil {

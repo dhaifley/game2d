@@ -4,5 +4,5 @@ import "embed"
 
 // FS is a file system containing static files.
 //
-//go:embed *
+//go:embed * all:scripts
 var FS embed.FS

@@ -89,16 +89,20 @@ func TestGameSaveLoad(t *testing.T) {
 	game.AddObject(client.NewObject(game, TestID, TestName, TestID, TestID,
 		nil))
 
-	au := os.Getenv("GAME2D_API_URL")
+	au := game.APIURL()
 
-	err := os.Setenv("GAME2D_API_URL", "")
-	assert.NoError(t, err)
+	game.SetAPIURL("")
+	game.SetAPIToken(game.APIToken())
+	game.SetH(game.H())
+	game.SetW(game.W())
+	game.SetID(game.ID())
+	game.SetName(game.Name())
 
-	err = game.Save()
+	err := game.Save()
 	assert.NoError(t, err)
 
 	t.Cleanup(func() {
-		_ = os.Setenv("GAME2D_API_URL", au)
+		game.SetAPIURL(au)
 		os.Remove("test.json")
 	})
 

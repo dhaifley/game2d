@@ -25,6 +25,14 @@ game2d: $(GO_FILES)
 	-ldflags="-X github.com/dhaifley/game2d/client.Version=${VERSION}" \
 	./cmd/game2d
 
+static/game2d.wasm: $(GO_FILES)
+	CGO_ENABLED=1 GOOS=js GOARCH=wasm go build -v -o static/game2d.wasm \
+	-ldflags="-X github.com/dhaifley/game2d/client.Version=${VERSION}" \
+	./cmd/game2d
+
+game2d-wasm: static/game2d.wasm
+.PHONY: game2d-wasm
+
 app/dist/index.html: app/index.html $(shell find app/src -type f)
 	cd app && \
 	npm run build && \
@@ -33,7 +41,7 @@ app/dist/index.html: app/index.html $(shell find app/src -type f)
 game2d-app: app/dist/index.html
 .PHONY: game2d-app	
 
-game2d-api: $(GO_FILES) static/* game2d-app
+game2d-api: $(GO_FILES) $(shell find static -type f) game2d-app game2d-wasm
 	CGO_ENABLED=0 go build -v -o game2d-api \
 	-ldflags="-X github.com/dhaifley/game2d/server.Version=${VERSION}" \
 	./cmd/game2d-api

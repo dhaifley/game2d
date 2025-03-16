@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      padding: 0 24px;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="/scripts/wasm_exec.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const go = new Go();
+      let url = "/game2d.wasm";
+      const result = await WebAssembly.instantiateStreaming(await fetch(url),
+        go.importObject).catch((err) => {
+          console.error(err);
+        });
+      document.getElementById('loading').remove();
+      go.run(result.instance);
+      const params = new URLSearchParams(window.parent.location.search);
+      if (params.has('game_id')) {
+        setGameID(params.get('game_id'));
+      }
+      if (params.has('game_name')) {
+        setGameName(params.get('game_name'));
+      }
+      if (params.has('api_url')) {
+        setAPIURL(params.get('api_url'));
+      }
+      if (params.has('api_token')) {
+        setAPIToken(params.get('api_token'));
+      }
+    });
+  </script>
+  <p id="loading">Loading...</p>
+</body>
+
+</html>

@@ -12,6 +12,7 @@
 *.tmp
 *.log
 *.env
+*.wasm
 .DS_Store
 .vscode
 go.work
