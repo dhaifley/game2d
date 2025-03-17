@@ -1,17 +1,30 @@
-import React from 'react';
-import HelloWorld from '../components/HelloWorld';
-import avatarLogo from '../assets/avatar.png';
+import React, { useState } from 'react';
+import GamesTable from '../components/GamesTable';
+import GameComponent from '../components/Game';
+import { Game } from '../services/gameService';
 
 const Games: React.FC = () => {
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+
+  const handleSelectGame = (game: Game) => {
+    setSelectedGame(game);
+  };
+
+  const handleCloseGameView = () => {
+    setSelectedGame(null);
+  };
+
   return (
     <div className="games-container">
-      <img src={avatarLogo} alt="Logo" className="logo" />
-      <h1>Games</h1>
-      <p>Browse and manage your game2d projects</p>
-      
-      <div className="components-container">
-        <HelloWorld />
-        <HelloWorld title="Custom Component Title" />
+      <div className="games-header">
+        <h1>Games</h1>
+      </div>
+      <div className="games-content">
+      {selectedGame ? (
+        <GameComponent game={selectedGame} onClose={handleCloseGameView} />
+      ) : (
+        <GamesTable onSelectGame={handleSelectGame} />
+      )}
       </div>
     </div>
   );

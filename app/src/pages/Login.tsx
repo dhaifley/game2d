@@ -33,7 +33,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
-      <h1>Sign In to game2d.ai</h1>
+      <h1>Sign In</h1>
       
       {error && <div className="error-message">{error}</div>}
       

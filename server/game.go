@@ -157,7 +157,8 @@ func (s *Server) getGames(ctx context.Context,
 	var f, srt bson.M
 
 	if query.Search != "" {
-		if err := bson.Unmarshal([]byte(query.Search), &f); err != nil {
+		if err := bson.UnmarshalExtJSON([]byte(query.Search),
+			false, &f); err != nil {
 			return nil, errors.Wrap(err, errors.ErrInvalidRequest,
 				"unable to decode search query",
 				"query", query)
@@ -175,11 +176,16 @@ func (s *Server) getGames(ctx context.Context,
 	f["account_id"] = aID
 
 	if query.Sort != "" {
-		if err := bson.Unmarshal([]byte(query.Sort), &srt); err != nil {
+		if err := bson.UnmarshalExtJSON([]byte(query.Sort),
+			false, &srt); err != nil {
 			return nil, errors.Wrap(err, errors.ErrInvalidRequest,
 				"unable to decode sort query",
 				"query", query)
 		}
+	}
+
+	if srt == nil {
+		srt = bson.M{"created_at": -1}
 	}
 
 	pro := bson.M{

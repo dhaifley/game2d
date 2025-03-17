@@ -151,34 +151,287 @@ body {
 
 .welcome-button:hover {
   background-color: #535bf2;
+  color: white;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
-.home-container, .not-found-container {
+.not-found-container {
   padding: 2rem;
 }
 
-.components-container {
+/* Games page styles */
+.games-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.games-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Games Table Component */
+.games-table-container {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.games-table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 3rem;
+}
+
+.search-container {
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-size-selector select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.games-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.games-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.games-table th, .games-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.games-table th {
+  background-color: #1a1a1a;
+  position: sticky;
+  top: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.games-table th:hover {
+  background-color: #2a2a2a;
+}
+
+.game-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.game-row:hover {
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.game-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-icon {
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.pagination-button {
+  background-color: #1a1a1a;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 2rem;
+  color: #646cff;
+}
+
+.error-message {
+  text-align: center;
+  color: #ff6464;
+  background-color: rgba(255, 100, 100, 0.1);
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+/* Game Details Component */
+.game-details-container {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 1rem;
+}
+
+.game-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1rem;
+}
+
+.game-details-header h2 {
+  margin: 0;
+}
+
+.close-button {
+  background-color: #2a2a2a;
+  padding: 0.5rem 1rem;
+}
+
+.game-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.game-details-content p {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+/* Help Page Styles */
+.help-page {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.help-page h1 {
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.help-content {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  margin-top: 2rem;
 }
 
-.hello-world-component {
-  border: 1px solid #646cff;
+.help-content section {
+  background-color: #1a1a1a;
   border-radius: 8px;
   padding: 1.5rem;
-  background-color: rgba(100, 108, 255, 0.1);
-  transition: background-color 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.hello-world-component:hover {
-  background-color: rgba(100, 108, 255, 0.2);
+.help-content h2 {
+  color: #646cff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.help-content p {
+  line-height: 1.6;
+  margin: 0.75rem 0;
+}
+
+.help-content a {
+  color: #646cff;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.help-content a:hover {
+  color: #535bf2;
+  text-decoration: none;
+}
+
+.faq-item {
+  margin-bottom: 1.5rem;
+  background-color: #2a2a2a;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.faq-item:last-child {
+  margin-bottom: 0;
+}
+
+.faq-item h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: #e2e2e2;
+  font-size: 1.1rem;
+}
+
+.faq-item p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .help-page {
+    padding: 1.5rem;
+  }
+  
+  .help-content section {
+    padding: 1rem;
+  }
 }
 
 a {

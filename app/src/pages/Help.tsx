@@ -3,7 +3,9 @@ import React from 'react';
 const Help: React.FC = () => {
   return (
     <div className="help-page">
-      <h1>Help Center</h1>
+      <div className="help-header">
+        <h1>Help Center</h1>
+      </div>
       <div className="help-content">
         <section>
           <h2>Getting Started</h2>
@@ -30,8 +32,13 @@ const Help: React.FC = () => {
         <section>
           <h2>Documentation and Source Code</h2>
           <p>
-            The game2d.ai platform is open-source and available on GitHub. You can find the source code and
+            The game2d.ai platform is open-source and available on GitHub.
+          </p>
+          <p>  
+            You can find the source code and
             documentation at <a href="https://github.com/dhaifley/game2d">github.com/dhaifley/game2d</a>.
+          </p>
+          <p>
             We encourage contributions and feedback from the community.
           </p>
           <p>

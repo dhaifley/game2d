@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(false);
   }, []);
 
+
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
