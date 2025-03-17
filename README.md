@@ -1,104 +1,167 @@
-# game2d
-2D gaming framework
+# game2d: A 2D Gaming Framework
 
-This is a basic framework providing an interface for accessing the ebitengine
-2D game engine and a Lua scripting interpreter. It is implemented using a
-declarative schema that can be rendered in JSON or YAML. It is intended to be
-produced and consumed by generative A.I.
+<div align="center">
 
-## Overview
+![game2d](https://img.shields.io/badge/game2d-Framework-646cff)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
+![Status](https://img.shields.io/badge/status-active-success.svg)
 
-The game2d service consists of three primary components.
+</div>
 
-### game2d
+## 📋 Overview
 
-This is the main client and protocol, which is usually compiled into WASM for
-distribution via the application user interface. It can also be built for
-various native architectures.
+game2d is an open-source framework for 2D game development that combines Go,
+the ebitengine game engine, Lua scripting, and a WebAssembly client. Built on a
+declarative object schema, representable in JSON or YAML, it's designed for
+experimenting with game code and assets created with generative AI.
 
-### game2d-api
+### 🏗️ Architecture Overview
 
-This is the back-end service providing the REST API and the main service
-functionality. It provides the interface with generative A.I. services. It also
-serves the application user interface.
+```mermaid
+graph TD
+    subgraph "API Layer"
+        API["game2d-api Service"] --> Auth["Authentication & Authorization"]
+        API --> GameManagement["Game Management"]
+        API --> AIService["AI Integration Service"]
+    end
 
-### game2d-app
+    subgraph "Storage Layer"
+        GameManagement --> MongoDB["MongoDB (Game Definitions)"]
+        GameManagement --> Redis["Redis (Caching)"]
+    end
 
-This is a simple user interface application for interacting with the service.
-It is used to list, select and save game definitions, update user profiles and
-settings, and submit game definitions and prompts to generative A.I. services.
-The primary portion of the user interface runs a WASM version of the client
-directly within the user interface.
+    subgraph "Client Layer"
+        Client["game2d WASM Client"] --> Ebitengine["Ebitengine (2D Game Engine)"]
+        Client --> LuaInterpreter["Lua Interpreter"]
+        Client --> API
+    end
+    
+    subgraph "Frontend Layer"
+        WebUI["game2d-app React Web UI"] --> API
+        WebUI --> Client
+    end
 
-## Getting Started
-
-### Requirements
-
-- [go](https://go.dev/dl/)
-- [docker](https://docs.docker.com/get-docker/)
-- [make](https://www.gnu.org/software/make/)
-- [node.js](https://nodejs.org/)
-- [npm](https://www.npmjs.com/)
-- [typescript](https://www.typescriptlang.org/)
-
-### Other Tools and Libraries
-
-- [ebitengine](https://ebitengine.org/)
-- [lua](https://www.lua.org/)
-- [wasm](https://webassembly.org/)
-- [react](https://react.dev/)
-- [react router](https://reactrouter.com/)
-- [vite](https://vite.dev/)
-
-### Building and Testing
-
-To build the service components locally:
-
-```sh
-$ make clean
-$ make build
+    AIService --> ExternalAI["External AI Services"]
 ```
 
-To run just the unit tests, which do not start any test containers:
+## 🧩 Core Components
+
+### 1. game2d Client
+
+The main client and protocol, typically compiled into WebAssembly (WASM) for
+browser integration, but also buildable for various native architectures.
+
+- **Engine**: Combines Ebitengine 2D game engine with a Lua interpreter
+- **State Management**: Shared game state between Lua and Go code
+- **Game Loop**: Renders assets during draw phase, executes scripts during update phase
+- **Game Schema**: Uses a declarative object schema for game definitions
+
+### 2. game2d API Service
+
+The distributed backend service providing REST API functionality:
+
+- **Game Storage**: Persists game state definitions in MongoDB
+- **Performance**: Implements Redis caching for fast access
+- **AI Integration**: Interfaces with generative AI services to create game content
+- **User Management**: Handles authentication, accounts, and profiles
+- **Content Delivery**: Serves the web application UI
+
+### 3. game2d App (Web UI)
+
+A React/Vite application for interacting with the service:
+
+- **Game Management**: Search, browse, edit, and save game definitions
+- **Account Management**: Update profiles and account settings
+- **AI Interaction**: Submit game definitions and prompts to AI services
+- **Game Player**: Runs the WASM client directly in the browser
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Go](https://go.dev/dl/) (1.18+)
+- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
+- [Make](https://www.gnu.org/software/make/)
+- [Node.js](https://nodejs.org/) (16+) & [npm](https://www.npmjs.com/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [React](https://react.dev/)
+
+### Building the Project
 
 ```sh
-$ make test-quick
+# Clean and build all components
+make clean
+make build
+
+# Quick tests (no containers)
+make test-quick
+
+# Full integration tests (with containers)
+make test
+
+# Start the test environment
+make start
+
+# Run the service locally
+make run
+
+# Stop and clean up
+make stop
 ```
 
-To run all tests, including integration tests, which start test containers:
+## 📖 Documentation
 
-```sh
-$ make test
-```
+While the service is running locally:
 
-To start the test environment containers locally:
+- **API Documentation**: Swagger UI at [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs)
 
-```sh
-$ make start
-```
+## 🔧 Development Workflow
 
-To run the service locally, for testing:
+1. **Clone the repository**
+   ```sh
+   git clone https://github.com/dhaifley/game2d.git
+   cd game2d
+   ```
 
-```sh
-$ make run
-```
+2. **Set up the development environment**
+   ```sh
+   make start
+   ```
 
-Finally, to shutdown and cleanup the test environment:
+3. **Run the services locally**
+   ```sh
+   make run
+   ```
 
-```sh
-$ make stop
-```
+4. **Access the application**
+   - Web UI: [http://localhost:8080/](http://localhost:8080/)
+   - API docs: [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs)
 
-### Documentation
+## 🎮 Game Definition Schema
 
-While the service is running locally, interactive documentation, which can be
-used for testing requests to the service, can be accessed using:
+game2d uses a declarative schema for defining games:
 
-- http://localhost:8080/api/v1/docs
+- **Game State**: Overall game properties and metadata
+- **Assets**: Images and resources needed for rendering
+- **Scripts**: Lua code executed during the game loop
+- **Objects**: Compositions of assets, scripts, and data
+- **Subject**: The special object representing the player
 
-### Running
+## 🤝 Contributing
 
-While the service is running locally, the user interface application can be
-accessed using:
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- http://localhost:8080/
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the GPL-3.0 License - see the LICENSE file for
+details.
+
+## 📬 Contact
+
+Project Link: [https://github.com/dhaifley/game2d](https://github.com/dhaifley/game2d)

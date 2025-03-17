@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: game2d
   version: "0.1.1"
-  description: 2D gaming framework
+  description: A 2D gaming framework
   license:
     name: GPL-3.0 license
     identifier: GPL-3.0

@@ -138,6 +138,18 @@ body {
   margin-top: 2rem;
 }
 
+.welcome-item {
+  margin: 0.75rem 0;
+  margin-bottom: 1.5rem;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 1rem;
+  line-height: 1.6;
+}
+
 .welcome-button {
   display: inline-block;
   margin-top: 2rem;
