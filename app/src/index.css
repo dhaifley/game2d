@@ -30,6 +30,7 @@ body {
 
 .title-bar {
   display: flex;
+  gap: 10px;
   justify-content: space-between;
   align-items: center;
   background-color: #1a1a1a;
@@ -44,7 +45,7 @@ body {
   text-align: left;
 }
 
-.title-bar .auth-buttons {
+.title-bar .title-buttons {
   display: flex;
   gap: 10px;
   margin-left: auto;

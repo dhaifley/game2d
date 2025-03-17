@@ -26,7 +26,7 @@ const TitleBar: React.FC = () => {
   return (
     <div className="title-bar">
       <div className="title">game2d.ai</div>
-      <div className="auth-buttons">
+      <div className="title-buttons">
         <button className="games-button" onClick={handleGamesClick}>
           Games
         </button>

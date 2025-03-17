@@ -29,7 +29,7 @@ static/game2d.wasm: $(shell find cmd/game2d -type f) $(shell find client -type f
 game2d-wasm: static/game2d.wasm
 .PHONY: game2d-wasm
 
-app/dist/index.html: app/index.html $(shell find app/src -type f)
+app/dist/index.html: app/index.html $(shell find app/src -type f) $(shell find app/public -type f)
 	cd app && \
 	npm run build && \
 	cd ..
