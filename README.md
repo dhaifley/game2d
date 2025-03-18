@@ -86,35 +86,6 @@ A React/Vite application for interacting with the service:
 - [TypeScript](https://www.typescriptlang.org/)
 - [React](https://react.dev/)
 
-### Building the Project
-
-```sh
-# Clean and build all components
-make clean
-make build
-
-# Quick tests (no containers)
-make test-quick
-
-# Full integration tests (with containers)
-make test
-
-# Start the test environment
-make start
-
-# Run the service locally
-make run
-
-# Stop and clean up
-make stop
-```
-
-## 📖 Documentation
-
-While the service is running locally:
-
-- **API Documentation**: Swagger UI at [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs)
-
 ## 🔧 Development Workflow
 
 1. **Clone the repository**
@@ -125,7 +96,11 @@ While the service is running locally:
 
 2. **Set up the development environment**
    ```sh
-   make start
+   cat <<EOF
+   SUPERUSER=admin
+   SUPERUSER_PASSWORD=admin
+   AI_KEY=(your AI API key)
+   EOF > .env
    ```
 
 3. **Run the services locally**
@@ -137,6 +112,21 @@ While the service is running locally:
    - Web UI: [http://localhost:8080/](http://localhost:8080/)
    - API docs: [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs)
 
+5. **Stop and cleanup the services**
+   ```sh
+   make stop
+   ```
+6. **Run all tests locally**
+   ```sh
+   make tests
+   ```
+
+## 📖 Documentation
+
+While the service is running locally:
+
+- **API Documentation**: Swagger UI at [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs)
+  
 ## 🎮 Game Definition Schema
 
 game2d uses a declarative schema for defining games:
