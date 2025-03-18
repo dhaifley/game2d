@@ -96,11 +96,14 @@ A React/Vite application for interacting with the service:
 
 2. **Set up the development environment**
    ```sh
-   cat <<EOF
+   cat <<EOF > .env
    SUPERUSER=admin
    SUPERUSER_PASSWORD=admin
    AI_KEY=(your AI API key)
-   EOF > .env
+   EOF
+
+   set -a
+   . .env
    ```
 
 3. **Run the services locally**
