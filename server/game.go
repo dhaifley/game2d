@@ -58,10 +58,11 @@ type Game struct {
 
 // AIData values contain the AI data for a game.
 type AIData struct {
-	Prompt   request.FieldString `bson:"prompt"   json:"prompt"   yaml:"prompt"`
-	Response request.FieldString `bson:"response" json:"response" yaml:"response"`
-	Data     request.FieldJSON   `bson:"data"     json:"data"     yaml:"data"`
-	Error    request.FieldJSON   `bson:"error"    json:"error"    yaml:"error"`
+	Prompt   request.FieldString `bson:"prompt"            json:"prompt"            yaml:"prompt"`
+	Response request.FieldString `bson:"response"          json:"response"          yaml:"response"`
+	Data     request.FieldJSON   `bson:"data"              json:"data"              yaml:"data"`
+	Error    request.FieldJSON   `bson:"error"             json:"error"             yaml:"error"`
+	GameID   *string             `bson:"game_id,omitempty" json:"game_id,omitempty" yaml:"game_id,omitempty"`
 }
 
 // Validate checks that the value contains valid data.
@@ -94,12 +95,18 @@ func (g *Game) Validate() error {
 		}
 	}
 
-	if g.ID.Set && g.ID.Valid {
-		if !request.ValidGameID(g.ID.Value) {
+	if g.PreviousID.Set && g.PreviousID.Valid {
+		if !request.ValidGameID(g.PreviousID.Value) {
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid previous_id",
 				"game", g)
 		}
+	}
+
+	if g.Name.Set && !g.Name.Valid {
+		return errors.New(errors.ErrInvalidRequest,
+			"name must not be null",
+			"game", g)
 	}
 
 	if g.Status.Set {
@@ -132,6 +139,12 @@ func (g *Game) ValidateCreate() error {
 	if !g.ID.Set {
 		return errors.New(errors.ErrInvalidRequest,
 			"missing id",
+			"game", g)
+	}
+
+	if !g.Name.Set {
+		return errors.New(errors.ErrInvalidRequest,
+			"missing name",
 			"game", g)
 	}
 
@@ -389,6 +402,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	request.SetField(doc, "w", req.W)
 	request.SetField(doc, "h", req.H)
+	request.SetField(doc, "previous_id", req.PreviousID)
 	request.SetField(doc, "name", req.Name)
 	request.SetField(doc, "version", req.Version)
 	request.SetField(doc, "description", req.Description)
@@ -405,17 +419,28 @@ func (s *Server) createGame(ctx context.Context,
 
 	cDoc := &bson.D{}
 
-	request.SetField(doc, "account_id", req.AccountID)
+	request.SetField(cDoc, "account_id", req.AccountID)
 	request.SetField(cDoc, "id", req.ID)
-	request.SetField(cDoc, "previous_id", req.PreviousID)
-	request.SetField(doc, "source", req.Source)
+	request.SetField(cDoc, "source", req.Source)
 	request.SetField(cDoc, "created_at", req.CreatedAt)
 	request.SetField(cDoc, "created_by", req.CreatedBy)
 
 	doc = &bson.D{{Key: "$set", Value: doc}, {Key: "$setOnInsert", Value: cDoc}}
 
+	pro := bson.M{"_id": 0}
+
+	if v := ctx.Value(CtxKeyGameMinData); v != nil {
+		pro = bson.M{
+			"_id":     0,
+			"subject": 0,
+			"objects": 0,
+			"images":  0,
+			"scripts": 0,
+		}
+	}
+
 	if err := s.DB().Collection("games").FindOneAndUpdate(ctx, f, doc,
-		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0}).
+		options.FindOneAndUpdate().SetProjection(pro).
 			SetReturnDocument(options.After).SetUpsert(true)).
 		Decode(&res); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -505,6 +530,14 @@ func (s *Server) updateGame(ctx context.Context,
 		}
 	}
 
+	if req.PreviousID.Set {
+		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"previous_id not allowed",
+				"req", req)
+		}
+	}
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -525,6 +558,7 @@ func (s *Server) updateGame(ctx context.Context,
 
 	request.SetField(doc, "w", req.W)
 	request.SetField(doc, "h", req.H)
+	request.SetField(doc, "previous_id", req.PreviousID)
 	request.SetField(doc, "name", req.Name)
 	request.SetField(doc, "version", req.Version)
 	request.SetField(doc, "description", req.Description)
@@ -539,9 +573,21 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
+	pro := bson.M{"_id": 0}
+
+	if v := ctx.Value(CtxKeyGameMinData); v != nil {
+		pro = bson.M{
+			"_id":     0,
+			"subject": 0,
+			"objects": 0,
+			"images":  0,
+			"scripts": 0,
+		}
+	}
+
 	if err := s.DB().Collection("games").FindOneAndUpdate(ctx, f,
 		&bson.D{{Key: "$set", Value: doc}},
-		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0}).
+		options.FindOneAndUpdate().SetProjection(pro).
 			SetReturnDocument(options.After).SetUpsert(false)).
 		Decode(&res); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -1232,7 +1278,10 @@ func (s *Server) gamesHandler() http.Handler {
 
 	r.With(s.stat, s.trace, s.auth).Post("/import", s.postImportGamesHandler)
 
-	r.With(s.stat, s.trace, s.auth).Get("/tags", s.getAllGameTagsHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/prompt", s.postGamesPromptHandler)
+	r.With(s.stat, s.trace, s.auth).Post("/undo", s.postGamesUndoHandler)
+
+	r.With(s.stat, s.trace, s.auth).Get("/tags", s.getAllGamesTagsHandler)
 	r.With(s.stat, s.trace, s.auth).Get("/{id}/tags",
 		s.getGameTagsHandler)
 	r.With(s.stat, s.trace, s.auth).Post("/{id}/tags",
@@ -1444,8 +1493,289 @@ func (s *Server) postImportGamesHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// getAllGameTagsHandler is the get handler function for all game tags.
-func (s *Server) getAllGameTagsHandler(w http.ResponseWriter, r *http.Request) {
+// postGamesPromptHandler is the post handler used to send a prompt about a game
+// to an AI service.
+func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	req := &AIData{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		switch e := err.(type) {
+		case *errors.Error:
+			s.error(e, w, r)
+		default:
+			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to decode request"), w, r)
+		}
+
+		return
+	}
+
+	doPrompt := func(req *AIData) (*AIData, error) {
+		if req == nil {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing request")
+		}
+
+		if req.GameID == nil || *req.GameID == "" {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing game id",
+				"req", req)
+		}
+
+		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
+
+		g, err := s.getGame(ctx, *req.GameID)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to get game for prompt",
+				"req", req)
+		}
+
+		if g == nil {
+			return nil, errors.New(errors.ErrNotFound,
+				"game not found for prompt",
+				"req", req)
+		}
+
+		if g.Source.Value == "git" {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"unable to create prompts for games with source git",
+				"req", req)
+		}
+
+		if g.Status.Value == request.StatusInactive {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"unable to create prompts for inactive games",
+				"req", req)
+		}
+
+		ng := &Game{
+			AccountID: g.AccountID,
+			W:         g.W,
+			H:         g.H,
+			PreviousID: request.FieldString{
+				Set: true, Valid: false, Value: g.ID.Value,
+			},
+			Name:        g.Name,
+			Version:     g.Version,
+			Description: g.Description,
+			Icon:        g.Icon,
+			Status:      g.Status,
+			StatusData:  g.StatusData,
+			Subject:     g.Subject,
+			Objects:     g.Objects,
+			Images:      g.Images,
+			Scripts:     g.Scripts,
+			Source:      g.Source,
+			CommitHash:  g.CommitHash,
+			Tags:        g.Tags,
+			AIData:      g.AIData,
+		}
+
+		ng, err = s.createGame(ctx, ng)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to create new game from prompt",
+				"req", req,
+				"new_game", ng)
+		}
+
+		req.Response = request.FieldString{
+			Set: true, Valid: true, Value: req.Response.Value +
+				"\n\nPrompt:\n" + req.Prompt.Value +
+				"\n\nResponse:\nThe AI has responded.",
+		}
+
+		req.GameID = &ng.ID.Value
+
+		return req, nil
+	}
+
+	res, err := doPrompt(req)
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+	scheme := "https"
+	if strings.Contains(r.Host, "localhost") {
+		scheme = "http"
+	}
+
+	loc := &url.URL{
+		Scheme: scheme,
+		Host:   r.Host,
+		Path:   r.URL.Path,
+	}
+
+	w.Header().Set("Location", loc.String())
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// postGamesUndoHandler is the post handler used to undo to the point prior to
+// the last AI prompt.
+func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	req := &AIData{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		switch e := err.(type) {
+		case *errors.Error:
+			s.error(e, w, r)
+		default:
+			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to decode request"), w, r)
+		}
+
+		return
+	}
+
+	doUndo := func(req *AIData) (*AIData, error) {
+		if req == nil {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing request")
+		}
+
+		if req.GameID == nil || *req.GameID == "" {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing game id",
+				"req", req)
+		}
+
+		ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
+		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
+
+		g, err := s.getGame(ctx, *req.GameID)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to get game to undo",
+				"req", req)
+		}
+
+		if g == nil {
+			return nil, errors.New(errors.ErrNotFound,
+				"game not found to undo",
+				"req", req)
+		}
+
+		if g.PreviousID.Value == "" {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"unable to undo game, no previous game",
+				"req", req)
+		}
+
+		pg, err := s.getGame(ctx, g.PreviousID.Value)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to get previous game to undo",
+				"req", req)
+		}
+
+		if pg == nil {
+			return nil, errors.New(errors.ErrNotFound,
+				"previous game not found",
+				"req", req)
+		}
+
+		g.PreviousID = request.FieldString{
+			Set: true, Valid: false, Value: pg.ID.Value,
+		}
+
+		g.Status = request.FieldString{
+			Set: true, Valid: true, Value: request.StatusInactive,
+		}
+
+		pg.PreviousID = request.FieldString{
+			Set: true, Valid: false,
+		}
+
+		pg.Status = request.FieldString{
+			Set: true, Valid: true, Value: request.StatusActive,
+		}
+
+		pg, err = s.updateGame(ctx, pg)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to update previous game to undo",
+				"req", req,
+				"previous_game", pg)
+		}
+
+		g, err = s.updateGame(ctx, g)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to update game to undo",
+				"req", req,
+				"game", g)
+		}
+
+		req.Response = request.FieldString{
+			Set: true, Valid: true, Value: req.Response.Value +
+				"\n\nUndo." + req.Prompt.Value +
+				"\n\nResponse:\nThe previous prompt has been undone.",
+		}
+
+		req.GameID = &pg.ID.Value
+
+		return req, nil
+	}
+
+	res, err := doUndo(req)
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+	scheme := "https"
+	if strings.Contains(r.Host, "localhost") {
+		scheme = "http"
+	}
+
+	loc := &url.URL{
+		Scheme: scheme,
+		Host:   r.Host,
+		Path:   r.URL.Path,
+	}
+
+	w.Header().Set("Location", loc.String())
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
+// getAllGamesTagsHandler is the get handler function for all game tags.
+func (s *Server) getAllGamesTagsHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
 	ctx := r.Context()
 
 	if err := s.checkScope(ctx, request.ScopeGamesRead); err != nil {

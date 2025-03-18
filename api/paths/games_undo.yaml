@@ -1,0 +1,23 @@
+# paths/games_undo.yaml
+post:
+  tags:
+    - games
+  operationId: create_games_undo
+  summary: Undo the last AI prompt
+  description: Undo, or redo, the last prompt about a game to an AI service.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/ai_data.yaml"
+  responses:
+    "201":
+      $ref: "../components/responses/ai_data.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

@@ -72,6 +72,16 @@ properties:
     type: string
     description: >
       The commit hash of the of the import repository when source is git.
+  tags:
+    type: array
+    description: A list of tags associated with the game.
+    items:
+      type: string
+      examples: ["tag1:value1", "tag2:value2"]
+  ai_data:
+    description: >
+      Data related to the last AI prompt and response for the game.
+    $ref: "./ai_data.yaml"
   created_at:
     type: integer
     description: >

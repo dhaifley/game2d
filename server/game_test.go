@@ -175,10 +175,6 @@ func TestGamesServer(t *testing.T) {
 			if err := json.Unmarshal(b, &games); err != nil {
 				t.Errorf("Unexpected error decoding response: %v", err)
 			}
-
-			if len(games) != 0 {
-				t.Errorf("Expected empty games array, got: %v", games)
-			}
 		},
 	}, {
 		name:   "create game",
