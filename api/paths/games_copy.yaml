@@ -1,0 +1,28 @@
+# paths/games_copy.yaml
+post:
+  tags:
+    - games
+  operationId: create_games_copy
+  summary: Copy game
+  description: >
+    Copy a game to new game definition. Only the id field of the game to be
+    copied and the name field containing the name of the new game are required.
+    The rest of the fields will be copied from the game to be copied. The
+    response contains the new (copied) game definition.
+  security: 
+    -  "OAuth2PasswordBearer":
+       - "game:write"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/game.yaml"
+  responses:
+    "201":
+      description: A response containing details about the new game definition.
+      $ref: "../components/responses/game.yaml"
+    "400":
+      $ref: "../components/responses/user_error.yaml"
+    "500":
+      $ref: "../components/responses/error.yaml"

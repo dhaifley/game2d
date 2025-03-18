@@ -1277,7 +1277,7 @@ func (s *Server) gamesHandler() http.Handler {
 	r.Use(s.dbAvail)
 
 	r.With(s.stat, s.trace, s.auth).Post("/import", s.postImportGamesHandler)
-
+	r.With(s.stat, s.trace, s.auth).Post("/copy", s.postGamesCopyHandler)
 	r.With(s.stat, s.trace, s.auth).Post("/prompt", s.postGamesPromptHandler)
 	r.With(s.stat, s.trace, s.auth).Post("/undo", s.postGamesUndoHandler)
 
@@ -1493,6 +1493,123 @@ func (s *Server) postImportGamesHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// postGamesCopyHandler is the post handler used to copy a game definition.
+func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
+	r *http.Request,
+) {
+	ctx := r.Context()
+
+	if err := s.checkScope(ctx, request.ScopeGamesWrite); err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	req := &Game{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		switch e := err.(type) {
+		case *errors.Error:
+			s.error(e, w, r)
+		default:
+			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+				"unable to decode request"), w, r)
+		}
+
+		return
+	}
+
+	doCopy := func(req *Game) (*Game, error) {
+		if req == nil {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing request")
+		}
+
+		if req.ID.Value == "" {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing game id",
+				"req", req)
+		}
+
+		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
+
+		g, err := s.getGame(ctx, req.ID.Value)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to get game for copy",
+				"req", req)
+		}
+
+		if g == nil {
+			return nil, errors.New(errors.ErrNotFound,
+				"game not found for copy",
+				"req", req)
+		}
+
+		res := &Game{
+			AccountID: g.AccountID,
+			W:         g.W,
+			H:         g.H,
+			PreviousID: request.FieldString{
+				Set: true, Valid: false,
+			},
+			Name:        req.Name,
+			Version:     g.Version,
+			Description: g.Description,
+			Icon:        g.Icon,
+			Status: request.FieldString{
+				Set: true, Valid: true, Value: request.StatusActive,
+			},
+			StatusData: g.StatusData,
+			Subject:    g.Subject,
+			Objects:    g.Objects,
+			Images:     g.Images,
+			Scripts:    g.Scripts,
+			Source: request.FieldString{
+				Set: true, Valid: true, Value: "app",
+			},
+			Tags:   g.Tags,
+			AIData: g.AIData,
+		}
+
+		res, err = s.createGame(ctx, res)
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to create new game from prompt",
+				"req", req,
+				"new_game", res)
+		}
+
+		return res, nil
+	}
+
+	res, err := doCopy(req)
+	if err != nil {
+		s.error(err, w, r)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+	scheme := "https"
+	if strings.Contains(r.Host, "localhost") {
+		scheme = "http"
+	}
+
+	loc := &url.URL{
+		Scheme: scheme,
+		Host:   r.Host,
+		Path:   r.URL.Path,
+	}
+
+	w.Header().Set("Location", loc.String())
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		s.error(err, w, r)
+	}
+}
+
 // postGamesPromptHandler is the post handler used to send a prompt about a game
 // to an AI service.
 func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
@@ -1564,7 +1681,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 			W:         g.W,
 			H:         g.H,
 			PreviousID: request.FieldString{
-				Set: true, Valid: false, Value: g.ID.Value,
+				Set: true, Valid: true, Value: g.ID.Value,
 			},
 			Name:        g.Name,
 			Version:     g.Version,
@@ -1576,10 +1693,11 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 			Objects:     g.Objects,
 			Images:      g.Images,
 			Scripts:     g.Scripts,
-			Source:      g.Source,
-			CommitHash:  g.CommitHash,
-			Tags:        g.Tags,
-			AIData:      g.AIData,
+			Source: request.FieldString{
+				Set: true, Valid: true, Value: "app",
+			},
+			Tags:   g.Tags,
+			AIData: g.AIData,
 		}
 
 		ng, err = s.createGame(ctx, ng)
@@ -1703,7 +1821,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 		}
 
 		g.PreviousID = request.FieldString{
-			Set: true, Valid: false, Value: pg.ID.Value,
+			Set: true, Valid: true, Value: pg.ID.Value,
 		}
 
 		g.Status = request.FieldString{
@@ -1711,7 +1829,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 		}
 
 		pg.PreviousID = request.FieldString{
-			Set: true, Valid: false,
+			Set: true, Valid: true, Value: g.ID.Value,
 		}
 
 		pg.Status = request.FieldString{
