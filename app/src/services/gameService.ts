@@ -4,6 +4,9 @@ import * as mockService from './mockGameService';
 // Environment flag to use mock data (for development)
 const USE_MOCK_DATA = false;
 
+// Base API URL
+const API_BASE_URL = '/api/v1';
+
 // Define the game response interface
 export interface Game {
   id: string;
@@ -78,10 +81,69 @@ export const fetchGame = async (id: string): Promise<Game> => {
   }
 
   try {
-    const response = await axios.get(`/api/v1/games/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/games/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching game ${id}:`, error);
+    throw error;
+  }
+};
+
+// Create a new game
+export const createGame = async (name: string): Promise<Game> => {
+  if (USE_MOCK_DATA) {
+    return mockService.fetchGame('mock-new-game');
+  }
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/games`, { name });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating game:', error);
+    throw error;
+  }
+};
+
+// Copy an existing game
+export const copyGame = async (id: string, name: string): Promise<Game> => {
+  if (USE_MOCK_DATA) {
+    return mockService.fetchGame('mock-copy-game');
+  }
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/games/copy`, { id, name });
+    return response.data;
+  } catch (error) {
+    console.error(`Error copying game ${id}:`, error);
+    throw error;
+  }
+};
+
+// Delete a game
+export const deleteGame = async (id: string): Promise<void> => {
+  if (USE_MOCK_DATA) {
+    return Promise.resolve();
+  }
+
+  try {
+    await axios.delete(`${API_BASE_URL}/games/${id}`);
+  } catch (error) {
+    console.error(`Error deleting game ${id}:`, error);
+    throw error;
+  }
+};
+
+// Update a game
+export const updateGame = async (id: string, updates: Partial<Game>): Promise<Game> => {
+  if (USE_MOCK_DATA) {
+    return mockService.fetchGame(id);
+  }
+
+  try {
+    const response = await axios.put(`${API_BASE_URL}/games/${id}`, updates);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating game ${id}:`, error);
     throw error;
   }
 };

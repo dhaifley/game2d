@@ -41,6 +41,7 @@ type Game struct {
 	ver      string
 	desc     string
 	icon     string
+	source   string
 	apiURL   string
 	apiToken string
 	lua      *lua.State
@@ -89,16 +90,17 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 	}
 
 	return &Game{
-		log:  log,
-		w:    w,
-		h:    h,
-		lua:  l,
-		id:   id,
-		name: name,
-		desc: desc,
-		obj:  make(map[string]*Object),
-		img:  make(map[string]*Image),
-		src:  make(map[string]*Script),
+		log:    log,
+		w:      w,
+		h:      h,
+		lua:    l,
+		id:     id,
+		name:   name,
+		desc:   desc,
+		source: "app",
+		obj:    make(map[string]*Object),
+		img:    make(map[string]*Image),
+		src:    make(map[string]*Script),
 	}
 }
 
@@ -110,6 +112,7 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Version     string             `json:"version,omitempty"`
 		Description string             `json:"description,omitempty"`
 		Icon        string             `json:"icon,omitempty"`
+		Source      string             `json:"source,omitempty"`
 		Debug       bool               `json:"debug,omitempty"`
 		W           int                `json:"w"`
 		H           int                `json:"h"`
@@ -123,6 +126,7 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Version:     g.ver,
 		Description: g.desc,
 		Icon:        g.icon,
+		Source:      g.source,
 		Debug:       g.debug,
 		W:           g.w,
 		H:           g.h,
@@ -141,6 +145,7 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 		Version     string             `json:"version,omitempty"`
 		Description string             `json:"description,omitempty"`
 		Icon        string             `json:"icon,omitempty"`
+		Source      string             `json:"source,omitempty"`
 		Debug       bool               `json:"debug,omitempty"`
 		W           int                `json:"w"`
 		H           int                `json:"h"`
@@ -159,6 +164,7 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 	g.ver = v.Version
 	g.desc = v.Description
 	g.icon = v.Icon
+	g.source = v.Source
 	g.debug = v.Debug
 	g.w = v.W
 	g.h = v.H
@@ -418,6 +424,8 @@ func (g *Game) Layout(w, h int) (int, int) {
 // Save persists a game state.
 func (g *Game) Save() error {
 	ebiten.SetWindowTitle(g.name + " (saving...)")
+
+	g.source = "app"
 
 	b, err := json.MarshalIndent(&g, "", "  ")
 	if err != nil {

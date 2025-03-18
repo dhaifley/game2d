@@ -354,7 +354,7 @@ func (s *Server) createGame(ctx context.Context,
 		}
 	}
 
-	if req.PreviousID.Set {
+	if req.PreviousID.Value != "" {
 		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
 			return nil, errors.New(errors.ErrInvalidRequest,
 				"previous_id not allowed",
@@ -368,9 +368,15 @@ func (s *Server) createGame(ctx context.Context,
 		}
 	}
 
-	if !req.Status.Set {
+	if req.Status.Value == "" {
 		req.Status = request.FieldString{
 			Set: true, Valid: true, Value: request.StatusActive,
+		}
+	}
+
+	if req.Source.Value == "" {
+		req.Source = request.FieldString{
+			Set: true, Valid: true, Value: "app",
 		}
 	}
 
@@ -456,7 +462,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	s.setCache(ctx, cache.KeyGame(res.ID.Value), res)
 
-	if req.PreviousID.Set {
+	if req.PreviousID.Value != "" {
 		pg, err := s.getGame(ctx, res.PreviousID.Value)
 		if err != nil && !errors.Has(err, errors.ErrNotFound) {
 			return nil, errors.Wrap(err, errors.ErrDatabase,
@@ -543,7 +549,7 @@ func (s *Server) updateGame(ctx context.Context,
 	}
 
 	req.UpdatedAt = request.FieldTime{
-		Set: true, Valid: true, Value: req.CreatedAt.Value,
+		Set: true, Valid: true, Value: time.Now().Unix(),
 	}
 
 	req.UpdatedBy = request.FieldString{

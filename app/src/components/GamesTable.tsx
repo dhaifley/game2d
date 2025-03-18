@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import avatarLogo from '../assets/avatar.png';
-import { Game, fetchGames } from '../services/gameService';
+import { Game, fetchGames, createGame } from '../services/gameService';
+import Modal from './Modal';
 
 interface SortConfig {
   key: string;
@@ -11,7 +12,12 @@ interface GamesTableProps {
   onSelectGame: (game: Game) => void;
 }
 
-const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
+// Define the ref handle type
+export interface GamesTableHandle {
+  loadGames: () => Promise<void>;
+}
+
+const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame }, ref) => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +26,18 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
   const [pageSkip, setPageSkip] = useState(0);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [totalGames, setTotalGames] = useState(0);
+  
+  // New Game Modal State
+  const [isNewGameModalOpen, setIsNewGameModalOpen] = useState(false);
+  const [newGameName, setNewGameName] = useState('');
+  const [newGameError, setNewGameError] = useState<string | null>(null);
+  const [creatingGame, setCreatingGame] = useState(false);
 
+  // Expose the loadGames method to parent components via ref
+  useImperativeHandle(ref, () => ({
+    loadGames
+  }));
+  
   const loadGames = async () => {
     try {
       setLoading(true);
@@ -138,7 +155,7 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
           </select>
         </div>
         <div className="new-game-button">
-          <button className="new-button" onClick={() => {}}>New Game</button>
+          <button className="new-button" onClick={() => setIsNewGameModalOpen(true)}>New Game</button>
         </div>
       </div>
 
@@ -214,8 +231,79 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
           </div>
         </>
       )}
+
+      {/* New Game Modal */}
+      <Modal
+        isOpen={isNewGameModalOpen}
+        onClose={() => {
+          setIsNewGameModalOpen(false);
+          setNewGameName('');
+          setNewGameError(null);
+        }}
+        title="Create New Game"
+        actions={
+          <>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setIsNewGameModalOpen(false);
+                setNewGameName('');
+                setNewGameError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="action-button" 
+              onClick={async () => {
+                if (!newGameName.trim()) {
+                  setNewGameError('Game name is required');
+                  return;
+                }
+
+                try {
+                  setCreatingGame(true);
+                  setNewGameError(null);
+                  const newGame = await createGame(newGameName.trim());
+                  
+                  // Close the modal
+                  setIsNewGameModalOpen(false);
+                  setNewGameName('');
+                  
+                  // Refresh the games list
+                  await loadGames();
+                  
+                  // Open the newly created game
+                  onSelectGame(newGame);
+                } catch (err) {
+                  setNewGameError(err instanceof Error ? err.message : 'Failed to create game');
+                  console.error('Error creating game:', err);
+                } finally {
+                  setCreatingGame(false);
+                }
+              }}
+              disabled={creatingGame}
+            >
+              {creatingGame ? 'Creating...' : 'Create'}
+            </button>
+          </>
+        }
+      >
+        <div className="modal-form-group">
+          <label htmlFor="new-game-name">Game Name</label>
+          <input
+            id="new-game-name"
+            type="text"
+            value={newGameName}
+            onChange={(e) => setNewGameName(e.target.value)}
+            placeholder="Enter a name for your new game"
+            autoFocus
+          />
+        </div>
+        {newGameError && <div className="modal-error">{newGameError}</div>}
+      </Modal>
     </div>
   );
-};
+});
 
 export default GamesTable;

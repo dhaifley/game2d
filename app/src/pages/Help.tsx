@@ -22,8 +22,13 @@ const Help: React.FC = () => {
             platform.
           </p>
           <p>
+            While playing a game, press Ctrl + S to save the current game state to the server. Press
+            Ctrl + L to load the last saved game state. Pressing Ctrl+' will display debug information
+            about the game.
+          </p>
+          <p>
             For game-specific controls, refer to the individual game's instructions which will be displayed
-            before you start playing.
+            in the description of the game.
           </p>
         </section>
 
