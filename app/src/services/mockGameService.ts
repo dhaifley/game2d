@@ -51,6 +51,11 @@ const generateMockGame = (index: number) => {
     description: `This is a description for Game ${index}`,
     icon: hasIcon ? svgToBase64(defaultSvgIcon) : '',
     status: statuses[Math.floor(Math.random() * statuses.length)],
+    source: "app",
+    tags: ["test:test"],
+    ai_data: {"prompt": "test", "response": "test", data: {}},
+    created_at: getRandomDate(),
+    created_by: users[Math.floor(Math.random() * users.length)],
     updated_at: getRandomDate(),
     updated_by: users[Math.floor(Math.random() * users.length)],
   };

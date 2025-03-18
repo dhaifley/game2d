@@ -7,11 +7,18 @@ const USE_MOCK_DATA = false;
 // Define the game response interface
 export interface Game {
   id: string;
+  previous_id?: string;
   name: string;
   version?: string;
   description?: string;
   icon?: string;
   status?: string;
+  status_data?: any;
+  source?: string;
+  tags?: string[];
+  ai_data?: any;
+  created_at?: number;
+  created_by?: string;
   updated_at?: number;
   updated_by?: string;
   [key: string]: any | undefined;

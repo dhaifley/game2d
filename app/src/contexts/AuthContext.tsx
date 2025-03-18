@@ -59,7 +59,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const params = new URLSearchParams();
       params.append('username', username);
       params.append('password', password);
-      params.append('scope', 'account.read user.read'); // Set appropriate scopes
+      params.append('scope', 'account:read account:write account:admin ' +
+        'user:read user:write user:admin ' +
+        'games:read games:write games:admin');
 
       const response = await axios.post('/api/v1/login/token', params, {
         headers: {
@@ -69,26 +71,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.data.access_token) {
         localStorage.setItem('token', response.data.access_token);
-        
+
         // Set up axios for authenticated requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
-        
+
         // Get user information - assuming JWT contains user ID and we can decode it
         // or we can fetch user details from an endpoint
         try {
           // For now, extract user ID from JWT (this is simplified)
           const base64Url = response.data.access_token.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
           }).join(''));
-          
+
           const decoded = JSON.parse(jsonPayload);
           const userData = {
             id: decoded.sub,
             accountId: decoded.account_id || decoded.accountId
           };
-          
+
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
           setIsAuthenticated(true);
@@ -101,7 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return false;
         }
       }
-      
+
       setLoading(false);
       return false;
     } catch (error) {

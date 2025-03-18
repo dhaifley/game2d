@@ -3,9 +3,7 @@ import React from 'react';
 const Help: React.FC = () => {
   return (
     <div className="help-page">
-      <div className="help-header">
-        <h1>Help Center</h1>
-      </div>
+      <div className="help-header"></div>
       <div className="help-content">
         <section>
           <h2>Getting Started</h2>

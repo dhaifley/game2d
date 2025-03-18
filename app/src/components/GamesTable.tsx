@@ -108,7 +108,7 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
   };
 
   const formatDate = (timestamp?: number) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return '';
     return new Date(timestamp * 1000).toLocaleString();
   };
 
@@ -124,9 +124,8 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
             className="search-input"
           />
         </div>
-        
         <div className="page-size-selector">
-          <label htmlFor="page-size">Items per page:</label>
+          <label htmlFor="page-size">Page size:</label>
           <select 
             id="page-size" 
             value={pageSize} 
@@ -137,6 +136,9 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
             <option value={25}>25</option>
             <option value={50}>50</option>
           </select>
+        </div>
+        <div className="new-game-button">
+          <button className="new-button" onClick={() => {}}>New Game</button>
         </div>
       </div>
 
@@ -153,7 +155,7 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
             <table className="games-table">
               <thead>
                 <tr>
-                  <th>Icon</th>
+                  <th></th>
                   <th onClick={() => handleSort('name')}>
                     Name {getSortIndicator('name')}
                   </th>
@@ -163,11 +165,11 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
                   <th onClick={() => handleSort('status')}>
                     Status {getSortIndicator('status')}
                   </th>
+                  <th onClick={() => handleSort('source')}>
+                    Source {getSortIndicator('source')}
+                  </th>
                   <th onClick={() => handleSort('updated_at')}>
                     Updated At {getSortIndicator('updated_at')}
-                  </th>
-                  <th onClick={() => handleSort('updated_by')}>
-                    Updated By {getSortIndicator('updated_by')}
                   </th>
                 </tr>
               </thead>
@@ -180,10 +182,10 @@ const GamesTable: React.FC<GamesTableProps> = ({ onSelectGame }) => {
                   >
                     <td>{renderIcon(game)}</td>
                     <td>{game.name}</td>
-                    <td>{game.version || 'N/A'}</td>
-                    <td>{game.status || 'N/A'}</td>
+                    <td>{game.version || ''}</td>
+                    <td>{game.status || ''}</td>
+                    <td>{game.source || ''}</td>
                     <td>{formatDate(game.updated_at)}</td>
-                    <td>{game.updated_by || 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>

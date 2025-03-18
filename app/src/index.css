@@ -22,7 +22,7 @@ body {
 }
 
 #root {
-  max-width: 1280px;
+  max-width: 768px;
   margin: 0 auto;
   padding: 0;
   text-align: center;
@@ -35,7 +35,7 @@ body {
   align-items: center;
   background-color: #1a1a1a;
   padding: 1rem 2rem;
-  width: 100%;
+  width: 768px;
   box-sizing: border-box;
 }
 
@@ -51,33 +51,51 @@ body {
   margin-left: auto;
 }
 
+
+
+.title-bar .games-button,
+.title-bar .help-button,
 .title-bar .sign-in-button,
 .title-bar .sign-out-button,
 .title-bar .user-button {
   margin: 0;
 }
 
-.title-bar .user-button {
-  background-color: #2a2a2a;
-  cursor: default;
+.title-bar .games-button-sel,
+.title-bar .help-button-sel,
+.title-bar .sign-in-button-sel{
+  border-color: #646cff;
 }
+
+.title-bar .user-button {
+  background-color: #646cff;
+}
+
+.title-bar .user-button:hover {
+  background-color: #535bf2;
+  color: white;
+}
+
 
 .app-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   width: 100%;
+  max-width: 768px;
 }
 
 .app-content {
   flex: 1;
   padding: 2rem;
+  padding-top: 0;
 }
 
 /* Login Page Styles */
 .login-container {
   max-width: 400px;
   margin: 0 auto;
+  margin-top: 2rem;
   padding: 2rem;
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -115,6 +133,11 @@ body {
   background-color: #646cff;
 }
 
+.login-button:hover {
+  background-color: #535bf2;
+  color: white;
+}
+
 .error-message {
   color: #ff6464;
   background-color: rgba(255, 100, 100, 0.1);
@@ -130,7 +153,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  max-width: 600px;
+  max-width: 768px;
   margin: 0 auto;
 }
 
@@ -178,7 +201,7 @@ h1 {
 
 /* Games page styles */
 .games-container {
-  max-width: 1200px;
+  max-width: 768px;
   margin: 0 auto;
 }
 
@@ -195,10 +218,10 @@ h1 {
 
 .games-table-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: right;
   align-items: center;
   margin-bottom: 1rem;
-  gap: 3rem;
+  gap: 2rem;
 }
 
 .search-container {
@@ -218,6 +241,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left: 1.5rem;
 }
 
 .page-size-selector select {
@@ -226,6 +250,12 @@ h1 {
   border: 1px solid #444;
   background-color: #1a1a1a;
   color: white;
+}
+
+.new-game-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .games-table-wrapper {
@@ -276,6 +306,92 @@ h1 {
   max-width: 32px;
   max-height: 32px;
   object-fit: contain;
+}
+
+/* Game detail page icon styling */
+.game-details-content .game-icon-container {
+  justify-content: flex-start;
+}
+
+.game-details-content .game-icon {
+  width: 128px;
+  height: 128px;
+  max-width: 128px;
+  max-height: 128px;
+  object-fit: contain;
+}
+
+/* Layout for game info with icon and fields side by side */
+.game-info-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.game-info-fields {
+  flex: 1;
+}
+
+.game-additional-fields {
+  flex: 1;
+}
+
+.game-field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.5rem;
+}
+
+.game-field-container label {
+  width: 25%;
+}
+
+.game-field-container input {
+  width: 75%;
+}
+
+.readonly-input {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: white;
+}
+
+/* Prompt container with input and button side by side */
+.prompt-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.prompt-container .prompt-input {
+  flex: 1;
+}
+
+.prompt-container .prompt-button {
+  white-space: nowrap;
+  background-color: #646cff;
+}
+
+.prompt-container .prompt-button:hover {
+  background-color: #535bf2;
+  color: white;
+}
+
+.ai-field-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0.5rem;
+}
+
+.response-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
 }
 
 .pagination-controls {
@@ -345,9 +461,107 @@ h1 {
   margin: 0;
 }
 
+.response-textarea {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.prompt-textarea {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+  width: 100%;
+}
+
+.name-input {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.version-input {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.description-textarea {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+  width: 75%;
+}
+
+.tags-input {
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.new-button {
+  background-color: #1a1a1a;
+  padding: 0.5rem 1rem;
+}
+
 .close-button {
   background-color: #2a2a2a;
   padding: 0.5rem 1rem;
+}
+
+.undo-button {
+  background-color: #ff6464aa;
+  padding: 0.5rem 1rem;
+}
+
+.undo-button:hover {
+  background-color: #f45151dd;
+  color: white;
+  border-color: #f45151ff;
+}
+
+.undo-button-disabled {
+  background-color: #1a1a1a;
+  padding: 0.5rem 1rem;
+}
+
+.delete-button {
+  background-color: #ff6464aa;
+  padding: 0.5rem 1rem;
+}
+
+.delete-button:hover {
+  background-color: #f45151dd;
+  color: white;
+  border-color: #f45151ff;
+}
+
+.copy-button {
+  background-color: #2a2a2a;
+  padding: 0.5rem 1rem;
+}
+
+.edit-button {
+  background-color: #2a2a2a;
+  padding: 0.5rem 1rem;
+}
+
+.game-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .game-details-content {
@@ -366,7 +580,8 @@ h1 {
 
 /* Help Page Styles */
 .help-page {
-  max-width: 800px;
+  max-width: 768px;
+  padding: 1.5rem;
   margin: 0 auto;
   text-align: left;
 }
@@ -434,16 +649,6 @@ h1 {
 
 .faq-item p {
   margin: 0;
-}
-
-@media (max-width: 768px) {
-  .help-page {
-    padding: 1.5rem;
-  }
-  
-  .help-content section {
-    padding: 1rem;
-  }
 }
 
 a {

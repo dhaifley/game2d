@@ -97,14 +97,21 @@ A React/Vite application for interacting with the service:
 2. **Set up the development environment**
    ```sh
    cat <<EOF > .env
+   LOG_LEVEL='debug'
+   DB_CONNECTION='mongodb://game2d:mongodb@localhost:27017/game2d?authSource=admin' 
+   CACHE_SERVERS='localhost:6379'
    SUPERUSER=admin
    SUPERUSER_PASSWORD=admin
-   AI_KEY=(your AI API key)
+   AI_API_KEY={your AI API key}
    EOF
 
    set -a
    . .env
    ```
+
+   You can change any of these defaults, but these values will work with the
+   defaults set in the Docker Compose configuration used to run and test
+   the services.
 
 3. **Run the services locally**
    ```sh

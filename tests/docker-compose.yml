@@ -7,8 +7,8 @@ services:
     volumes:
       - mongodb_data_container:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: game2d
-      MONGO_INITDB_ROOT_PASSWORD: mongodb
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME:-game2d}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-mongodb}
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
   cache:

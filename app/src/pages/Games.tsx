@@ -16,9 +16,7 @@ const Games: React.FC = () => {
 
   return (
     <div className="games-container">
-      <div className="games-header">
-        <h1>Games</h1>
-      </div>
+      <div className="games-header"></div>
       <div className="games-content">
       {selectedGame ? (
         <GameComponent game={selectedGame} onClose={handleCloseGameView} />
