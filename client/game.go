@@ -37,6 +37,7 @@ const (
 type Game struct {
 	log      logger.Logger
 	debug    bool
+	pause    bool
 	w, h     int
 	id       string
 	name     string
@@ -288,35 +289,11 @@ func (g *Game) AddScript(src *Script) {
 
 // Update updates the game state each frame.
 func (g *Game) Update() error {
-	objects := make(map[string]any, len(g.obj))
+	keyMap := map[string]any{}
 
-	for k, obj := range g.obj {
-		objects[k] = obj.Map()
-	}
-
-	if g.sub == nil {
-		return errors.New(errors.ErrClient,
-			"game subject object not found",
-			"game", g)
-	}
-
-	d := map[string]any{
-		"id":          g.id,
-		"version":     g.ver,
-		"name":        g.name,
-		"description": g.desc,
-		"debug":       g.debug,
-		"w":           g.w,
-		"h":           g.h,
-		"subject":     g.sub.Map(),
-		"objects":     objects,
-	}
-
-	debug, save, load := false, false, false
+	debug, save, load, pause := false, false, false, false
 
 	if keys := inpututil.AppendPressedKeys(nil); len(keys) > 0 {
-		keyMap := map[string]any{}
-
 		if slices.Contains(keys, ebiten.KeyControl) {
 			if jpk := inpututil.AppendJustPressedKeys(nil); len(jpk) > 0 {
 				for _, jk := range jpk {
@@ -327,6 +304,8 @@ func (g *Game) Update() error {
 						save = true
 					case ebiten.KeyL:
 						load = true
+					case ebiten.KeyP:
+						pause = true
 					}
 				}
 			}
@@ -335,36 +314,61 @@ func (g *Game) Update() error {
 				keyMap[strconv.Itoa(i)] = int(k)
 			}
 		}
-
-		d["keys"] = keyMap
 	}
 
-	pushMap(g.lua, d)
-	g.lua.SetGlobal("game")
+	if !g.pause {
+		objects := make(map[string]any, len(g.obj))
 
-	for _, obj := range g.obj {
-		if err := obj.Update(); err != nil {
-			return err
+		for k, obj := range g.obj {
+			objects[k] = obj.Map()
 		}
-	}
 
-	if g.sub != nil {
-		if err := g.sub.Update(); err != nil {
-			return err
+		if g.sub == nil {
+			return errors.New(errors.ErrClient,
+				"game subject object not found",
+				"game", g)
 		}
-	}
 
-	luaState, err := pullMap(g.lua)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrClient,
-			"unable to retrieve game state from lua")
-	}
+		d := map[string]any{
+			"id":          g.id,
+			"version":     g.ver,
+			"name":        g.name,
+			"description": g.desc,
+			"debug":       g.debug,
+			"w":           g.w,
+			"h":           g.h,
+			"subject":     g.sub.Map(),
+			"objects":     objects,
+			"keys":        keyMap,
+		}
 
-	delete(luaState, "keys")
+		pushMap(g.lua, d)
+		g.lua.SetGlobal("game")
 
-	if err := g.updateFromMap(luaState); err != nil {
-		return errors.Wrap(err, errors.ErrClient,
-			"unable to update game state from lua")
+		for _, obj := range g.obj {
+			if err := obj.Update(); err != nil {
+				return err
+			}
+		}
+
+		if g.sub != nil {
+			if err := g.sub.Update(); err != nil {
+				return err
+			}
+		}
+
+		luaState, err := pullMap(g.lua)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to retrieve game state from lua")
+		}
+
+		delete(luaState, "keys")
+
+		if err := g.updateFromMap(luaState); err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to update game state from lua")
+		}
 	}
 
 	if debug {
@@ -385,6 +389,10 @@ func (g *Game) Update() error {
 				"unable to load game",
 				"error", err)
 		}
+	}
+
+	if pause {
+		g.pause = !g.pause
 	}
 
 	return nil

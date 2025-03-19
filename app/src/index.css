@@ -650,14 +650,21 @@ h1 {
 }
 
 .help-content a {
-  color: #6464ff;
+  color: #6464ffaa;
   text-decoration: underline;
   transition: color 0.3s;
 }
 
 .help-content a:hover {
-  color: #6464ff;
+  color: #6464ffff;
   text-decoration: none;
+}
+
+.keys {
+  background-color: #6464ffaa;
+  border-radius: 4px;
+  padding: 0.25rem;
+  border: #6464ffff;
 }
 
 .faq-item {
