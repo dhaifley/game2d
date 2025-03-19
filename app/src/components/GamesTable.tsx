@@ -223,7 +223,7 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
             </span>
             <button 
               onClick={handleNextPage} 
-              disabled={games.length < pageSize}
+              disabled={pageSkip + games.length >= totalGames}
               className="pagination-button"
             >
               Next

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -25,6 +26,7 @@ import (
 
 // Context keys.
 const (
+	CtxKeyGameNoCount         = "game_no_count"
 	CtxKeyGameMinData         = "game_min_data"
 	CtxKeyGameAllowPreviousID = "game_allow_previous_id"
 )
@@ -155,10 +157,10 @@ func (g *Game) ValidateCreate() error {
 // getGames retrieves games based on a search query.
 func (s *Server) getGames(ctx context.Context,
 	query *request.Query,
-) ([]*Game, error) {
+) ([]*Game, int64, error) {
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
-		return nil, errors.New(errors.ErrUnauthorized,
+		return nil, 0, errors.New(errors.ErrUnauthorized,
 			"unable to get account id from context")
 	}
 
@@ -173,7 +175,7 @@ func (s *Server) getGames(ctx context.Context,
 	if query.Search != "" {
 		if err := bson.UnmarshalExtJSON([]byte(query.Search),
 			false, &f); err != nil {
-			return nil, errors.Wrap(err, errors.ErrInvalidRequest,
+			return nil, 0, errors.Wrap(err, errors.ErrInvalidRequest,
 				"unable to decode search query",
 				"query", query)
 		}
@@ -192,7 +194,7 @@ func (s *Server) getGames(ctx context.Context,
 	if query.Sort != "" {
 		if err := bson.UnmarshalExtJSON([]byte(query.Sort),
 			false, &srt); err != nil {
-			return nil, errors.Wrap(err, errors.ErrInvalidRequest,
+			return nil, 0, errors.Wrap(err, errors.ErrInvalidRequest,
 				"unable to decode sort query",
 				"query", query)
 		}
@@ -214,7 +216,7 @@ func (s *Server) getGames(ctx context.Context,
 		SetLimit(query.Size).SetSkip(query.Skip).
 		SetSort(srt).SetProjection(pro))
 	if err != nil {
-		return nil, errors.Wrap(err, errors.ErrDatabase,
+		return nil, 0, errors.Wrap(err, errors.ErrDatabase,
 			"unable to find games",
 			"query", query)
 	}
@@ -232,7 +234,7 @@ func (s *Server) getGames(ctx context.Context,
 		var g *Game
 
 		if err := cur.Decode(&g); err != nil {
-			return nil, errors.Wrap(err, errors.ErrDatabase,
+			return nil, 0, errors.Wrap(err, errors.ErrDatabase,
 				"unable to decode game",
 				"query", query)
 		}
@@ -247,12 +249,20 @@ func (s *Server) getGames(ctx context.Context,
 	}
 
 	if err := cur.Err(); err != nil {
-		return nil, errors.Wrap(err, errors.ErrDatabase,
+		return nil, 0, errors.Wrap(err, errors.ErrDatabase,
 			"unable to get games",
 			"query", query)
 	}
 
-	return res, nil
+	n, err := s.DB().Collection("games").CountDocuments(ctx, f,
+		options.Count())
+	if err != nil {
+		return nil, 0, errors.Wrap(err, errors.ErrDatabase,
+			"unable to count games",
+			"query", query)
+	}
+
+	return res, n, nil
 }
 
 // getGame retrieves a game by ID.
@@ -1229,7 +1239,9 @@ func (s *Server) updateGameImports(ctx context.Context,
 // getAllGameTags retrieves all game tags.
 func (s *Server) getAllGameTags(ctx context.Context,
 ) ([]string, error) {
-	gs, err := s.getGames(ctx, nil)
+	ctx = context.WithValue(ctx, CtxKeyGameNoCount, true)
+
+	gs, _, err := s.getGames(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1396,12 +1408,14 @@ func (s *Server) getGamesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.getGames(ctx, query)
+	res, n, err := s.getGames(ctx, query)
 	if err != nil {
 		s.error(err, w, r)
 
 		return
 	}
+
+	w.Header().Add("X-Total-Count", strconv.FormatInt(n, 10))
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		s.error(err, w, r)
