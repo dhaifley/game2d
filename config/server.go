@@ -23,7 +23,7 @@ const (
 	DefaultServerIdleTimeout    = time.Second * 5
 	DefaultServerHost           = "game2d.ai"
 	DefaultServerPathPrefix     = "/api/v1"
-	DefaultServerMaxRequestSize = int64(100 * 1024 * 1023) // 100 MB
+	DefaultServerMaxRequestSize = int64(20 * 1024 * 1023) // 20 MB
 )
 
 // ServerConfig values represent telemetry configuration data.

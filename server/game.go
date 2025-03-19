@@ -496,6 +496,22 @@ func (s *Server) createGame(ctx context.Context,
 				"req", req)
 		}
 
+		var wex mongo.WriteException
+
+		if errors.As(err, &wex) {
+			for _, writeErr := range wex.WriteErrors {
+				if writeErr.Code == 10334 || writeErr.Code == 16793 {
+					return nil, errors.New(errors.ErrInvalidRequest,
+						"game data exceeds 16MB size limit",
+						"req", req)
+				}
+			}
+		} else if errors.ErrorHas(err, "exceeded maximum BSON document size") {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"game data exceeds 16MB size limit",
+				"req", req)
+		}
+
 		return nil, errors.Wrap(err, errors.ErrDatabase,
 			"unable to create game",
 			"req", req)
@@ -641,6 +657,22 @@ func (s *Server) updateGame(ctx context.Context,
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, errors.New(errors.ErrNotFound,
 				"game not found",
+				"req", req)
+		}
+
+		var wex mongo.WriteException
+
+		if errors.As(err, &wex) {
+			for _, writeErr := range wex.WriteErrors {
+				if writeErr.Code == 10334 || writeErr.Code == 16793 {
+					return nil, errors.New(errors.ErrInvalidRequest,
+						"game data exceeds 16MB size limit",
+						"req", req)
+				}
+			}
+		} else if errors.ErrorHas(err, "exceeded maximum BSON document size") {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"game data exceeds 16MB size limit",
 				"req", req)
 		}
 
