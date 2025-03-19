@@ -384,6 +384,45 @@ func (s *Server) createGame(ctx context.Context,
 		return nil, err
 	}
 
+	a, err := s.getAccount(ctx, aID)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get account game limits",
+			"account_id", aID,
+			"req", req)
+	}
+
+	if a == nil {
+		return nil, errors.New(errors.ErrNotFound,
+			"account game limits not found",
+			"account_id", aID,
+			"req", req)
+	}
+
+	if a.GameLimit.Value > 0 {
+		f := bson.M{
+			"account_id": aID,
+			"status":     request.StatusActive,
+		}
+
+		n, err := s.DB().Collection("games").CountDocuments(ctx, f,
+			options.Count())
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrDatabase,
+				"unable to count games",
+				"account_id", aID,
+				"req", req)
+		}
+
+		if n >= a.GameLimit.Value {
+			return nil, errors.New(errors.ErrorRateLimit,
+				"account game limit reached",
+				"account_id", aID,
+				"game_limit", a.GameLimit.Value,
+				"game_count", n)
+		}
+	}
+
 	req.CreatedAt = request.FieldTime{
 		Set: true, Valid: true, Value: time.Now().Unix(),
 	}

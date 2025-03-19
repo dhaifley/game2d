@@ -36,6 +36,7 @@ type Account struct {
 	RepoStatus     request.FieldString `bson:"repo_status"      json:"repo_status"      yaml:"repo_status"`
 	RepoStatusData request.FieldJSON   `bson:"repo_status_data" json:"repo_status_data" yaml:"repo_status_data"`
 	GameCommitHash request.FieldString `bson:"game_commit_hash" json:"game_commit_hash" yaml:"game_commit_hash"`
+	GameLimit      request.FieldInt64  `bson:"game_limit"       json:"game_limit"       yaml:"game_limit"`
 	Secret         request.FieldString `bson:"secret"           json:"secret"           yaml:"secret"`
 	Data           request.FieldJSON   `bson:"data"             json:"data"             yaml:"data"`
 	CreatedAt      request.FieldTime   `bson:"created_at"       json:"created_at"       yaml:"created_at"`
@@ -101,6 +102,20 @@ func (a *Account) Validate() error {
 		default:
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid repo_status",
+				"account", a)
+		}
+	}
+
+	if a.GameLimit.Set {
+		if !a.GameLimit.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"game_limit must not be null",
+				"account", a)
+		}
+
+		if a.GameLimit.Value < 0 {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid game_limit",
 				"account", a)
 		}
 	}
@@ -317,6 +332,10 @@ func (s *Server) createAccount(ctx context.Context,
 		Set: true, Valid: true, Value: req.CreatedAt.Value,
 	}
 
+	req.GameLimit = request.FieldInt64{
+		Set: true, Valid: true, Value: s.cfg.GameLimitDefault(),
+	}
+
 	f := bson.M{"id": req.ID.Value}
 
 	doc := &bson.D{}
@@ -328,6 +347,7 @@ func (s *Server) createAccount(ctx context.Context,
 	request.SetField(doc, "repo", req.Repo)
 	request.SetField(doc, "repo_status", req.RepoStatus)
 	request.SetField(doc, "repo_status_data", req.RepoStatusData)
+	request.SetField(doc, "game_limit", req.GameLimit)
 	request.SetField(doc, "secret", req.Secret)
 	request.SetField(doc, "data", req.Data)
 	request.SetField(doc, "created_at", req.CreatedAt)

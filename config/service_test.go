@@ -15,9 +15,10 @@ func TestServiceConfig(t *testing.T) {
 	cfg.Load(nil)
 
 	cfg.SetService(&config.ServiceConfig{
-		Name:           "test name",
-		Maintenance:    true,
-		ImportInterval: time.Second,
+		Name:             "test name",
+		Maintenance:      true,
+		ImportInterval:   time.Second,
+		GameLimitDefault: 5,
 	})
 
 	if cfg.ServiceName() != "test name" {
@@ -31,5 +32,10 @@ func TestServiceConfig(t *testing.T) {
 
 	if cfg.ImportInterval() != time.Second {
 		t.Errorf("Expected import interval: 1s, got: %v", cfg.ImportInterval())
+	}
+
+	if cfg.GameLimitDefault() != 5 {
+		t.Errorf("Expected game limit default: 5, got: %v",
+			cfg.GameLimitDefault())
 	}
 }

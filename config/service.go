@@ -10,20 +10,20 @@ const (
 	KeyServiceName        = "service/name"
 	KeyServiceMaintenance = "service/maintenance"
 	KeyImportInterval     = "service/import_interval"
-	KeyGameDataRetention  = "game/data_retention"
+	KeyGameLimitDefault   = "service/game_limit_default"
 
 	DefaultServiceName        = "game2d-api"
 	DefaultServiceMaintenance = false
 	DefaultImportInterval     = time.Minute * 5
-	DefaultGameDataRetention  = time.Hour * 720 // 30d
+	DefaultGameLimitDefault   = 10
 )
 
 // ServiceConfig values represent telemetry configuration data.
 type ServiceConfig struct {
-	Name              string        `json:"name,omitempty"                yaml:"name,omitempty"`
-	Maintenance       bool          `json:"maintenance,omitempty"         yaml:"maintenance,omitempty"`
-	ImportInterval    time.Duration `json:"import_interval,omitempty"     yaml:"import_interval,omitempty"`
-	GameDataRetention time.Duration `json:"game_data_retention,omitempty" yaml:"game_data_retention,omitempty"`
+	Name             string        `json:"name,omitempty"               yaml:"name,omitempty"`
+	Maintenance      bool          `json:"maintenance,omitempty"        yaml:"maintenance,omitempty"`
+	ImportInterval   time.Duration `json:"import_interval,omitempty"    yaml:"import_interval,omitempty"`
+	GameLimitDefault int64         `json:"game_limit_default,omitempty" yaml:"game_limit_default,omitempty"`
 }
 
 // Load reads configuration data from environment variables and applies defaults
@@ -55,17 +55,17 @@ func (c *ServiceConfig) Load() {
 		c.ImportInterval = DefaultImportInterval
 	}
 
-	if v := os.Getenv(ReplaceEnv(KeyGameDataRetention)); v != "" {
-		v, err := time.ParseDuration(v)
+	if v := os.Getenv(ReplaceEnv(KeyGameLimitDefault)); v != "" {
+		v, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			v = DefaultGameDataRetention
+			v = DefaultGameLimitDefault
 		}
 
-		c.GameDataRetention = v
+		c.GameLimitDefault = v
 	}
 
-	if c.GameDataRetention == 0 {
-		c.GameDataRetention = DefaultGameDataRetention
+	if c.GameLimitDefault == 0 {
+		c.GameLimitDefault = DefaultGameLimitDefault
 	}
 }
 
@@ -107,15 +107,14 @@ func (c *Config) ImportInterval() time.Duration {
 	return c.service.ImportInterval
 }
 
-// GameDataRetention returns the duration for which game data elements are
-// retained. Default value is 30 days.
-func (c *Config) GameDataRetention() time.Duration {
+// GameLimitDefault returns the default game limit for accounts.
+func (c *Config) GameLimitDefault() int64 {
 	c.RLock()
 	defer c.RUnlock()
 
 	if c.service == nil {
-		return DefaultGameDataRetention
+		return DefaultGameLimitDefault
 	}
 
-	return c.service.GameDataRetention
+	return c.service.GameLimitDefault
 }

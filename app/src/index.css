@@ -64,16 +64,17 @@ body {
 .title-bar .games-button-sel,
 .title-bar .help-button-sel,
 .title-bar .sign-in-button-sel{
-  border-color: #646cff;
+  border-color: #6464ffaa;
 }
 
 .title-bar .user-button {
-  background-color: #646cff;
+  background-color: #6464ffaa;
 }
 
 .title-bar .user-button:hover {
-  background-color: #535bf2;
+  background-color: #6464ffdd;
   color: white;
+  border-color: #6464ffdd;
 }
 
 
@@ -130,12 +131,13 @@ body {
 .login-button {
   margin-top: 1rem;
   padding: 0.75rem;
-  background-color: #646cff;
+  background-color: #6464ffaa;
 }
 
 .login-button:hover {
-  background-color: #535bf2;
+  background-color: #6464ffdd;
   color: white;
+  border-color: #6464ffff;
 }
 
 .error-message {
@@ -177,7 +179,7 @@ body {
   display: inline-block;
   margin-top: 2rem;
   padding: 0.75rem 1.5rem;
-  background-color: #646cff;
+  background-color: #6464ffaa;
   color: white;
   border-radius: 4px;
   text-decoration: none;
@@ -185,8 +187,9 @@ body {
 }
 
 .welcome-button:hover {
-  background-color: #535bf2;
+  background-color: #6464ffdd;
   color: white;
+  border-color: #6464ffff;
 }
 
 h1 {
@@ -372,12 +375,13 @@ h1 {
 
 .prompt-container .prompt-button {
   white-space: nowrap;
-  background-color: #646cff;
+  background-color: #6464ffaa;
 }
 
 .prompt-container .prompt-button:hover {
-  background-color: #535bf2;
+  background-color: #6464ffdd;
   color: white;
+  border-color: #6464ffff;
 }
 
 .ai-field-container {
@@ -423,7 +427,7 @@ h1 {
 .loading-indicator {
   text-align: center;
   padding: 2rem;
-  color: #646cff;
+  color: #6464ff;
 }
 
 .error-message {
@@ -528,9 +532,9 @@ h1 {
 }
 
 .undo-button:hover {
-  background-color: #f45151dd;
+  background-color: #ff6464dd;
   color: white;
-  border-color: #f45151ff;
+  border-color: #ff6464ff;
 }
 
 .undo-button-disabled {
@@ -544,9 +548,9 @@ h1 {
 }
 
 .delete-button:hover {
-  background-color: #f45151dd;
+  background-color: #ff6464dd;
   color: white;
-  border-color: #f45151ff;
+  border-color: #ff6464ff;
 }
 
 .copy-button {
@@ -557,7 +561,7 @@ h1 {
 
 /* Game component buttons - additional styles */
 .save-button {
-  background-color: #4caf50;
+  background-color: #64ff64aa;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -565,11 +569,13 @@ h1 {
 }
 
 .save-button:hover {
-  background-color: #45a049;
+  background-color: #64ff64dd;
+  color: white;
+  border-color: #64ff64ff;
 }
 
 .save-button:disabled {
-  background-color: #a5d6a7;
+  background-color: #1a1a1a;
   cursor: not-allowed;
 }
 
@@ -631,7 +637,7 @@ h1 {
 }
 
 .help-content h2 {
-  color: #646cff;
+  color: #6464ff;
   border-bottom: 1px solid #333;
   padding-bottom: 0.5rem;
   margin-top: 0;
@@ -644,13 +650,13 @@ h1 {
 }
 
 .help-content a {
-  color: #646cff;
+  color: #6464ff;
   text-decoration: underline;
   transition: color 0.3s;
 }
 
 .help-content a:hover {
-  color: #535bf2;
+  color: #6464ff;
   text-decoration: none;
 }
 
@@ -678,12 +684,12 @@ h1 {
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #6464ff;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: #6464ff;
 }
 
 button {
@@ -699,7 +705,7 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: #6464ff;
 }
 
 button:focus,
@@ -800,14 +806,14 @@ button:focus-visible {
 }
 
 .modal-footer .action-button {
-  background-color: #4a6cf7;
-  border: 1px solid #4a6cf7;
+  background-color: #6464ff;
+  border: 1px solid #6464ff;
   color: white;
 }
 
 .modal-footer .delete-action-button {
-  background-color: #f44336;
-  border: 1px solid #f44336;
+  background-color: #ff6464;
+  border: 1px solid #ff6464;
   color: white;
 }
 
@@ -836,7 +842,7 @@ button:focus-visible {
 }
 
 .modal-error {
-  color: #f44336;
+  color: #ff6464;
   margin-top: 10px;
   font-size: 14px;
 }
@@ -845,7 +851,7 @@ button:focus-visible {
 input:not([readonly]),
 textarea:not([readonly]) {
   background-color: #2a2a2a;
-  border: 1px solid #4a6cf7;
+  border: 1px solid #6464ff;
 }
 
 input[readonly],
