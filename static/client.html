@@ -5,6 +5,11 @@
   <meta charset="utf-8">
   <style>
     body {
+      font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      font-weight: 400;
+      color: white;
+      background-color: black;
       padding: 0 24px;
     }
   </style>
@@ -22,7 +27,7 @@
         });
       document.getElementById('loading').remove();
       go.run(result.instance);
-      const params = new URLSearchParams(window.parent.location.search);
+      const params = new URLSearchParams(window.location.search);
       if (params.has('game_id')) {
         setGameID(params.get('game_id'));
       }

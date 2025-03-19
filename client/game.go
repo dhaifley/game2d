@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"slices"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Shopify/go-lua"
 	"github.com/dhaifley/game2d/errors"
@@ -49,6 +51,7 @@ type Game struct {
 	obj      map[string]*Object
 	img      map[string]*Image
 	src      map[string]*Script
+	err      error
 }
 
 // NewGame creates and initializes a new Game object.
@@ -291,6 +294,12 @@ func (g *Game) Update() error {
 		objects[k] = obj.Map()
 	}
 
+	if g.sub == nil {
+		return errors.New(errors.ErrClient,
+			"game subject object not found",
+			"game", g)
+	}
+
 	d := map[string]any{
 		"id":          g.id,
 		"version":     g.ver,
@@ -393,8 +402,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if g.debug {
 		ebitenutil.DebugPrint(screen,
-			fmt.Sprintf("FPS: %f\nTPS: %f",
-				ebiten.ActualFPS(), ebiten.ActualTPS()))
+			strings.ReplaceAll(
+				fmt.Sprintf("ID: "+g.id+"\nFPS: %f\nTPS: %f\nErr: %+v",
+					ebiten.ActualFPS(), ebiten.ActualTPS(), g.err),
+				`,"`, "\n,\""))
 	}
 }
 
@@ -422,10 +433,16 @@ func (g *Game) Layout(w, h int) (int, int) {
 }
 
 // Save persists a game state.
-func (g *Game) Save() error {
+func (g *Game) Save() (rErr error) {
 	ebiten.SetWindowTitle(g.name + " (saving...)")
 
 	g.source = "app"
+
+	defer func() {
+		if rErr != nil {
+			g.err = rErr
+		}
+	}()
 
 	b, err := json.MarshalIndent(&g, "", "  ")
 	if err != nil {
@@ -499,10 +516,16 @@ func (g *Game) Save() error {
 }
 
 // Load retrieves a persisted game state.
-func (g *Game) Load() error {
+func (g *Game) Load() (rErr error) {
 	var b []byte
 
 	ebiten.SetWindowTitle(g.name + " (loading...)")
+
+	defer func() {
+		if rErr != nil {
+			g.err = rErr
+		}
+	}()
 
 	if g.apiURL != "" {
 		u, err := url.Parse(g.apiURL)
@@ -574,6 +597,13 @@ func (g *Game) Load() error {
 	}
 
 	g.debug = g2.debug
+
+	if g2.w <= 0 || g2.h <= 0 {
+		return errors.New(errors.ErrClient,
+			"game width and height data not found",
+			"game", g2)
+	}
+
 	g.w = g2.w
 	g.h = g2.h
 	g.id = g2.id
@@ -582,13 +612,30 @@ func (g *Game) Load() error {
 	g.desc = g2.desc
 	g.img = g2.img
 	g.src = g2.src
+
+	if g2.sub == nil {
+		return errors.New(errors.ErrClient,
+			"game subject object not found",
+			"game", g2)
+	}
+
 	g.sub = g2.sub
 	g.sub.game = g
+
+	if len(g2.obj) == 0 {
+		return errors.New(errors.ErrClient,
+			"game objects not found",
+			"game", g2)
+	}
+
 	g.obj = g2.obj
 
 	for i, s := range g.obj {
-		s.game = g
-		g.obj[i] = s
+		if s == nil {
+			continue
+		}
+
+		g.obj[i].game = g
 	}
 
 	g.lua = lua.NewState()
@@ -604,6 +651,18 @@ func (g *Game) Run(ctx context.Context) error {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetWindowSize(g.w, g.h)
 	ebiten.SetWindowTitle(g.name)
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+
+		if err := g.Load(); err != nil {
+			g.log.Log(ctx, logger.LvlError,
+				"unable to initialize game",
+				"error", err)
+
+			g.err = err
+		}
+	}()
 
 	if err := ebiten.RunGame(g); err != nil {
 		return err

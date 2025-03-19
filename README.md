@@ -106,7 +106,7 @@ A React/Vite application for interacting with the service:
    EOF
 
    set -a
-   . .env
+   . ./.env
    ```
 
    You can change any of these defaults, but these values will work with the
