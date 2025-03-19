@@ -2,7 +2,11 @@
 type: object
 description: A user.
 properties:
-  user_id:
+  account_id:
+    type: string
+    description: The ID of the account of the user.
+    examples: [1234567890abcdef]
+  id:
     type: string
     description: The ID of the user.
     examples: [test@test.com]

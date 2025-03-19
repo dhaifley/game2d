@@ -857,8 +857,8 @@ func (s *Server) createUser(ctx context.Context,
 
 	doc := &bson.D{}
 
-	request.SetField(doc, "id", req.ID)
 	request.SetField(doc, "account_id", req.AccountID)
+	request.SetField(doc, "id", req.ID)
 	request.SetField(doc, "email", req.Email)
 	request.SetField(doc, "last_name", req.LastName)
 	request.SetField(doc, "first_name", req.FirstName)

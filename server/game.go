@@ -32,6 +32,7 @@ const (
 // Game values represent game state data.
 type Game struct {
 	AccountID   request.FieldString      `bson:"account_id"        json:"account_id"        yaml:"account_id"`
+	Public      request.FieldBool        `bson:"public"            json:"public"            yaml:"public"`
 	W           request.FieldInt64       `bson:"w"                 json:"w"                 yaml:"w"`
 	H           request.FieldInt64       `bson:"h"                 json:"h"                 yaml:"h"`
 	ID          request.FieldString      `bson:"id"                json:"id"                yaml:"id"`
@@ -445,6 +446,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	doc := &bson.D{}
 
+	request.SetField(doc, "public", req.Public)
 	request.SetField(doc, "w", req.W)
 	request.SetField(doc, "h", req.H)
 	request.SetField(doc, "previous_id", req.PreviousID)
@@ -601,6 +603,7 @@ func (s *Server) updateGame(ctx context.Context,
 
 	doc := &bson.D{}
 
+	request.SetField(doc, "public", req.Public)
 	request.SetField(doc, "w", req.W)
 	request.SetField(doc, "h", req.H)
 	request.SetField(doc, "previous_id", req.PreviousID)

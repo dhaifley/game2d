@@ -2,6 +2,15 @@
 type: object
 description: A game definition.
 properties:
+  account_id:
+    type: string
+    description: The ID of the account of the game.
+    examples: [1234567890abcdef]
+  public:
+    type: boolean
+    description: Whether the game is visible publicly.
+    default: false
+    examples: [false]
   id:
     type: string
     description: The ID of the game.
