@@ -155,7 +155,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   return (
     <div className="game-details-container">
       <div className="game-details-header">
-        <h2>{currentGame.name}</h2>
         <div className="game-buttons">
           <button className="delete-button" onClick={() => setIsDeleteModalOpen(true)}>Delete</button>
           <button className="copy-button" onClick={() => setIsCopyModalOpen(true)}>Copy</button>
@@ -178,11 +177,15 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           ) : (
             <button className="edit-button" onClick={handleEditClick}>Edit</button>
           )}
+          <button className="export-button" onClick={onClose}>Export</button>
           <button className="close-button" onClick={onClose}>Close</button>
         </div>
       </div>
 
       <div className="game-details-content">
+        <div className="game-details-title">
+          <h2>{currentGame.name}</h2>
+        </div>
         <div className="game-info-layout">
           <div className="game-icon-container">
             <img 
@@ -195,48 +198,28 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           </div>
           <div className="game-info-fields">
             <div className="game-field-container">
-              <label htmlFor='id'>ID: </label>
-              <input
-                type="text"
-                id="id"
-                value={currentGame.id}
-                className="readonly-input"
-                readOnly
-              />
-            </div>
-            <div className="game-field-container">
-              <label htmlFor='name'>Name: </label>
-              <input
-                type="text"
-                id="name"
-                value={isEditMode ? editedName : currentGame.name}
-                onChange={(e) => setEditedName(e.target.value)}
-                placeholder="Enter Name"
-                className="name-input"
+              <textarea 
+                id="description"
+                className="description-textarea"
+                placeholder="Enter description"
                 readOnly={!isEditMode}
+                value={isEditMode ? editedDescription : (currentGame.description || '')}
+                onChange={(e) => setEditedDescription(e.target.value)}
               />
             </div>
             <div className="game-field-container">
-              <label htmlFor='status'>Status: </label>
               <input
                 type="text"
-                id="status"
-                value={currentGame.status || ''}
-                className="readonly-input"
+                id="tags"
+                value={isEditMode ? editedTags : (currentGame.tags?.join(', ') || '')}
+                onChange={(e) => setEditedTags(e.target.value)}
+                placeholder="Add tags"
+                className="tags-input"
                 readOnly
               />
             </div>
           </div>
         </div>
-
-        {currentGame.status_data && (
-          <div className="status-data-container">
-            <h3>Status Data:</h3>
-            <pre className="status-data-json">
-              {JSON.stringify(currentGame.status_data, null, 2)}
-            </pre>
-          </div>
-        )}
 
         <div className="client-container">
           {currentGame.id && <GameIframe gameId={currentGame.id} />}
@@ -263,32 +246,49 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           </div>
         </div>
 
-        <div className="game-field-container">
-          <label htmlFor='description'>Description: </label>
-          <textarea 
-            id="description"
-            className="description-textarea"
-            placeholder="Enter Description"
-            readOnly={!isEditMode}
-            value={isEditMode ? editedDescription : (currentGame.description || '')}
-            onChange={(e) => setEditedDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="game-field-container">
-          <label htmlFor='tags'>Tags: </label>
-          <input
-            type="text"
-            id="tags"
-            value={isEditMode ? editedTags : (currentGame.tags?.join(', ') || '')}
-            onChange={(e) => setEditedTags(e.target.value)}
-            placeholder="Enter Tags (comma separated)"
-            className="tags-input"
-            readOnly={!isEditMode}
-          />
-        </div>
-
         <div className="game-additional-fields">
+          <div className="game-field-container">
+            <label htmlFor='id'>ID: </label>
+            <input
+              type="text"
+              id="id"
+              value={currentGame.id}
+              className="readonly-input"
+              readOnly
+            />
+          </div>
+          <div className="game-field-container">
+            <label htmlFor='name'>Name: </label>
+            <input
+              type="text"
+              id="name"
+              value={isEditMode ? editedName : currentGame.name}
+              onChange={(e) => setEditedName(e.target.value)}
+              placeholder="Enter name"
+              className="name-input"
+              readOnly={!isEditMode}
+            />
+          </div>
+          <div className="game-field-container">
+            <label htmlFor='status'>Status: </label>
+            <input
+              type="text"
+              id="status"
+              value={currentGame.status || ''}
+              className="readonly-input"
+              readOnly
+            />
+          </div>
+
+        {currentGame.status_data && (
+          <div className="status-data-container">
+            <h3>Status Data:</h3>
+            <pre className="status-data-json">
+              {JSON.stringify(currentGame.status_data, null, 2)}
+            </pre>
+          </div>
+        )}
+
           <div className="game-field-container">
             <label htmlFor='source'>Source: </label>
             <input

@@ -34,7 +34,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background-color: #1a1a1a;
-  padding: 1rem 2rem;
+  padding: 1rem;
   width: 768px;
   box-sizing: border-box;
 }
@@ -50,8 +50,6 @@ body {
   gap: 10px;
   margin-left: auto;
 }
-
-
 
 .title-bar .games-button,
 .title-bar .help-button,
@@ -172,7 +170,7 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   padding: 1rem;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .welcome-button {
@@ -198,19 +196,28 @@ h1 {
   text-align: center;
 }
 
+.client-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
 .not-found-container {
   padding: 2rem;
 }
 
 /* Games page styles */
 .games-container {
+  padding: 1rem;
   max-width: 768px;
-  margin: 0 auto;
 }
 
 .games-header {
   text-align: center;
-  margin-bottom: 2rem;
 }
 
 /* Games Table Component */
@@ -256,6 +263,12 @@ h1 {
 }
 
 .new-game-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-game-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -354,6 +367,10 @@ h1 {
   width: 75%;
 }
 
+.game-field-container input.tags-input {
+  width: 100%;
+}
+
 .readonly-input {
   padding: 0.75rem;
   border-radius: 4px;
@@ -449,20 +466,29 @@ h1 {
 .game-details-container {
   background-color: #1a1a1a;
   border-radius: 8px;
-  padding: 2rem;
-  margin-top: 1rem;
+  padding: 1rem;
 }
 
 .game-details-header {
   display: flex;
+  flex: 1;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
   border-bottom: 1px solid #444;
   padding-bottom: 1rem;
 }
 
-.game-details-header h2 {
+.game-details-title {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.game-details-title h2 {
+  width: 100%;
+  text-align: left;
   margin: 0;
 }
 
@@ -505,7 +531,7 @@ h1 {
   border: 1px solid #444;
   background-color: #1a1a1a;
   color: white;
-  width: 75%;
+  width: 100%;
 }
 
 .tags-input {
@@ -514,6 +540,7 @@ h1 {
   border: 1px solid #444;
   background-color: #1a1a1a;
   color: white;
+  width: 100%;
 }
 
 .new-button {
@@ -521,7 +548,17 @@ h1 {
   padding: 0.5rem 1rem;
 }
 
+.import-button {
+  background-color: #1a1a1a;
+  padding: 0.5rem 1rem;
+}
+
 .close-button {
+  background-color: #2a2a2a;
+  padding: 0.5rem 1rem;
+}
+
+.export-button {
   background-color: #2a2a2a;
   padding: 0.5rem 1rem;
 }
@@ -592,6 +629,7 @@ h1 {
 .game-buttons {
   display: flex;
   gap: 0.5rem;
+  align-items: right;
   margin-left: auto;
 }
 
@@ -645,7 +683,7 @@ h1 {
 }
 
 .help-content p {
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0.75rem 0;
 }
 
@@ -682,7 +720,7 @@ h1 {
   margin-top: 0;
   margin-bottom: 0.75rem;
   color: #e2e2e2;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
 }
 
 .faq-item p {

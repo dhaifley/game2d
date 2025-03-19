@@ -154,6 +154,9 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
             <option value={50}>50</option>
           </select>
         </div>
+        <div className="import-game-button">
+          <button className="import-button" onClick={() => {}}>Import</button>
+        </div>
         <div className="new-game-button">
           <button className="new-button" onClick={() => setIsNewGameModalOpen(true)}>New Game</button>
         </div>
