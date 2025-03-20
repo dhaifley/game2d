@@ -1900,6 +1900,9 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		}
 
 		aid := aiDataFromFieldJSON(g.AIData)
+		if aid == nil {
+			aid = req
+		}
 
 		if aid.Response.Value != "" {
 			aid.Response.Value += "\n\n"

@@ -41,9 +41,6 @@ type Game struct {
 	w, h     int
 	id       string
 	name     string
-	ver      string
-	desc     string
-	icon     string
 	source   string
 	apiURL   string
 	apiToken string
@@ -100,7 +97,6 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 		lua:    l,
 		id:     id,
 		name:   name,
-		desc:   desc,
 		source: "app",
 		obj:    make(map[string]*Object),
 		img:    make(map[string]*Image),
@@ -111,52 +107,43 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 // MarshalJSON serializes the game to JSON.
 func (g *Game) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		ID          string             `json:"id"`
-		Name        string             `json:"name"`
-		Version     string             `json:"version,omitempty"`
-		Description string             `json:"description,omitempty"`
-		Icon        string             `json:"icon,omitempty"`
-		Source      string             `json:"source,omitempty"`
-		Debug       bool               `json:"debug,omitempty"`
-		W           int                `json:"w"`
-		H           int                `json:"h"`
-		Subject     *Object            `json:"subject,omitempty"`
-		Objects     map[string]*Object `json:"objects,omitempty"`
-		Images      map[string]*Image  `json:"images,omitempty"`
-		Scripts     map[string]*Script `json:"scripts,omitempty"`
+		ID      string             `json:"id"`
+		Name    string             `json:"name"`
+		Source  string             `json:"source,omitempty"`
+		Debug   bool               `json:"debug,omitempty"`
+		W       int                `json:"w"`
+		H       int                `json:"h"`
+		Subject *Object            `json:"subject,omitempty"`
+		Objects map[string]*Object `json:"objects,omitempty"`
+		Images  map[string]*Image  `json:"images,omitempty"`
+		Scripts map[string]*Script `json:"scripts,omitempty"`
 	}{
-		ID:          g.id,
-		Name:        g.name,
-		Version:     g.ver,
-		Description: g.desc,
-		Icon:        g.icon,
-		Source:      g.source,
-		Debug:       g.debug,
-		W:           g.w,
-		H:           g.h,
-		Subject:     g.sub,
-		Objects:     g.obj,
-		Images:      g.img,
-		Scripts:     g.src,
+		ID:      g.id,
+		Name:    g.name,
+		Source:  g.source,
+		Debug:   g.debug,
+		W:       g.w,
+		H:       g.h,
+		Subject: g.sub,
+		Objects: g.obj,
+		Images:  g.img,
+		Scripts: g.src,
 	})
 }
 
 // UnmarshalJSON deserializes the game from JSON.
 func (g *Game) UnmarshalJSON(data []byte) error {
 	v := &struct {
-		ID          string             `json:"id"`
-		Name        string             `json:"name"`
-		Version     string             `json:"version,omitempty"`
-		Description string             `json:"description,omitempty"`
-		Icon        string             `json:"icon,omitempty"`
-		Source      string             `json:"source,omitempty"`
-		Debug       bool               `json:"debug,omitempty"`
-		W           int                `json:"w"`
-		H           int                `json:"h"`
-		Subject     *Object            `json:"subject,omitempty"`
-		Objects     map[string]*Object `json:"objects,omitempty"`
-		Images      map[string]*Image  `json:"images,omitempty"`
-		Scripts     map[string]*Script `json:"scripts,omitempty"`
+		ID      string             `json:"id"`
+		Name    string             `json:"name"`
+		Source  string             `json:"source,omitempty"`
+		Debug   bool               `json:"debug,omitempty"`
+		W       int                `json:"w"`
+		H       int                `json:"h"`
+		Subject *Object            `json:"subject,omitempty"`
+		Objects map[string]*Object `json:"objects,omitempty"`
+		Images  map[string]*Image  `json:"images,omitempty"`
+		Scripts map[string]*Script `json:"scripts,omitempty"`
 	}{}
 
 	if err := json.Unmarshal(data, &v); err != nil {
@@ -165,9 +152,6 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 
 	g.id = v.ID
 	g.name = v.Name
-	g.ver = v.Version
-	g.desc = v.Description
-	g.icon = v.Icon
 	g.source = v.Source
 	g.debug = v.Debug
 	g.w = v.W
@@ -330,16 +314,14 @@ func (g *Game) Update() error {
 		}
 
 		d := map[string]any{
-			"id":          g.id,
-			"version":     g.ver,
-			"name":        g.name,
-			"description": g.desc,
-			"debug":       g.debug,
-			"w":           g.w,
-			"h":           g.h,
-			"subject":     g.sub.Map(),
-			"objects":     objects,
-			"keys":        keyMap,
+			"id":      g.id,
+			"name":    g.name,
+			"debug":   g.debug,
+			"w":       g.w,
+			"h":       g.h,
+			"subject": g.sub.Map(),
+			"objects": objects,
+			"keys":    keyMap,
 		}
 
 		pushMap(g.lua, d)
@@ -615,9 +597,7 @@ func (g *Game) Load() (rErr error) {
 	g.w = g2.w
 	g.h = g2.h
 	g.id = g2.id
-	g.ver = g2.ver
 	g.name = g2.name
-	g.desc = g2.desc
 	g.img = g2.img
 	g.src = g2.src
 
@@ -817,20 +797,16 @@ func (g *Game) updateFromMap(m map[string]any) error {
 		g.debug = v
 	}
 
+	if v, ok := m["pause"].(bool); ok {
+		g.pause = v
+	}
+
 	if v, ok := m["id"].(string); ok {
 		g.id = v
 	}
 
-	if v, ok := m["version"].(string); ok {
-		g.ver = v
-	}
-
 	if v, ok := m["name"].(string); ok {
 		g.name = v
-	}
-
-	if v, ok := m["description"].(string); ok {
-		g.desc = v
 	}
 
 	if v, ok := m["w"].(int); ok {

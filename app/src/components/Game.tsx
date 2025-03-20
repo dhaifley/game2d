@@ -40,6 +40,8 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUndo, setIsUndo] = useState(true); // true for Undo, false for Redo
   const [isPublic, setIsPublic] = useState(game.public || false);
+
+  const clientIframeRef = useRef<HTMLIFrameElement>(null);
   
   // State to keep track of the current game data
   const [currentGame, setCurrentGame] = useState<GameType>(game);
@@ -53,6 +55,9 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     setResponseText(game.ai_data?.response || '');
     setIsUndo(true); // Reset to Undo when game changes
     setIsPublic(game.public || false);
+    if (clientIframeRef.current) {
+      clientIframeRef.current.src = `/client?game_id=${game.id}&game_name=${game.name}&api_url=${window.location.origin}/api/v1&api_token=${localStorage.getItem('token')}`;
+    }
   }, [game]);
 
   useEffect(() => {
@@ -402,7 +407,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         </div>
 
         <div className="client-container">
-          {currentGame.id && <GameIframe gameId={currentGame.id} />}
+          {currentGame.id && <GameIframe gameId={currentGame.id} gameName={currentGame.name} />}
         </div>
 
         <div className="ai-field-container">
@@ -623,7 +628,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
 };
 
 // Component for the game iframe that handles token retrieval and refresh logic
-const GameIframe: React.FC<{ gameId: string }> = ({ gameId }) => {
+const GameIframe: React.FC<{ gameId: string, gameName: string }> = ({ gameId, gameName }) => {
   const [apiToken, setApiToken] = useState<string>('');
   
   // Get API token from localStorage on component mount and when gameId changes
@@ -634,11 +639,11 @@ const GameIframe: React.FC<{ gameId: string }> = ({ gameId }) => {
 
   // Build the iframe src URL with query parameters
   const iframeSrc = apiToken ? 
-    `/client?game_id=${gameId}&api_url=${window.location.origin}/api/v1&api_token=${apiToken}` : '';
+    `/client?game_id=${gameId}&game_name=${gameName}&api_url=${window.location.origin}/api/v1&api_token=${apiToken}` : '';
 
   // Only render the iframe when we have an API token
   return apiToken ? (
-    <iframe 
+    <iframe
       src={iframeSrc}
       title="Game Client"
       width="640px"

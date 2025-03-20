@@ -28,7 +28,7 @@ func initJS(g *client.Game) {
 			return 1
 		}
 
-		g.SetID(args[0].String())
+		g.SetName(args[0].String())
 
 		return 0
 	}
