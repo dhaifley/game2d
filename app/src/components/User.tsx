@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { User as UserType, fetchUser, updateUser } from '../services/userService';
+import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to check if a user has the required scope
+const hasScope = (scopes: string | undefined, requiredScope: string): boolean => {
+  if (!scopes) return false;
+  return scopes.split(' ').includes(requiredScope) || scopes.split(' ').includes('superuser');
+};
 
 interface UserProps {
   onClose: () => void;
 }
 
 const User: React.FC<UserProps> = ({ onClose }) => {
+  const { user: authUser } = useAuth();
+  
   // Component state
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +26,9 @@ const User: React.FC<UserProps> = ({ onClose }) => {
   const [editedFirstName, setEditedFirstName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Check if the current user has write permission
+  const canEdit = authUser && hasScope(authUser.scopes, 'user:write');
 
   // Load user data when component mounts
   useEffect(() => {
@@ -118,7 +130,9 @@ const User: React.FC<UserProps> = ({ onClose }) => {
               </button>
             </>
           ) : (
-            <button className="edit-button" onClick={handleEditClick}>Edit</button>
+            canEdit && (
+              <button className="edit-button" onClick={handleEditClick}>Edit</button>
+            )
           )}
           <button className="close-button" onClick={onClose}>Close</button>
         </div>

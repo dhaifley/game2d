@@ -2,6 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+// Helper function to check if a user has the required scope
+const hasScope = (scopes: string | undefined, requiredScope: string): boolean => {
+  if (!scopes) return false;
+  return scopes.split(' ').includes(requiredScope) || scopes.split(' ').includes('superuser');
+};
+
 const TitleBar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -76,9 +82,11 @@ const TitleBar: React.FC = () => {
                 <button className="dropdown-item" onClick={handleUserProfileClick}>
                   User Profile
                 </button>
-                <button className="dropdown-item" onClick={handleAccountSettingsClick}>
-                  Account Settings
-                </button>
+                {user && hasScope(user.scopes, 'account:admin') && (
+                  <button className="dropdown-item" onClick={handleAccountSettingsClick}>
+                    Account Settings
+                  </button>
+                )}
                 <button className="dropdown-item" onClick={handleSignOutClick}>
                   Sign Out
                 </button>

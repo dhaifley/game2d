@@ -16,6 +16,8 @@ func TestServiceConfig(t *testing.T) {
 
 	cfg.SetService(&config.ServiceConfig{
 		Name:             "test name",
+		AccountID:        "test id",
+		AccountName:      "test name",
 		Maintenance:      true,
 		ImportInterval:   time.Second,
 		GameLimitDefault: 5,
@@ -23,6 +25,16 @@ func TestServiceConfig(t *testing.T) {
 
 	if cfg.ServiceName() != "test name" {
 		t.Errorf("Expected name: test name, got: %v", cfg.ServiceName())
+	}
+
+	if cfg.AccountID() != "test id" {
+		t.Errorf("Expected account id: test id, got: %v",
+			cfg.AccountID())
+	}
+
+	if cfg.AccountName() != "test name" {
+		t.Errorf("Expected account name: test name, got: %v",
+			cfg.AccountName())
 	}
 
 	if cfg.ServiceMaintenance() != true {

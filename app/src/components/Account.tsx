@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Account as AccountType, fetchAccount, updateAccount } from '../services/accountService';
+import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to check if a user has the required scope
+const hasScope = (scopes: string | undefined, requiredScope: string): boolean => {
+  if (!scopes) return false;
+  return scopes.split(' ').includes(requiredScope) || scopes.split(' ').includes('superuser');
+};
 
 interface AccountProps {
   onClose: () => void;
 }
 
 const Account: React.FC<AccountProps> = ({ onClose }) => {
+  const { user: authUser } = useAuth();
+  
   // Component state
   const [account, setAccount] = useState<AccountType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,6 +25,9 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
   const [editedName, setEditedName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Check if the current user has admin permission
+  const canEdit = authUser && hasScope(authUser.scopes, 'account:admin');
 
   // Load account data when component mounts
   useEffect(() => {
@@ -114,7 +126,9 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
               </button>
             </>
           ) : (
-            <button className="edit-button" onClick={handleEditClick}>Edit</button>
+            canEdit && (
+              <button className="edit-button" onClick={handleEditClick}>Edit</button>
+            )
           )}
           <button className="close-button" onClick={onClose}>Close</button>
         </div>
@@ -186,6 +200,17 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
               </pre>
             </div>
           )}
+          
+          <div className="account-field-container">
+            <label htmlFor='game_commit_hash'>Game Commit Hash:</label>
+            <input
+              type="text"
+              id="game_commit_hash"
+              value={account.game_commit_hash || ''}
+              className="readonly-input"
+              readOnly
+            />
+          </div>
           
           <div className="account-field-container">
             <label htmlFor='game_limit'>Game Limit:</label>

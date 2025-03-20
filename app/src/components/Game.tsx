@@ -3,6 +3,13 @@ import { Game as GameType, copyGame, deleteGame, updateGame, fetchGame } from '.
 import avatarImage from '../assets/avatar.png';
 import Modal from './Modal';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to check if a user has the required scope
+const hasScope = (scopes: string | undefined, requiredScope: string): boolean => {
+  if (!scopes) return false;
+  return scopes.split(' ').includes(requiredScope) || scopes.split(' ').includes('superuser');
+};
 
 interface GameProps {
   game: GameType;
@@ -11,6 +18,8 @@ interface GameProps {
 }
 
 const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
+  const { user: authUser } = useAuth();
+  
   // Determine icon source: use base64 SVG from game.icon or fallback to avatar.png
   const iconSrc = game.icon ? `data:image/svg+xml;base64,${game.icon}` : avatarImage;
   
@@ -45,6 +54,11 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   
   // State to keep track of the current game data
   const [currentGame, setCurrentGame] = useState<GameType>(game);
+  
+  // Check if user has write permission and belongs to the game's account
+  const hasWritePermission = authUser && 
+    (hasScope(authUser.scopes, 'games:write') && 
+    (authUser.accountId === currentGame.account_id || hasScope(authUser.scopes, 'superuser')));
   
   // Update form fields when game prop changes
   useEffect(() => {
@@ -329,26 +343,30 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     <div className="game-details-container">
       <div className="game-details-header">
         <div className="game-buttons">
-          <button className="delete-button" onClick={() => setIsDeleteModalOpen(true)}>Delete</button>
-          <button className="copy-button" onClick={() => setIsCopyModalOpen(true)}>Copy</button>
-          {isEditMode ? (
+          {hasWritePermission && (
             <>
-              <button 
-                className="cancel-button" 
-                onClick={handleCancelEdit}
-              >
-                Cancel
-              </button>
-              <button 
-                className="save-button" 
-                onClick={handleSaveEdit}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
+              <button className="delete-button" onClick={() => setIsDeleteModalOpen(true)}>Delete</button>
+              <button className="copy-button" onClick={() => setIsCopyModalOpen(true)}>Copy</button>
+              {isEditMode ? (
+                <>
+                  <button 
+                    className="cancel-button" 
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="save-button" 
+                    onClick={handleSaveEdit}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              ) : (
+                <button className="edit-button" onClick={handleEditClick}>Edit</button>
+              )}
             </>
-          ) : (
-            <button className="edit-button" onClick={handleEditClick}>Edit</button>
           )}
           <button className="export-button" onClick={handleExport}>Export</button>
           <button className="close-button" onClick={handleCloseAndRefresh}>Close</button>
@@ -365,9 +383,9 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
               type="checkbox"
               checked={isPublic}
               onChange={handlePublicChange}
-              disabled={isProcessing}
+              disabled={isProcessing || !hasWritePermission}
               className="wide"
-              readOnly={!isEditMode}
+              readOnly={!hasWritePermission}
             />
           </div>
         </div>
@@ -422,29 +440,31 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
               value={responseText}
             />
           </div>
-          <div className="prompt-container">
-            <textarea
-              id="prompt"
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              placeholder="Enter prompt"
-              className="prompt-textarea"
-            />
-            <button 
-              className="prompt-button" 
-              onClick={handlePromptClick}
-              disabled={isProcessing}
-            >
-              {isProcessing ? 'Processing...' : 'Prompt'}
-            </button>
-            <button 
-              className={currentGame.previous_id || !isUndo ? "undo-button" : "undo-button-disabled"} 
-              onClick={handleUndoRedoClick}
-              disabled={isProcessing || (!currentGame.previous_id && isUndo)}
-            >
-              {isUndo ? 'Undo' : 'Redo'}
-            </button>
-          </div>
+          {hasWritePermission && (
+            <div className="prompt-container">
+              <textarea
+                id="prompt"
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder="Enter prompt"
+                className="prompt-textarea"
+              />
+              <button 
+                className="prompt-button" 
+                onClick={handlePromptClick}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Processing...' : 'Prompt'}
+              </button>
+              <button 
+                className={currentGame.previous_id || !isUndo ? "undo-button" : "undo-button-disabled"} 
+                onClick={handleUndoRedoClick}
+                disabled={isProcessing || (!currentGame.previous_id && isUndo)}
+              >
+                {isUndo ? 'Undo' : 'Redo'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="game-additional-fields">

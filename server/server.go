@@ -258,10 +258,12 @@ func (s *Server) ConnectDB() {
 
 				a, err := s.createAccount(ctx, &Account{
 					ID: request.FieldString{
-						Set: true, Valid: true, Value: s.cfg.ServiceName(),
+						Set: true, Valid: true,
+						Value: s.cfg.AccountID(),
 					},
 					Name: request.FieldString{
-						Set: true, Valid: true, Value: s.cfg.ServiceName(),
+						Set: true, Valid: true,
+						Value: s.cfg.AccountName(),
 					},
 					Secret: request.FieldString{
 						Set: true, Valid: true, Value: uuid.NewString(),
@@ -291,6 +293,32 @@ func (s *Server) ConnectDB() {
 							}); err != nil {
 								s.log.Log(ctx, logger.LvlError,
 									"unable to create initial superuser",
+									"error", err)
+							}
+						}
+					}
+				}
+
+				if su := os.Getenv("GUEST_USER"); su != "" {
+					if sp := os.Getenv("GUEST_USER_PASSWORD"); sp != "" {
+						if a != nil {
+							if _, err := s.createUser(ctx, &User{
+								AccountID: request.FieldString{
+									Set: true, Valid: true, Value: a.ID.Value,
+								},
+								ID: request.FieldString{
+									Set: true, Valid: true, Value: su,
+								},
+								Scopes: request.FieldString{
+									Set: true, Valid: true,
+									Value: request.ScopeAccountRead + " " +
+										request.ScopeUserRead + " " +
+										request.ScopeGamesRead,
+								},
+								Password: &sp,
+							}); err != nil {
+								s.log.Log(ctx, logger.LvlError,
+									"unable to create initial guest user",
 									"error", err)
 							}
 						}
@@ -790,8 +818,7 @@ func (s *Server) context(next http.Handler) http.Handler {
 
 		defer cancel()
 
-		ctx = context.WithValue(ctx, request.CtxKeyService,
-			s.cfg.ServiceName())
+		ctx = context.WithValue(ctx, request.CtxKeyService, s.cfg.ServiceName())
 
 		if tID, err := request.ContextTraceID(ctx); err != nil || tID == "" {
 			if tu, err := uuid.NewRandom(); err != nil {

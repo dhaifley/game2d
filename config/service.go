@@ -8,11 +8,15 @@ import (
 
 const (
 	KeyServiceName        = "service/name"
+	KeyAccountID          = "account_id"
+	KeyAccountName        = "account_name"
 	KeyServiceMaintenance = "service/maintenance"
 	KeyImportInterval     = "service/import_interval"
 	KeyGameLimitDefault   = "service/game_limit_default"
 
 	DefaultServiceName        = "game2d-api"
+	DefaultAccountID          = "game2d"
+	DefaultAccountName        = "game2d-api"
 	DefaultServiceMaintenance = false
 	DefaultImportInterval     = time.Minute * 5
 	DefaultGameLimitDefault   = 10
@@ -21,6 +25,8 @@ const (
 // ServiceConfig values represent telemetry configuration data.
 type ServiceConfig struct {
 	Name             string        `json:"name,omitempty"               yaml:"name,omitempty"`
+	AccountID        string        `json:"account_id,omitempty"         yaml:"account_id,omitempty"`
+	AccountName      string        `json:"account_name,omitempty"       yaml:"account_name,omitempty"`
 	Maintenance      bool          `json:"maintenance,omitempty"        yaml:"maintenance,omitempty"`
 	ImportInterval   time.Duration `json:"import_interval,omitempty"    yaml:"import_interval,omitempty"`
 	GameLimitDefault int64         `json:"game_limit_default,omitempty" yaml:"game_limit_default,omitempty"`
@@ -31,6 +37,22 @@ type ServiceConfig struct {
 func (c *ServiceConfig) Load() {
 	if c.Name == "" {
 		c.Name = DefaultServiceName
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyAccountID)); v != "" {
+		c.AccountID = v
+	}
+
+	if c.AccountID == "" {
+		c.AccountID = DefaultAccountID
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyAccountName)); v != "" {
+		c.AccountName = v
+	}
+
+	if c.AccountName == "" {
+		c.AccountName = DefaultAccountName
 	}
 
 	if v := os.Getenv(ReplaceEnv(KeyServiceMaintenance)); v != "" {
@@ -79,6 +101,30 @@ func (c *Config) ServiceName() string {
 	}
 
 	return c.service.Name
+}
+
+// AccountID returns the ID of the service account.
+func (c *Config) AccountID() string {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.service == nil {
+		return DefaultAccountID
+	}
+
+	return c.service.AccountID
+}
+
+// AccountName returns the name of the service account.
+func (c *Config) AccountName() string {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.service == nil {
+		return DefaultAccountName
+	}
+
+	return c.service.AccountName
 }
 
 // ServiceMaintenance returns whether the service has been placed into

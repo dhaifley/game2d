@@ -3,6 +3,13 @@ import avatarLogo from '../assets/avatar.png';
 import { Game, fetchGames, createGame } from '../services/gameService';
 import Modal from './Modal';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to check if a user has the required scope
+const hasScope = (scopes: string | undefined, requiredScope: string): boolean => {
+  if (!scopes) return false;
+  return scopes.split(' ').includes(requiredScope) || scopes.split(' ').includes('superuser');
+};
 
 interface SortConfig {
   key: string;
@@ -19,6 +26,9 @@ export interface GamesTableHandle {
 }
 
 const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame }, ref) => {
+  const { user: authUser } = useAuth();
+  const canWriteGames = authUser && hasScope(authUser.scopes, 'games:write');
+  
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -200,26 +210,31 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
             <option value={50}>50</option>
           </select>
         </div>
-        <div className="import-game-button">
-          <input 
-            type="file" 
-            id="game-import-input" 
-            accept=".json" 
-            style={{ display: 'none' }} 
-            onChange={handleFileImport}
-            ref={fileInputRef}
-          />
-          <button 
-            className="import-button" 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-          >
-            {importing ? 'Importing...' : 'Import'}
-          </button>
-        </div>
-        <div className="new-game-button">
-          <button className="new-button" onClick={() => setIsNewGameModalOpen(true)}>New Game</button>
-        </div>
+        
+        {canWriteGames && (
+          <>
+            <div className="import-game-button">
+              <input 
+                type="file" 
+                id="game-import-input" 
+                accept=".json" 
+                style={{ display: 'none' }} 
+                onChange={handleFileImport}
+                ref={fileInputRef}
+              />
+              <button 
+                className="import-button" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? 'Importing...' : 'Import'}
+              </button>
+            </div>
+            <div className="new-game-button">
+              <button className="new-button" onClick={() => setIsNewGameModalOpen(true)}>New Game</button>
+            </div>
+          </>
+        )}
       </div>
 
       {loading && <div className="loading-indicator">Loading games...</div>}

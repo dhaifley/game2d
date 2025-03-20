@@ -4,6 +4,7 @@ import axios from 'axios';
 interface User {
   id: string;
   accountId: string;
+  scopes?: string;
 }
 
 interface AuthContextType {

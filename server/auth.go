@@ -1253,8 +1253,8 @@ func (s *Server) authJWT(ctx context.Context,
 			"token", token)
 	}
 
-	res.AccountID = s.cfg.ServiceName()
-	res.AccountName = s.cfg.ServiceName()
+	res.AccountID = s.cfg.AccountID()
+	res.AccountName = s.cfg.AccountName()
 
 	ca, err := request.ContextAccountID(ctx)
 	if err != nil || ca != request.SystemAccount {
@@ -1353,7 +1353,7 @@ func (s *Server) authPassword(ctx context.Context,
 			"user_id", userID)
 	}
 
-	aID, aName := s.cfg.ServiceName(), s.cfg.ServiceName()
+	aID, aName := s.cfg.AccountID(), s.cfg.AccountName()
 
 	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
@@ -1633,7 +1633,7 @@ func (s *Server) createToken(ctx context.Context,
 	expiration int64,
 	scopes, accountID string,
 ) (string, error) {
-	aID := s.cfg.ServiceName()
+	aID := s.cfg.AccountID()
 
 	if accountID != "" {
 		aCtx := context.WithValue(ctx, request.CtxKeyAccountID, "sys")
