@@ -147,6 +147,13 @@ game2d uses a declarative schema for defining games:
 - **Objects**: Compositions of assets, scripts, and data
 - **Subject**: The special object representing the player
 
+## 🎯 Roadmap
+
+1. Get to a minimum viable demo release
+2. Add audio support
+3. Implement public game browsing and search
+4. Play and viability testing
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
