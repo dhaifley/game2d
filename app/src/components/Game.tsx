@@ -381,6 +381,8 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         </div>
       </div>
 
+      {saveError && <div className="modal-error">{saveError}</div>}
+
       <div className="game-details-content">
         <div className="game-details-title">
           <h2>{currentGame.name}</h2>
@@ -595,8 +597,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           </div>
         </div>
       </div>
-      
-      {saveError && <div className="modal-error">{saveError}</div>}
       
       {/* Copy Game Modal */}
       <Modal
