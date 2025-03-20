@@ -71,37 +71,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.data.access_token) {
         localStorage.setItem('token', response.data.access_token);
+        localStorage.setItem('user', JSON.stringify(response.data));
 
         // Set up axios for authenticated requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
+        axios.defaults.headers.common['Authorization'] = 
+          `Bearer ${response.data.access_token}`;
 
-        // Get user information - assuming JWT contains user ID and we can decode it
-        // or we can fetch user details from an endpoint
-        try {
-          // For now, extract user ID from JWT (this is simplified)
-          const base64Url = response.data.access_token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join(''));
-
-          const decoded = JSON.parse(jsonPayload);
-          const userData = {
-            id: decoded.sub,
-            accountId: decoded.account_id || decoded.accountId
-          };
-
-          localStorage.setItem('user', JSON.stringify(userData));
-          setUser(userData);
-          setIsAuthenticated(true);
-          setLoading(false);
-          return true;
-        } catch (e) {
-          console.error('Error decoding JWT or fetching user:', e);
-          localStorage.removeItem('token');
-          setLoading(false);
-          return false;
-        }
+        setUser(response.data);
+        setIsAuthenticated(true);
+        setLoading(false);
+        return true;
       }
 
       setLoading(false);

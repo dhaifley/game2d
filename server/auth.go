@@ -1817,6 +1817,10 @@ func (s *Server) postLoginTokenHandler(w http.ResponseWriter, r *http.Request) {
 	res := map[string]any{
 		"access_token": tok,
 		"token_type":   "bearer",
+		"account_id":   claims.AccountID,
+		"account_name": claims.AccountName,
+		"id":           claims.UserID,
+		"scopes":       claims.Scopes,
 	}
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
