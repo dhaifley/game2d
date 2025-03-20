@@ -410,20 +410,22 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 onChange={(e) => setEditedDescription(e.target.value)}
               />
             </div>
-            <div className="game-field-container">
-              <input
-                type="text"
-                id="tags"
-                value={isEditMode ? editedTags : (currentGame.tags?.join(', ') || '')}
-                onChange={(e) => setEditedTags(e.target.value)}
-                placeholder="Add tags"
-                className="tags-input"
-                readOnly
-              />
-            </div>
           </div>
         </div>
-
+        <div className="game-info-tags">
+          <div className="game-field-container">
+            <input
+              type="text"
+              id="tags"
+              value={isEditMode ? editedTags : (currentGame.tags?.join(', ') || '')}
+              onChange={(e) => setEditedTags(e.target.value)}
+              placeholder="Add tags"
+              className="tags-input"
+              readOnly
+            />
+          </div>
+        </div>
+        
         <div className="client-container">
           {currentGame.id && <GameIframe gameId={currentGame.id} gameName={currentGame.name} />}
         </div>

@@ -544,7 +544,7 @@ h1 {
   border: 1px solid #444;
   background-color: #1a1a1a;
   color: white;
-  min-height: 5rem;
+  min-height: 6rem;
 }
 
 .prompt-textarea {
@@ -579,7 +579,7 @@ h1 {
   background-color: #1a1a1a;
   color: white;
   width: 100%;
-  min-height: 3rem;
+  min-height: 6rem;
 }
 
 .tags-input {
