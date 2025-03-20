@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Game as GameType, copyGame, deleteGame, updateGame } from '../services/gameService';
+import React, { useEffect, useRef, useState, ChangeEvent } from 'react';
+import { Game as GameType, copyGame, deleteGame, updateGame, fetchGame } from '../services/gameService';
 import avatarImage from '../assets/avatar.png';
 import Modal from './Modal';
 import axios from 'axios';
@@ -33,6 +33,14 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   
+  // State for prompt and response
+  const [promptText, setPromptText] = useState('');
+  const [responseText, setResponseText] = useState(game.ai_data?.response || '');
+  const responseTextAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isUndo, setIsUndo] = useState(true); // true for Undo, false for Redo
+  const [isPublic, setIsPublic] = useState(game.public || false);
+  
   // State to keep track of the current game data
   const [currentGame, setCurrentGame] = useState<GameType>(game);
   
@@ -42,7 +50,42 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     setEditedName(game.name);
     setEditedDescription(game.description || '');
     setEditedTags(game.tags?.join(', ') || '');
+    setResponseText(game.ai_data?.response || '');
+    setIsUndo(true); // Reset to Undo when game changes
+    setIsPublic(game.public || false);
   }, [game]);
+
+  useEffect(() => {
+    if (responseTextAreaRef.current) {
+      responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
+    }
+  }, [responseText]);
+  
+  // Handle public checkbox change
+  const handlePublicChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const newPublicValue = e.target.checked;
+    setIsPublic(newPublicValue);
+    
+    try {
+      // Prepare the update payload
+      const updates: Partial<GameType> = {
+        public: newPublicValue
+      };
+      
+      // Call the API to update the game
+      const updatedGame = await updateGame(currentGame.id, updates);
+      
+      // Update the local state with the updated game data
+      setCurrentGame(updatedGame);
+      
+      // Refresh the games list
+      await onGameUpdated();
+    } catch (err) {
+      console.error('Error updating public status:', err);
+      // Revert to previous value if there was an error
+      setIsPublic(!newPublicValue);
+    }
+  };
   
   // Handle entering edit mode
   const handleEditClick = () => {
@@ -153,6 +196,98 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     }
   };
   
+  // Handle the Prompt button click
+  const handlePromptClick = async () => {
+    if (!promptText.trim()) {
+      return; // Don't send empty prompts
+    }
+    
+    try {
+      setIsProcessing(true);
+      
+      // Make the POST request to the prompt API
+      const response = await axios.post('/api/v1/games/prompt', {
+        prompt: promptText,
+        game_id: currentGame.id
+      });
+      
+      // Clear the prompt textarea
+      setPromptText('');
+      
+      // Reset to Undo state
+      setIsUndo(true);
+      
+      // Fetch the updated game to refresh the component
+      const updatedGame = await fetchGame(response.data.game_id);
+      setCurrentGame(updatedGame);
+      setResponseText(updatedGame.ai_data?.response || '');
+      if (responseTextAreaRef.current) {
+        responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
+      }
+      
+      // Refresh the games table
+      await onGameUpdated();
+    } catch (err) {
+      // Append error to response textarea
+      const errorMessage = err instanceof Error ? err.message : 'Error processing prompt';
+      setResponseText((prev: string) => {
+        const separator = prev ? '\n\n' : '';
+        return `${prev}${separator}ERROR: ${errorMessage}`;
+      });
+      console.error('Error processing prompt:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  // Handle the Undo/Redo button click
+  const handleUndoRedoClick = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Make the POST request to the undo API
+      const response = await axios.post('/api/v1/games/undo', {
+        game_id: currentGame.id
+      });
+      
+      // If successful, refresh with the new game ID
+      if (response.data && response.data.game_id) {
+        // Toggle between Undo and Redo
+        setIsUndo(!isUndo);
+        
+        // Fetch the updated game
+        const updatedGame = await fetchGame(response.data.game_id);
+        setCurrentGame(updatedGame);
+        setResponseText(updatedGame.ai_data?.response || '');
+        if (responseTextAreaRef.current) {
+          responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
+        }
+
+        // Refresh the games table
+        await onGameUpdated();
+      }
+    } catch (err) {
+      // Append error to response textarea
+      const errorMessage = err instanceof Error ? err.message : 'unable to process undo/redo';
+      setResponseText((prev: string) => {
+        const separator = prev ? '\n\n' : '';
+        return `${prev}${separator}ERROR: ${errorMessage}`;
+      });
+      console.error('Error processing undo/redo:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  // Handle closing the game and refreshing the table
+  const handleCloseAndRefresh = async () => {
+    // Refresh the games list
+    await onGameUpdated();
+    
+    // Close the game details view
+    onClose();
+  };
+  
   // Handle exporting a game
   const handleExport = async () => {
     try {
@@ -211,13 +346,25 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
             <button className="edit-button" onClick={handleEditClick}>Edit</button>
           )}
           <button className="export-button" onClick={handleExport}>Export</button>
-          <button className="close-button" onClick={onClose}>Close</button>
+          <button className="close-button" onClick={handleCloseAndRefresh}>Close</button>
         </div>
       </div>
 
       <div className="game-details-content">
         <div className="game-details-title">
           <h2>{currentGame.name}</h2>
+          <div className="game-field-container">
+            <label htmlFor="public-checkbox" className="wide">Public:</label>
+            <input
+              id="public-checkbox"
+              type="checkbox"
+              checked={isPublic}
+              onChange={handlePublicChange}
+              disabled={isProcessing}
+              className="wide"
+              readOnly={!isEditMode}
+            />
+          </div>
         </div>
         <div className="game-info-layout">
           <div className="game-icon-container">
@@ -260,22 +407,38 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
 
         <div className="ai-field-container">
           <div className="response-container">
-            <textarea 
+            <textarea
+              ref={responseTextAreaRef} 
               id="response"
               className="response-textarea"
               readOnly
-              value={currentGame.response || ''}
+              onLoad={() => { setResponseText(currentGame.ai_data?.response || '') }}
+              onChange={(e) => setResponseText(e.target.value)}
+              value={responseText}
             />
           </div>
           <div className="prompt-container">
             <textarea
               id="prompt"
-              value={currentGame.ai_data?.prompt || ''}
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
               placeholder="Enter prompt"
               className="prompt-textarea"
             />
-            <button className="prompt-button" onClick={onClose}>Prompt</button>
-            <button className={currentGame.previous_id ? "undo-button" : "undo-button-disabled"} onClick={onClose}>Undo</button>
+            <button 
+              className="prompt-button" 
+              onClick={handlePromptClick}
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Processing...' : 'Prompt'}
+            </button>
+            <button 
+              className={currentGame.previous_id || !isUndo ? "undo-button" : "undo-button-disabled"} 
+              onClick={handleUndoRedoClick}
+              disabled={isProcessing || (!currentGame.previous_id && isUndo)}
+            >
+              {isUndo ? 'Undo' : 'Redo'}
+            </button>
           </div>
         </div>
 

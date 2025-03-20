@@ -33,39 +33,165 @@ const (
 
 // Game values represent game state data.
 type Game struct {
-	AccountID   request.FieldString      `bson:"account_id"        json:"account_id"        yaml:"account_id"`
-	Public      request.FieldBool        `bson:"public"            json:"public"            yaml:"public"`
-	W           request.FieldInt64       `bson:"w"                 json:"w"                 yaml:"w"`
-	H           request.FieldInt64       `bson:"h"                 json:"h"                 yaml:"h"`
-	ID          request.FieldString      `bson:"id"                json:"id"                yaml:"id"`
-	PreviousID  request.FieldString      `bson:"previous_id"       json:"previous_id"       yaml:"previous_id"`
-	Name        request.FieldString      `bson:"name"              json:"name"              yaml:"name"`
-	Version     request.FieldString      `bson:"version"           json:"version"           yaml:"version"`
-	Description request.FieldString      `bson:"description"       json:"description"       yaml:"description"`
-	Icon        request.FieldString      `bson:"icon"              json:"icon"              yaml:"icon"`
-	Status      request.FieldString      `bson:"status"            json:"status"            yaml:"status"`
-	StatusData  request.FieldJSON        `bson:"status_data"       json:"status_data"       yaml:"status_data"`
-	Subject     request.FieldJSON        `bson:"subject"           json:"subject"           yaml:"subject"`
-	Objects     request.FieldJSON        `bson:"objects"           json:"objects"           yaml:"objects"`
-	Images      request.FieldJSON        `bson:"images"            json:"images"            yaml:"images"`
-	Scripts     request.FieldJSON        `bson:"scripts"           json:"scripts"           yaml:"scripts"`
-	Source      request.FieldString      `bson:"source"            json:"source"            yaml:"source"`
-	CommitHash  request.FieldString      `bson:"commit_hash"       json:"commit_hash"       yaml:"commit_hash"`
-	Tags        request.FieldStringArray `bson:"tags"              json:"tags"              yaml:"tags"`
-	AIData      *AIData                  `bson:"ai_data,omitempty" json:"ai_data,omitempty" yaml:"ai_data,omitempty"`
-	CreatedAt   request.FieldTime        `bson:"created_at"        json:"created_at"        yaml:"created_at"`
-	CreatedBy   request.FieldString      `bson:"created_by"        json:"created_by"        yaml:"created_by"`
-	UpdatedAt   request.FieldTime        `bson:"updated_at"        json:"updated_at"        yaml:"updated_at"`
-	UpdatedBy   request.FieldString      `bson:"updated_by"        json:"updated_by"        yaml:"updated_by"`
+	AccountID   request.FieldString      `bson:"account_id"  json:"account_id"  yaml:"account_id"`
+	Public      request.FieldBool        `bson:"public"      json:"public"      yaml:"public"`
+	W           request.FieldInt64       `bson:"w"           json:"w"           yaml:"w"`
+	H           request.FieldInt64       `bson:"h"           json:"h"           yaml:"h"`
+	ID          request.FieldString      `bson:"id"          json:"id"          yaml:"id"`
+	PreviousID  request.FieldString      `bson:"previous_id" json:"previous_id" yaml:"previous_id"`
+	Name        request.FieldString      `bson:"name"        json:"name"        yaml:"name"`
+	Version     request.FieldString      `bson:"version"     json:"version"     yaml:"version"`
+	Description request.FieldString      `bson:"description" json:"description" yaml:"description"`
+	Icon        request.FieldString      `bson:"icon"        json:"icon"        yaml:"icon"`
+	Status      request.FieldString      `bson:"status"      json:"status"      yaml:"status"`
+	StatusData  request.FieldJSON        `bson:"status_data" json:"status_data" yaml:"status_data"`
+	Subject     request.FieldJSON        `bson:"subject"     json:"subject"     yaml:"subject"`
+	Objects     request.FieldJSON        `bson:"objects"     json:"objects"     yaml:"objects"`
+	Images      request.FieldJSON        `bson:"images"      json:"images"      yaml:"images"`
+	Scripts     request.FieldJSON        `bson:"scripts"     json:"scripts"     yaml:"scripts"`
+	Source      request.FieldString      `bson:"source"      json:"source"      yaml:"source"`
+	CommitHash  request.FieldString      `bson:"commit_hash" json:"commit_hash" yaml:"commit_hash"`
+	Tags        request.FieldStringArray `bson:"tags"        json:"tags"        yaml:"tags"`
+	AIData      request.FieldJSON        `bson:"ai_data"     json:"ai_data"     yaml:"ai_data"`
+	CreatedAt   request.FieldTime        `bson:"created_at"  json:"created_at"  yaml:"created_at"`
+	CreatedBy   request.FieldString      `bson:"created_by"  json:"created_by"  yaml:"created_by"`
+	UpdatedAt   request.FieldTime        `bson:"updated_at"  json:"updated_at"  yaml:"updated_at"`
+	UpdatedBy   request.FieldString      `bson:"updated_by"  json:"updated_by"  yaml:"updated_by"`
 }
 
 // AIData values contain the AI data for a game.
 type AIData struct {
-	Prompt   request.FieldString `bson:"prompt"            json:"prompt"            yaml:"prompt"`
-	Response request.FieldString `bson:"response"          json:"response"          yaml:"response"`
-	Data     request.FieldJSON   `bson:"data"              json:"data"              yaml:"data"`
-	Error    request.FieldJSON   `bson:"error"             json:"error"             yaml:"error"`
-	GameID   *string             `bson:"game_id,omitempty" json:"game_id,omitempty" yaml:"game_id,omitempty"`
+	Prompt   request.FieldString `bson:"prompt"   json:"prompt"   yaml:"prompt"`
+	Response request.FieldString `bson:"response" json:"response" yaml:"response"`
+	Data     request.FieldJSON   `bson:"data"     json:"data"     yaml:"data"`
+	Error    request.FieldJSON   `bson:"error"    json:"error"    yaml:"error"`
+	GameID   request.FieldString `bson:"game_id"  json:"game_id"  yaml:"game_id"`
+}
+
+// Map converts the AIData to a map.
+func (a *AIData) Map() map[string]any {
+	var res map[string]any
+
+	if a == nil {
+		return res
+	}
+
+	res = map[string]any{}
+
+	if a.Prompt.Valid {
+		res["prompt"] = a.Prompt.Value
+	}
+
+	if a.Response.Valid {
+		res["response"] = a.Response.Value
+	}
+
+	if a.Data.Valid {
+		res["data"] = a.Data.Value
+	}
+
+	if a.Error.Valid {
+		res["error"] = a.Error.Value
+	}
+
+	if a.GameID.Valid {
+		res["game_id"] = a.GameID.Value
+	}
+
+	return res
+}
+
+// aiDataFromFieldJSON converts FieldJSON to AIData.
+func aiDataFromMap(m map[string]any) *AIData {
+	if m == nil {
+		return nil
+	}
+
+	res := &AIData{}
+
+	if v, ok := m["prompt"]; ok {
+		if s, ok := v.(string); ok {
+			res.Prompt = request.FieldString{
+				Set: true, Valid: true, Value: s,
+			}
+		}
+	}
+
+	if v, ok := m["response"]; ok {
+		if s, ok := v.(string); ok {
+			res.Response = request.FieldString{
+				Set: true, Valid: true, Value: s,
+			}
+		}
+	}
+
+	if v, ok := m["data"]; ok {
+		if v == nil {
+			res.Data = request.FieldJSON{
+				Set: true, Valid: false, Value: nil,
+			}
+		}
+
+		if s, ok := v.(map[string]any); ok {
+			res.Data = request.FieldJSON{
+				Set: true, Valid: true, Value: s,
+			}
+		} else if s, ok := v.(string); ok {
+			var m map[string]any
+
+			if err := json.Unmarshal([]byte(s), &m); err == nil {
+				res.Data = request.FieldJSON{
+					Set: true, Valid: true, Value: m,
+				}
+			}
+		}
+	}
+
+	if v, ok := m["error"]; ok {
+		if s, ok := v.(map[string]any); ok {
+			res.Error = request.FieldJSON{
+				Set: true, Valid: true, Value: s,
+			}
+		} else if s, ok := v.(string); ok {
+			var m map[string]any
+
+			if err := json.Unmarshal([]byte(s), &m); err == nil {
+				res.Error = request.FieldJSON{
+					Set: true, Valid: true, Value: m,
+				}
+			}
+		}
+	}
+
+	if v, ok := m["game_id"]; ok {
+		if s, ok := v.(string); ok {
+			res.GameID = request.FieldString{
+				Set: true, Valid: true, Value: s,
+			}
+		}
+	}
+
+	return res
+}
+
+// fieldJSONFromAIData converts an AIData to a FieldJSON.
+func fieldJSONFromAIData(req *AIData) request.FieldJSON {
+	if req == nil {
+		return request.FieldJSON{}
+	}
+
+	return request.FieldJSON{
+		Set: true, Valid: true, Value: req.Map(),
+	}
+}
+
+// aiDataFromFieldJSON converts a FieldJSON to an AIData.
+func aiDataFromFieldJSON(req request.FieldJSON) *AIData {
+	if !req.Set || !req.Valid {
+		return nil
+	}
+
+	return aiDataFromMap(req.Value)
 }
 
 // Validate checks that the value contains valid data.
@@ -471,6 +597,7 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "images", req.Images)
 	request.SetField(doc, "scripts", req.Scripts)
 	request.SetField(doc, "commit_hash", req.CommitHash)
+	request.SetField(doc, "ai_data", req.AIData)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
@@ -543,15 +670,16 @@ func (s *Server) createGame(ctx context.Context,
 				Set: true, Valid: true, Value: request.StatusInactive,
 			}
 
-			if pgID := pg.PreviousID.Value; pgID != "" {
-				if err := s.deleteGame(ctx, pgID); err != nil {
+			if pg.PreviousID.Value != res.ID.Value &&
+				pg.PreviousID.Value != "" {
+				if err := s.deleteGame(ctx, pg.PreviousID.Value); err != nil {
 					return nil, errors.Wrap(err, errors.ErrDatabase,
 						"unable to delete previous game",
 						"previous_id", res.PreviousID.Value)
 				}
 
 				pg.PreviousID = request.FieldString{
-					Set: true, Valid: true, Value: "",
+					Set: true, Valid: false, Value: "",
 				}
 			}
 
@@ -644,6 +772,7 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "images", req.Images)
 	request.SetField(doc, "scripts", req.Scripts)
 	request.SetField(doc, "commit_hash", req.CommitHash)
+	request.SetField(doc, "ai_data", req.AIData)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
@@ -1737,7 +1866,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"missing request")
 		}
 
-		if req.GameID == nil || *req.GameID == "" {
+		if req.GameID.Value == "" {
 			return nil, errors.New(errors.ErrInvalidRequest,
 				"missing game id",
 				"req", req)
@@ -1745,7 +1874,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 
 		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
-		g, err := s.getGame(ctx, *req.GameID)
+		g, err := s.getGame(ctx, req.GameID.Value)
 		if err != nil {
 			return nil, errors.Wrap(err, errors.ErrDatabase,
 				"unable to get game for prompt",
@@ -1770,6 +1899,26 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"req", req)
 		}
 
+		aid := aiDataFromFieldJSON(g.AIData)
+
+		if aid.Response.Value != "" {
+			aid.Response.Value += "\n\n"
+		}
+
+		req.Response = request.FieldString{
+			Set: true, Valid: true, Value: aid.Response.Value +
+				"Prompt:\n" + req.Prompt.Value +
+				"\n\nResponse:\nThe AI has responded.",
+		}
+
+		aid.Prompt = request.FieldString{
+			Set: true, Valid: true, Value: req.Prompt.Value,
+		}
+
+		aid.Response = request.FieldString{
+			Set: true, Valid: true, Value: req.Response.Value,
+		}
+
 		ng := &Game{
 			AccountID: g.AccountID,
 			W:         g.W,
@@ -1791,7 +1940,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				Set: true, Valid: true, Value: "app",
 			},
 			Tags:   g.Tags,
-			AIData: g.AIData,
+			AIData: fieldJSONFromAIData(aid),
 		}
 
 		ng, err = s.createGame(ctx, ng)
@@ -1802,13 +1951,9 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"new_game", ng)
 		}
 
-		req.Response = request.FieldString{
-			Set: true, Valid: true, Value: req.Response.Value +
-				"\n\nPrompt:\n" + req.Prompt.Value +
-				"\n\nResponse:\nThe AI has responded.",
+		req.GameID = request.FieldString{
+			Set: true, Valid: true, Value: ng.ID.Value,
 		}
-
-		req.GameID = &ng.ID.Value
 
 		return req, nil
 	}
@@ -1873,7 +2018,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 				"missing request")
 		}
 
-		if req.GameID == nil || *req.GameID == "" {
+		if req.GameID.Value == "" {
 			return nil, errors.New(errors.ErrInvalidRequest,
 				"missing game id",
 				"req", req)
@@ -1882,7 +2027,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 		ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
-		g, err := s.getGame(ctx, *req.GameID)
+		g, err := s.getGame(ctx, req.GameID.Value)
 		if err != nil {
 			return nil, errors.Wrap(err, errors.ErrDatabase,
 				"unable to get game to undo",
@@ -1914,8 +2059,18 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 				"req", req)
 		}
 
+		if pg.PreviousID.Value != g.ID.Value &&
+			pg.PreviousID.Value != "" {
+			if err := s.deleteGame(ctx, pg.PreviousID.Value); err != nil {
+				return nil, errors.Wrap(err, errors.ErrDatabase,
+					"unable to delete previous game",
+					"previous_id", pg.PreviousID.Value,
+					"req", req)
+			}
+		}
+
 		g.PreviousID = request.FieldString{
-			Set: true, Valid: true, Value: pg.ID.Value,
+			Set: true, Valid: false, Value: "",
 		}
 
 		g.Status = request.FieldString{
@@ -1952,7 +2107,9 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 				"\n\nResponse:\nThe previous prompt has been undone.",
 		}
 
-		req.GameID = &pg.ID.Value
+		req.GameID = request.FieldString{
+			Set: true, Valid: true, Value: pg.ID.Value,
+		}
 
 		return req, nil
 	}

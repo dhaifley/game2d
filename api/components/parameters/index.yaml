@@ -9,5 +9,3 @@ skip:
   $ref: "./skip.yaml"
 sort:
   $ref: "./sort.yaml"
-summary:
-  $ref: "./summary.yaml"

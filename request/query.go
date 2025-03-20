@@ -10,34 +10,18 @@ import (
 
 // Query messages represent query string search requests.
 type Query struct {
-	Search  string `json:"search,omitempty"`
-	Size    int64  `json:"size,omitempty"`
-	Skip    int64  `json:"skip,omitempty"`
-	Sort    string `json:"sort,omitempty"`
-	Summary string `json:"summary,omitempty"`
+	Search string `json:"search,omitempty"`
+	Size   int64  `json:"size,omitempty"`
+	Skip   int64  `json:"skip,omitempty"`
+	Sort   string `json:"sort,omitempty"`
 }
 
 func NewQuery() *Query {
 	return &Query{
-		Search:  "",
-		Size:    100,
-		Skip:    0,
-		Sort:    "",
-		Summary: "",
-	}
-}
-
-// NoSummary returns a copy of the query without the summary component.
-func (q *Query) NoSummary() *Query {
-	if q == nil {
-		return nil
-	}
-
-	return &Query{
-		Search: q.Search,
-		Size:   q.Size,
-		Skip:   q.Skip,
-		Sort:   q.Sort,
+		Search: "",
+		Size:   100,
+		Skip:   0,
+		Sort:   "",
 	}
 }
 
@@ -80,8 +64,6 @@ func ParseQuery(values url.Values) (*Query, error) {
 			}
 		case "sort":
 			req.Sort = strings.Join(qv, ",")
-		case "summary":
-			req.Summary = strings.Join(qv, ",")
 		}
 	}
 

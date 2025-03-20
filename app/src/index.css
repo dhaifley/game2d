@@ -355,6 +355,7 @@ h1 {
 .game-field-container {
   display: flex;
   align-items: center;
+  width: auto;
   gap: 10px;
   padding: 0.5rem;
 }
@@ -363,8 +364,16 @@ h1 {
   width: 25%;
 }
 
+.game-field-container label.wide {
+  width: auto;
+}
+
 .game-field-container input {
   width: 75%;
+}
+
+.game-field-container input.wide {
+  width: auto;
 }
 
 .game-field-container input.tags-input {
@@ -482,6 +491,7 @@ h1 {
 .game-details-title {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   gap: 10px;
 }

@@ -46,10 +46,4 @@ func TestParseQuery(t *testing.T) {
 	if req.Sort != expS {
 		t.Errorf("Expected sort: %v, got: %v", expS, req.Sort)
 	}
-
-	expS = "test,test1"
-
-	if req.Summary != expS {
-		t.Errorf("Expected summary: %v, got: %v", expS, req.Summary)
-	}
 }
