@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,6 +7,22 @@ const TitleBar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSignInClick = () => {
     navigate('/login');
@@ -15,6 +31,7 @@ const TitleBar: React.FC = () => {
   const handleSignOutClick = () => {
     logout();
     navigate('/welcome');
+    setIsDropdownOpen(false);
   };
   
   const handleHelpClick = () => {
@@ -23,6 +40,20 @@ const TitleBar: React.FC = () => {
   
   const handleGamesClick = () => {
     navigate('/');
+  };
+
+  const handleUserProfileClick = () => {
+    navigate('/user');
+    setIsDropdownOpen(false);
+  };
+
+  const handleAccountSettingsClick = () => {
+    navigate('/account');
+    setIsDropdownOpen(false);
+  };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
   };
 
   return (
@@ -36,17 +67,27 @@ const TitleBar: React.FC = () => {
           Help
         </button>
         {isAuthenticated && user ? (
-          <button className="user-button">
-            {user.id}
-          </button>
+          <div className="user-dropdown-container" ref={dropdownRef}>
+            <button className="user-button" onClick={toggleDropdown}>
+              {user.id}
+            </button>
+            {isDropdownOpen && (
+              <div className="user-dropdown-menu">
+                <button className="dropdown-item" onClick={handleUserProfileClick}>
+                  User Profile
+                </button>
+                <button className="dropdown-item" onClick={handleAccountSettingsClick}>
+                  Account Settings
+                </button>
+                <button className="dropdown-item" onClick={handleSignOutClick}>
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <button className={currentPath === '/login' ? "sign-in-button-sel" : "sign-in-button"} onClick={handleSignInClick}>
             Sign In
-          </button>
-        )}
-        {isAuthenticated && (
-          <button className="sign-out-button" onClick={handleSignOutClick}>
-            Sign Out
           </button>
         )}
       </div>

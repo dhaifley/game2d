@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Welcome from './pages/Welcome';
 import Help from './pages/Help';
 import Games from './pages/Games';
+import User from './pages/User';
+import Account from './pages/Account';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -32,6 +34,22 @@ const routes: RouteObject[] = [
       {
         path: 'help',
         element: <Help />
+      },
+      {
+        path: 'user',
+        element: (
+          <ProtectedRoute>
+            <User />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'account',
+        element: (
+          <ProtectedRoute>
+            <Account />
+          </ProtectedRoute>
+        ),
       },
       {
         path: '*',

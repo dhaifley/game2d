@@ -75,6 +75,42 @@ body {
   border-color: #6464ffdd;
 }
 
+/* User dropdown menu styles */
+.user-dropdown-container {
+  position: relative;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  min-width: 180px;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #2a2a2a;
+  color: #6464ff;
+}
 
 .app-layout {
   display: flex;
@@ -913,4 +949,95 @@ input[readonly],
 textarea[readonly] {
   background-color: #1a1a1a;
   border: 1px solid #444;
+}
+
+/* User and Account Component Styles */
+.user-details-container,
+.account-details-container {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.user-details-header,
+.account-details-header {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1rem;
+}
+
+.user-details-title,
+.account-details-title {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.user-details-title h2,
+.account-details-title h2 {
+  width: 100%;
+  text-align: left;
+  margin: 0;
+}
+
+.user-buttons,
+.account-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: right;
+  margin-left: auto;
+}
+
+.user-details-content,
+.account-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.user-field-container,
+.account-field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.5rem;
+}
+
+.user-field-container label,
+.account-field-container label {
+  width: 25%;
+}
+
+.user-field-container input,
+.account-field-container input {
+  width: 75%;
+}
+
+.user-data-container,
+.account-data-container {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.user-data-json,
+.account-data-json {
+  margin: 0;
+  padding: 1rem;
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.user-page,
+.account-page {
+  padding: 2rem;
+  max-width: 768px;
 }
