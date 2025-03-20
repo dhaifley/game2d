@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Game as GameType, copyGame, deleteGame, updateGame } from '../services/gameService';
 import avatarImage from '../assets/avatar.png';
 import Modal from './Modal';
+import axios from 'axios';
 
 interface GameProps {
   game: GameType;
@@ -152,6 +153,38 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     }
   };
   
+  // Handle exporting a game
+  const handleExport = async () => {
+    try {
+      // Get the game data from the API
+      const response = await axios.get(`/api/v1/games/${currentGame.id}`);
+      
+      // Create a Blob from the JSON data
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+        type: 'application/json'
+      });
+      
+      // Create a URL for the Blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${currentGame.id}.json`;
+      
+      // Append to the document, click it, then remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Release the URL object
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting game:', err);
+      alert('Failed to export game: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  };
+  
   return (
     <div className="game-details-container">
       <div className="game-details-header">
@@ -177,7 +210,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           ) : (
             <button className="edit-button" onClick={handleEditClick}>Edit</button>
           )}
-          <button className="export-button" onClick={onClose}>Export</button>
+          <button className="export-button" onClick={handleExport}>Export</button>
           <button className="close-button" onClick={onClose}>Close</button>
         </div>
       </div>

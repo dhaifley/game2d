@@ -1,7 +1,8 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import avatarLogo from '../assets/avatar.png';
 import { Game, fetchGames, createGame } from '../services/gameService';
 import Modal from './Modal';
+import axios from 'axios';
 
 interface SortConfig {
   key: string;
@@ -32,6 +33,10 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
   const [newGameName, setNewGameName] = useState('');
   const [newGameError, setNewGameError] = useState<string | null>(null);
   const [creatingGame, setCreatingGame] = useState(false);
+  
+  // Import file reference
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   // Expose the loadGames method to parent components via ref
   useImperativeHandle(ref, () => ({
@@ -129,6 +134,47 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
     return new Date(timestamp * 1000).toLocaleString();
   };
 
+  // Handle file import
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      setError('Only JSON files are supported for import');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      setError(null);
+      
+      // Read the file contents
+      const fileContent = await file.text();
+      
+      // Send to the API
+      await axios.post('/api/v1/games', JSON.parse(fileContent), {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Refresh the games list
+      await loadGames();
+      
+      // Reset the file input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to import game');
+      console.error('Error importing game:', err);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="games-table-container">
       <div className="games-table-controls">
@@ -155,7 +201,21 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
           </select>
         </div>
         <div className="import-game-button">
-          <button className="import-button" onClick={() => {}}>Import</button>
+          <input 
+            type="file" 
+            id="game-import-input" 
+            accept=".json" 
+            style={{ display: 'none' }} 
+            onChange={handleFileImport}
+            ref={fileInputRef}
+          />
+          <button 
+            className="import-button" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            {importing ? 'Importing...' : 'Import'}
+          </button>
         </div>
         <div className="new-game-button">
           <button className="new-button" onClick={() => setIsNewGameModalOpen(true)}>New Game</button>
