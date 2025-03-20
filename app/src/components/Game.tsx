@@ -42,6 +42,14 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   
+  // Tag modal states
+  const [isAddTagModalOpen, setIsAddTagModalOpen] = useState(false);
+  const [isDeleteTagModalOpen, setIsDeleteTagModalOpen] = useState(false);
+  const [newTag, setNewTag] = useState('');
+  const [selectedTag, setSelectedTag] = useState('');
+  const [tagError, setTagError] = useState<string | null>(null);
+  const [isTagProcessing, setIsTagProcessing] = useState(false);
+  
   // State for prompt and response
   const [promptText, setPromptText] = useState('');
   const [responseText, setResponseText] = useState(game.ai_data?.response || '');
@@ -413,17 +421,40 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           </div>
         </div>
         <div className="game-info-tags">
-          <div className="game-field-container">
-            <input
-              type="text"
-              id="tags"
-              value={isEditMode ? editedTags : (currentGame.tags?.join(', ') || '')}
-              onChange={(e) => setEditedTags(e.target.value)}
-              placeholder="Add tags"
-              className="tags-input"
-              readOnly
-            />
-          </div>
+          {hasWritePermission ? (
+            <button 
+              className="add-tag-button" 
+              onClick={() => {
+                setNewTag('');
+                setTagError(null);
+                setIsAddTagModalOpen(true);
+              }}
+            >
+              Add Tag
+            </button>
+          ) : (
+            <span className="tags-label">Tags:</span>
+          )}
+          
+          {currentGame.tags && currentGame.tags.length > 0 ? (
+            currentGame.tags.map((tag, index) => (
+              <span 
+                key={index} 
+                className={hasScope(authUser?.scopes, 'user:write') ? "tag-item clickable" : "tag-item"}
+                onClick={() => {
+                  if (hasScope(authUser?.scopes, 'user:write')) {
+                    setSelectedTag(tag);
+                    setTagError(null);
+                    setIsDeleteTagModalOpen(true);
+                  }
+                }}
+              >
+                {tag}
+              </span>
+            ))
+          ) : (
+            <span style={{ color: '#888', fontSize: '0.9rem' }}>No tags</span>
+          )}
         </div>
         
         <div className="client-container">
@@ -644,6 +675,133 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         <p>Are you sure you want to delete <strong>{currentGame.name}</strong>?</p>
         <p>This action cannot be undone.</p>
         {deleteError && <div className="modal-error">{deleteError}</div>}
+      </Modal>
+
+      {/* Add Tag Modal */}
+      <Modal
+        isOpen={isAddTagModalOpen}
+        onClose={() => {
+          setIsAddTagModalOpen(false);
+          setTagError(null);
+        }}
+        title="Add Tag"
+        actions={
+          <>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setIsAddTagModalOpen(false);
+                setTagError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="action-button" 
+              onClick={async () => {
+                if (!newTag.trim()) {
+                  setTagError('Tag cannot be empty');
+                  return;
+                }
+                
+                try {
+                  setIsTagProcessing(true);
+                  setTagError(null);
+                  
+                  // POST request to add tag
+                  await axios.post(`/api/v1/games/${currentGame.id}/tags`, [newTag.trim()]);
+                  
+                  // Close modal
+                  setIsAddTagModalOpen(false);
+                  setNewTag('');
+                  
+                  // Refresh game to show new tag
+                  const updatedGame = await fetchGame(currentGame.id);
+                  setCurrentGame(updatedGame);
+                  await onGameUpdated();
+                } catch (err) {
+                  setTagError(err instanceof Error ? err.message : 'Failed to add tag');
+                  console.error('Error adding tag:', err);
+                } finally {
+                  setIsTagProcessing(false);
+                }
+              }}
+              disabled={isTagProcessing}
+            >
+              {isTagProcessing ? 'Adding...' : 'Add'}
+            </button>
+          </>
+        }
+      >
+        <div className="modal-form-group">
+          <label htmlFor="tag-input">New Tag</label>
+          <input
+            id="tag-input"
+            type="text"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            placeholder="Enter tag"
+            autoFocus
+          />
+        </div>
+        {tagError && <div className="modal-error">{tagError}</div>}
+      </Modal>
+
+      {/* Delete Tag Modal */}
+      <Modal
+        isOpen={isDeleteTagModalOpen}
+        onClose={() => {
+          setIsDeleteTagModalOpen(false);
+          setTagError(null);
+        }}
+        title="Delete Tag"
+        actions={
+          <>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setIsDeleteTagModalOpen(false);
+                setTagError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="delete-action-button" 
+              onClick={async () => {
+                try {
+                  setIsTagProcessing(true);
+                  setTagError(null);
+                  
+                  // DELETE request to remove tag
+                  await axios.delete(`/api/v1/games/${currentGame.id}/tags`, {
+                    data: [selectedTag]
+                  });
+                  
+                  // Close modal
+                  setIsDeleteTagModalOpen(false);
+                  setSelectedTag('');
+                  
+                  // Refresh game to update tags
+                  const updatedGame = await fetchGame(currentGame.id);
+                  setCurrentGame(updatedGame);
+                  await onGameUpdated();
+                } catch (err) {
+                  setTagError(err instanceof Error ? err.message : 'Failed to delete tag');
+                  console.error('Error deleting tag:', err);
+                } finally {
+                  setIsTagProcessing(false);
+                }
+              }}
+              disabled={isTagProcessing}
+            >
+              {isTagProcessing ? 'Deleting...' : 'Yes'}
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete the tag <strong>{selectedTag}</strong>?</p>
+        {tagError && <div className="modal-error">{tagError}</div>}
       </Modal>
     </div>
   );

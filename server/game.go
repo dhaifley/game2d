@@ -29,6 +29,7 @@ const (
 	CtxKeyGameNoCount         = "game_no_count"
 	CtxKeyGameMinData         = "game_min_data"
 	CtxKeyGameAllowPreviousID = "game_allow_previous_id"
+	CtxKeyGameAllowTags       = "game_allow_tags"
 )
 
 // Game values represent game state data.
@@ -609,6 +610,10 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(cDoc, "created_at", req.CreatedAt)
 	request.SetField(cDoc, "created_by", req.CreatedBy)
 
+	if v := ctx.Value(CtxKeyGameAllowTags); v != nil {
+		request.SetField(doc, "tags", req.Tags)
+	}
+
 	doc = &bson.D{{Key: "$set", Value: doc}, {Key: "$setOnInsert", Value: cDoc}}
 
 	pro := bson.M{"_id": 0}
@@ -775,6 +780,10 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "ai_data", req.AIData)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
+
+	if v := ctx.Value(CtxKeyGameAllowTags); v != nil {
+		request.SetField(doc, "tags", req.Tags)
+	}
 
 	pro := bson.M{"_id": 0}
 
@@ -1417,30 +1426,29 @@ func (s *Server) addGameTags(ctx context.Context,
 		return nil, err
 	}
 
-	tags = append(tags, g.Tags.Value...)
+	newTags := append(tags, g.Tags.Value...)
 
-	tm := make(map[string]struct{}, len(tags))
-	for _, t := range tags {
+	tm := make(map[string]struct{}, len(newTags))
+	for _, t := range newTags {
 		tm[t] = struct{}{}
 	}
 
-	tags = tags[:0]
+	nt := make([]string, 0, len(tm))
 	for t := range tm {
-		tags = append(tags, t)
+		nt = append(nt, t)
 	}
 
 	g.Tags = request.FieldStringArray{
-		Set: true, Valid: true, Value: tags,
+		Set: true, Valid: true, Value: nt,
 	}
 
 	if len(g.Tags.Value) == 0 {
 		g.Tags.Valid = false
 	}
 
-	if _, err := s.updateGame(ctx, &Game{
-		ID:   g.ID,
-		Tags: g.Tags,
-	}); err != nil {
+	ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
+
+	if _, err := s.updateGame(ctx, g); err != nil {
 		return nil, err
 	}
 
@@ -1468,23 +1476,22 @@ func (s *Server) deleteGameTags(ctx context.Context,
 		delete(tm, t)
 	}
 
-	tags = tags[:0]
+	nt := make([]string, 0, len(tm))
 	for t := range tm {
-		tags = append(tags, t)
+		nt = append(nt, t)
 	}
 
 	g.Tags = request.FieldStringArray{
-		Set: true, Valid: true, Value: tags,
+		Set: true, Valid: true, Value: nt,
 	}
 
 	if len(g.Tags.Value) == 0 {
 		g.Tags.Valid = false
 	}
 
-	if _, err := s.updateGame(ctx, &Game{
-		ID:   g.ID,
-		Tags: g.Tags,
-	}); err != nil {
+	ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
+
+	if _, err := s.updateGame(ctx, g); err != nil {
 		return err
 	}
 

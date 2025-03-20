@@ -72,7 +72,7 @@ body {
 .title-bar .user-button:hover {
   background-color: #6464ffdd;
   color: white;
-  border-color: #6464ffdd;
+  border-color: #6464ffff;
 }
 
 /* User dropdown menu styles */
@@ -1042,4 +1042,44 @@ textarea[readonly] {
 .account-page {
   padding: 2rem;
   max-width: 768px;
+}
+
+/* Styles for game tags */
+.game-info-tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  width: 100%;
+}
+
+.tags-label {
+  font-weight: 500;
+}
+
+.tag-item {
+  display: inline-block;
+  background-color: #6464ffaa;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin: 2px;
+  cursor: default;
+}
+
+.tag-item.clickable {
+  cursor: pointer;
+}
+
+.tag-item.clickable:hover {
+  opacity: 0.8;
+}
+
+.add-tag-button {
+  background-color: #2a2a2a;
+  padding: 4px 8px;
+  font-size: 0.9rem;
 }
