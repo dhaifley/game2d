@@ -35,18 +35,18 @@ const TitleBar: React.FC = () => {
         <button className={currentPath === '/help' ? "help-button-sel" : "help-button"} onClick={handleHelpClick}>
           Help
         </button>
-        {isAuthenticated ? (
-          <button className="sign-out-button" onClick={handleSignOutClick}>
-            Sign Out
+        {isAuthenticated && user ? (
+          <button className="user-button">
+            {user.id}
           </button>
         ) : (
           <button className={currentPath === '/login' ? "sign-in-button-sel" : "sign-in-button"} onClick={handleSignInClick}>
             Sign In
           </button>
         )}
-        {isAuthenticated && user && (
-          <button className="user-button">
-            {user.id}
+        {isAuthenticated && (
+          <button className="sign-out-button" onClick={handleSignOutClick}>
+            Sign Out
           </button>
         )}
       </div>

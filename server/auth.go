@@ -38,6 +38,7 @@ type Account struct {
 	GameCommitHash request.FieldString `bson:"game_commit_hash" json:"game_commit_hash" yaml:"game_commit_hash"`
 	GameLimit      request.FieldInt64  `bson:"game_limit"       json:"game_limit"       yaml:"game_limit"`
 	Secret         request.FieldString `bson:"secret"           json:"secret"           yaml:"secret"`
+	AIAPIKey       request.FieldString `bson:"ai_api_key"       json:"ai_api_key"       yaml:"ai_api_key"`
 	Data           request.FieldJSON   `bson:"data"             json:"data"             yaml:"data"`
 	CreatedAt      request.FieldTime   `bson:"created_at"       json:"created_at"       yaml:"created_at"`
 	UpdatedAt      request.FieldTime   `bson:"updated_at"       json:"updated_at"       yaml:"updated_at"`
@@ -255,6 +256,10 @@ func (s *Server) getAccount(ctx context.Context,
 			if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
 				res.Repo = request.FieldString{}
 			}
+
+			if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
+				res.AIAPIKey = request.FieldString{}
+			}
 		}
 	}()
 
@@ -321,6 +326,10 @@ func (s *Server) createAccount(ctx context.Context,
 			if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
 				res.Repo = request.FieldString{}
 			}
+
+			if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
+				res.AIAPIKey = request.FieldString{}
+			}
 		}
 	}()
 
@@ -349,6 +358,7 @@ func (s *Server) createAccount(ctx context.Context,
 	request.SetField(doc, "repo_status_data", req.RepoStatusData)
 	request.SetField(doc, "game_limit", req.GameLimit)
 	request.SetField(doc, "secret", req.Secret)
+	request.SetField(doc, "ai_api_key", req.AIAPIKey)
 	request.SetField(doc, "data", req.Data)
 	request.SetField(doc, "created_at", req.CreatedAt)
 	request.SetField(doc, "updated_at", req.UpdatedAt)

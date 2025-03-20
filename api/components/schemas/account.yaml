@@ -20,6 +20,11 @@ properties:
   status_data:
     type: object
     description: Additional data related to the account status.
+  repo:
+    type: string
+    description: >
+      The connection URL for the import repository used by the account.
+    examples: [https://example.com/repo.git]
   repo_status:
     type: string
     description: The current status of the import repository.
@@ -40,6 +45,10 @@ properties:
     type: integer
     description: The maximum number of game definitions allowed for the account.
     examples: [10]
+  ai_api_key:
+    type: string
+    description: The API key for the AI service used by the account.
+    examples: [secret-api-key]
   data:
     type: object
     description: Additional data related to the account.
