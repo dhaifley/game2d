@@ -1226,6 +1226,9 @@ func (s *Server) importRepoGames(ctx context.Context,
 				Set: true, Valid: true, Value: newHash,
 			}
 
+			ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
+			ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
+
 			if _, err := s.createGame(ctx, g); err != nil {
 				errs.Errors = append(errs.Errors, errors.Wrap(err,
 					errors.ErrDatabase,
@@ -1763,6 +1766,7 @@ func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
 				"req", req)
 		}
 
+		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
 		g, err := s.getGame(ctx, req.ID.Value)
@@ -1881,6 +1885,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"req", req)
 		}
 
+		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
 		g, err := s.getGame(ctx, req.GameID.Value)
@@ -2037,6 +2042,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 		}
 
 		ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
+		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
 		g, err := s.getGame(ctx, req.GameID.Value)

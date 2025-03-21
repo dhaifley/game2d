@@ -254,9 +254,6 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
                   <th onClick={() => handleSort('name')}>
                     Name {getSortIndicator('name')}
                   </th>
-                  <th onClick={() => handleSort('version')}>
-                    Version {getSortIndicator('version')}
-                  </th>
                   <th onClick={() => handleSort('status')}>
                     Status {getSortIndicator('status')}
                   </th>
@@ -264,7 +261,7 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
                     Source {getSortIndicator('source')}
                   </th>
                   <th onClick={() => handleSort('updated_at')}>
-                    Updated At {getSortIndicator('updated_at')}
+                    Updated {getSortIndicator('updated_at')}
                   </th>
                 </tr>
               </thead>
@@ -277,7 +274,6 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
                   >
                     <td>{renderIcon(game)}</td>
                     <td>{game.name}</td>
-                    <td>{game.version || ''}</td>
                     <td>{game.status || ''}</td>
                     <td>{game.source || ''}</td>
                     <td>{formatDate(game.updated_at)}</td>

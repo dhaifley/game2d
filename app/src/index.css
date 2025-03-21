@@ -723,7 +723,7 @@ h1 {
 }
 
 .help-content h2 {
-  color: #6464ff;
+  color: #6464ffdd;
   border-bottom: 1px solid #333;
   padding-bottom: 0.5rem;
   margin-top: 0;
@@ -736,7 +736,7 @@ h1 {
 }
 
 .help-content a {
-  color: #6464ffaa;
+  color: #6464ffdd;
   text-decoration: underline;
   transition: color 0.3s;
 }

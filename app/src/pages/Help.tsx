@@ -36,11 +36,8 @@ const Help: React.FC = () => {
         <section>
           <h2>Documentation and Source Code</h2>
           <p>
-            The game2d.ai platform is open-source and available on GitHub.
-          </p>
-          <p>  
-            You can find the source code and
-            documentation at <a href="https://github.com/dhaifley/game2d">github.com/dhaifley/game2d</a>.
+            The game2d.ai platform is open-source and available on GitHub. You can find the source code and
+            documentation at <a href="https://github.com/dhaifley/game2d">this link</a>.
           </p>
           <p>
             We encourage contributions and feedback from the community.
@@ -63,8 +60,8 @@ const Help: React.FC = () => {
           <div className="faq-item">
             <h3>Can I share my games with others?</h3>
             <p>
-              Coming soon! All games you create will be able to be shared with the community. You will be
-              able to control visibility settings when you edit your games.
+              Coming soon! All games you create will be able to be shared with other users. You can control
+              individual game visibility using the Public checkbox when you edit your games.
             </p>
           </div>
           
