@@ -50,6 +50,12 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [tagError, setTagError] = useState<string | null>(null);
   const [isTagProcessing, setIsTagProcessing] = useState(false);
   
+  // Visibility change modal states
+  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+  const [newVisibilityValue, setNewVisibilityValue] = useState(false);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
+  const [isVisibilityProcessing, setIsVisibilityProcessing] = useState(false);
+  
   // State for prompt and response
   const [promptText, setPromptText] = useState('');
   const [responseText, setResponseText] = useState(game.ai_data?.response || '');
@@ -89,14 +95,31 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   }, [responseText]);
   
   // Handle public checkbox change
-  const handlePublicChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const newPublicValue = e.target.checked;
-    setIsPublic(newPublicValue);
+  const handlePublicChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.checked;
     
+    // Set visibility value for the modal
+    setNewVisibilityValue(newValue);
+    
+    // Temporarily update checkbox visual state
+    setIsPublic(newValue);
+    
+    // Reset error state
+    setVisibilityError(null);
+    
+    // Open confirmation modal
+    setIsVisibilityModalOpen(true);
+  };
+  
+  // Handle confirming the visibility change
+  const handleConfirmVisibilityChange = async () => {
     try {
+      setIsVisibilityProcessing(true);
+      setVisibilityError(null);
+      
       // Prepare the update payload
       const updates: Partial<GameType> = {
-        public: newPublicValue
+        public: newVisibilityValue
       };
       
       // Call the API to update the game
@@ -105,13 +128,31 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       // Update the local state with the updated game data
       setCurrentGame(updatedGame);
       
+      // Close modal
+      setIsVisibilityModalOpen(false);
+      
       // Refresh the games list
       await onGameUpdated();
     } catch (err) {
+      // Show error in modal
+      setVisibilityError(err instanceof Error ? err.message : 'Failed to update game visibility');
       console.error('Error updating public status:', err);
+      
       // Revert to previous value if there was an error
-      setIsPublic(!newPublicValue);
+      setIsPublic(!newVisibilityValue);
+    } finally {
+      setIsVisibilityProcessing(false);
     }
+  };
+  
+  // Handle canceling the visibility change
+  const handleCancelVisibilityChange = () => {
+    // Revert to original value
+    setIsPublic(currentGame.public || false);
+    
+    // Close the modal
+    setIsVisibilityModalOpen(false);
+    setVisibilityError(null);
   };
   
   // Handle entering edit mode
@@ -802,6 +843,35 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       >
         <p>Are you sure you want to delete the tag <strong>{selectedTag}</strong>?</p>
         {tagError && <div className="modal-error">{tagError}</div>}
+      </Modal>
+      
+      {/* Visibility Change Modal */}
+      <Modal
+        isOpen={isVisibilityModalOpen}
+        onClose={handleCancelVisibilityChange}
+        title="Change Visibility"
+        actions={
+          <>
+            <button 
+              className="cancel-button" 
+              onClick={handleCancelVisibilityChange}
+            >
+              Cancel
+            </button>
+            <button 
+              className="action-button" 
+              onClick={handleConfirmVisibilityChange}
+              disabled={isVisibilityProcessing}
+            >
+              {isVisibilityProcessing ? 'Processing...' : 'Confirm'}
+            </button>
+          </>
+        }
+      >
+        <p>
+          Are you sure you want to make the game <strong>{newVisibilityValue ? 'public' : 'private'}</strong>?
+        </p>
+        {visibilityError && <div className="modal-error">{visibilityError}</div>}
       </Modal>
     </div>
   );

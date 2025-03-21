@@ -892,21 +892,42 @@ button:focus-visible {
   cursor: pointer;
 }
 
+.modal-footer button:hover {
+  border-color: #6464ff;
+}
+
 .modal-footer .cancel-button {
   background-color: #2a2a2a;
-  border: 1px solid #444;
+  border: 1px solid #2a2a2a;
   color: #e2e2e2;
 }
 
+.modal-footer .cancel-button:hover {
+  border: 1px solid #6464ffff;
+  color: white;
+}
+
 .modal-footer .action-button {
-  background-color: #6464ff;
-  border: 1px solid #6464ff;
+  background-color: #6464ffaa;
+  border: 1px solid #6464ffaa;
+  color: white;
+}
+
+.modal-footer .action-button:hover {
+  background-color: #6464ffdd;
+  border: 1px solid #6464ffff;
   color: white;
 }
 
 .modal-footer .delete-action-button {
-  background-color: #ff6464;
-  border: 1px solid #ff6464;
+  background-color: #ff6464aa;
+  border: 1px solid #ff6464aa;
+  color: white;
+}
+
+.modal-footer .delete-action-button:hover {
+  background-color: #ff6464dd;
+  border: 1px solid #ff6464ff;
   color: white;
 }
 

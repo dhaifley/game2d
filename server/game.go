@@ -494,9 +494,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	if req.PreviousID.Value != "" {
 		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
-			return nil, errors.New(errors.ErrInvalidRequest,
-				"previous_id not allowed",
-				"req", req)
+			req.PreviousID = request.FieldString{}
 		}
 	}
 
@@ -738,9 +736,7 @@ func (s *Server) updateGame(ctx context.Context,
 
 	if req.PreviousID.Value != "" {
 		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
-			return nil, errors.New(errors.ErrInvalidRequest,
-				"previous_id not allowed",
-				"req", req)
+			req.PreviousID = request.FieldString{}
 		}
 	}
 
@@ -1171,6 +1167,10 @@ func (s *Server) importRepoGames(ctx context.Context,
 					g.CommitHash = request.FieldString{
 						Set: true, Valid: true, Value: newHash,
 					}
+
+					ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID,
+						true)
+					ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 
 					if _, err := s.updateGame(ctx, g); err != nil {
 						errs.Errors = append(errs.Errors, errors.Wrap(err,
@@ -1609,6 +1609,11 @@ func (s *Server) postGameHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return
+	}
+
+	if qp := r.URL.Query().Get("allow_tags"); qp != "" && qp != "0" &&
+		!strings.EqualFold(qp, "false") && !strings.EqualFold(qp, "f") {
+		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 	}
 
 	res, err := s.createGame(ctx, req)

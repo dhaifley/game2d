@@ -163,7 +163,7 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
       const fileContent = await file.text();
       
       // Send to the API
-      await axios.post('/api/v1/games', JSON.parse(fileContent), {
+      await axios.post('/api/v1/games?allow_tags=true', JSON.parse(fileContent), {
         headers: {
           'Content-Type': 'application/json'
         }
