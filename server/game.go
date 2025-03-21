@@ -1630,6 +1630,18 @@ func (s *Server) postGameHandler(w http.ResponseWriter, r *http.Request) {
 		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 	}
 
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		s.error(errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context"), w, r)
+
+		return
+	}
+
+	req.AccountID = request.FieldString{
+		Set: true, Valid: true, Value: aID,
+	}
+
 	res, err := s.createGame(ctx, req)
 	if err != nil {
 		s.error(err, w, r)
