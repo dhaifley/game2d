@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/" # root directory for go.mod
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/app" # directory containing package.json
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/" # root directory for Dockerfile
+    schedule:
+      interval: "weekly"
