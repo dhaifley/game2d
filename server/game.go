@@ -877,7 +877,7 @@ func (s *Server) importGames(ctx context.Context,
 	ctx = context.WithValue(ctx, request.CtxKeyUserID, request.SystemUser)
 	ctx = context.WithValue(ctx, request.CtxKeyScopes, request.ScopeSuperuser)
 
-	ar, err := s.getAccountRepo(ctx)
+	ar, err := s.getAccount(ctx, "")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrDatabase,
 			"unable to get account repository")
@@ -908,14 +908,15 @@ func (s *Server) importGames(ctx context.Context,
 		Set: true, Valid: true, Value: dm,
 	}
 
-	if err := s.setAccountRepo(ctx, ar); err != nil {
+	ar, err = s.createAccount(ctx, ar)
+	if err != nil {
 		return errors.Wrap(err, errors.ErrDatabase,
 			"unable to set account repository status")
 	}
 
-	updated, deleted, iErr := s.importRepoGames(ctx, ar, force)
+	updated, deleted, iErr := s.importRepoGames(ctx, ar.Repo.Value, force)
 
-	ar, err = s.getAccountRepo(ctx)
+	ar, err = s.getAccount(ctx, "")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrDatabase,
 			"unable to get account repository")
@@ -947,7 +948,7 @@ func (s *Server) importGames(ctx context.Context,
 		Set: true, Valid: true, Value: dm,
 	}
 
-	if err := s.setAccountRepo(ctx, ar); err != nil {
+	if _, err := s.createAccount(ctx, ar); err != nil {
 		return errors.Wrap(err, errors.ErrDatabase,
 			"unable to set account repository status")
 	}
@@ -1093,14 +1094,14 @@ func (s *Server) deleteRepoGames(ctx context.Context,
 // importRepoGames updates the games based on the contents of the account
 // import repository.
 func (s *Server) importRepoGames(ctx context.Context,
-	ar *AccountRepo,
+	repoURL string,
 	force bool,
 ) (int, int, error) {
 	ctx, cancel := request.ContextReplaceTimeout(ctx, s.cfg.ServerTimeout())
 
 	defer cancel()
 
-	cli, err := s.getRepoClient(ar.Repo.Value)
+	cli, err := s.getRepoClient(repoURL)
 	if err != nil {
 		return 0, 0, errors.Wrap(err, errors.ErrImport,
 			"unable to create repository client")

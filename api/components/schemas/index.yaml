@@ -3,8 +3,6 @@ account:
   $ref: "./account.yaml"
 ai_data:
   $ref: "./ai_data.yaml"
-account_repo:
-  $ref: "./account_repo.yaml"
 error:
   $ref: "./error.yaml"
 game:

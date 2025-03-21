@@ -383,96 +383,11 @@ func (s *Server) createAccount(ctx context.Context,
 	return res, nil
 }
 
-// AccountRepo values represent account repository data.
-type AccountRepo struct {
-	Repo           request.FieldString `json:"repo"`
-	RepoStatus     request.FieldString `json:"repo_status"`
-	RepoStatusData request.FieldJSON   `json:"repo_status_data"`
-}
-
-// getAccountRepo retrieves the account repository from the database.
-func (s *Server) getAccountRepo(ctx context.Context) (*AccountRepo, error) {
-	a, err := s.getAccount(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	return &AccountRepo{
-		Repo:           a.Repo,
-		RepoStatus:     a.RepoStatus,
-		RepoStatusData: a.RepoStatusData,
-	}, nil
-}
-
-// setAccountRepo sets the account repository in the database.
-func (s *Server) setAccountRepo(ctx context.Context,
-	req *AccountRepo,
-) error {
-	aID, err := request.ContextAccountID(ctx)
-	if err != nil {
-		return errors.New(errors.ErrUnauthorized,
-			"unable to get account id from context")
-	}
-
-	if req == nil {
-		return errors.New(errors.ErrInvalidRequest,
-			"missing account repo")
-	}
-
-	a, err := s.getAccount(ctx, aID)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrDatabase,
-			"unable to get account repo",
-			"account_id", aID,
-			"req", req)
-	}
-
-	if a == nil {
-		return errors.New(errors.ErrNotFound,
-			"account not found",
-			"account_id", aID,
-			"req", req)
-	}
-
-	update := false
-
-	if req.Repo.Set {
-		a.Repo = req.Repo
-		update = true
-	}
-
-	if req.RepoStatus.Set {
-		a.RepoStatus = req.RepoStatus
-		update = true
-	}
-
-	if req.RepoStatusData.Set {
-		a.RepoStatusData = req.RepoStatusData
-		update = true
-	}
-
-	if !update {
-		return nil
-	}
-
-	if _, err := s.createAccount(ctx, a); err != nil {
-		return errors.Wrap(err, errors.ErrDatabase,
-			"unable to update account repo",
-			"account_id", aID,
-			"req", req)
-	}
-
-	return nil
-}
-
 // accountHandler performs routing for account requests.
 func (s *Server) accountHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(s.dbAvail)
-
-	r.With(s.stat, s.trace, s.auth).Get("/repo", s.getAccountRepoHandler)
-	r.With(s.stat, s.trace, s.auth).Post("/repo", s.postAccountRepoHandler)
 
 	r.With(s.stat, s.trace, s.auth).Get("/", s.getAccountHandler)
 	r.With(s.stat, s.trace, s.auth).Post("/", s.postAccountHandler)
@@ -549,78 +464,6 @@ func (s *Server) postAccountHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// getAccountRepoHandler is the get handler function for account repos.
-func (s *Server) getAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeAccountRead); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	res, err := s.getAccountRepo(ctx)
-	if err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		s.error(err, w, r)
-	}
-}
-
-// postAccountRepoHandler is the post handler function for account repos.
-func (s *Server) postAccountRepoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := s.checkScope(ctx, request.ScopeAccountAdmin); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	req := &AccountRepo{}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		switch e := err.(type) {
-		case *errors.Error:
-			s.error(e, w, r)
-		default:
-			s.error(errors.Wrap(err, errors.ErrInvalidRequest,
-				"unable to decode request"), w, r)
-		}
-
-		return
-	}
-
-	if err := s.setAccountRepo(ctx, req); err != nil {
-		s.error(err, w, r)
-
-		return
-	}
-
-	scheme := "https"
-	if strings.Contains(r.Host, "localhost") {
-		scheme = "http"
-	}
-
-	loc := &url.URL{
-		Scheme: scheme,
-		Host:   r.Host,
-		Path:   r.URL.Path,
-	}
-
-	w.Header().Set("Location", loc.String())
-
-	w.WriteHeader(http.StatusCreated)
-
-	if err := json.NewEncoder(w).Encode(req); err != nil {
 		s.error(err, w, r)
 	}
 }
