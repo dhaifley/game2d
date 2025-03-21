@@ -316,7 +316,9 @@ func (s *Server) getGames(ctx context.Context,
 		f["status"] = request.StatusActive
 	}
 
-	f["account_id"] = aID
+	if v, ok := f["public"].(bool); !ok || !v {
+		f["account_id"] = aID
+	}
 
 	if query.Sort != "" {
 		if err := bson.UnmarshalExtJSON([]byte(query.Sort),
@@ -422,7 +424,10 @@ func (s *Server) getGame(ctx context.Context,
 		return res, nil
 	}
 
-	f := bson.M{"id": id, "account_id": aID}
+	f := bson.M{"id": id, "$or": bson.A{
+		bson.D{{Key: "public", Value: true}},
+		bson.D{{Key: "account_id", Value: aID}},
+	}}
 
 	pro := bson.M{"_id": 0}
 
@@ -489,12 +494,6 @@ func (s *Server) createGame(ctx context.Context,
 				"unauthorized request",
 				"account_id", aID,
 				"user_id", uID)
-		}
-	}
-
-	if !req.Public.Set {
-		req.Public = request.FieldBool{
-			Set: true, Valid: true, Value: false,
 		}
 	}
 
@@ -661,6 +660,14 @@ func (s *Server) createGame(ctx context.Context,
 		return nil, errors.Wrap(err, errors.ErrDatabase,
 			"unable to create game",
 			"req", req)
+	}
+
+	if !res.Public.Set {
+		res.Public = request.FieldBool{
+			Set: true, Valid: true, Value: false,
+		}
+
+		return s.createGame(ctx, res)
 	}
 
 	s.setCache(ctx, cache.KeyGame(res.ID.Value), res)
