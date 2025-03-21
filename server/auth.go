@@ -300,15 +300,21 @@ func (s *Server) createAccount(ctx context.Context,
 			"unable to get account id from context")
 	}
 
-	if aID != request.SystemAccount &&
-		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
-		return nil, errors.New(errors.ErrUnauthorized,
-			"unauthorized request")
-	}
-
 	if req == nil {
 		return nil, errors.New(errors.ErrInvalidRequest,
 			"missing account")
+	}
+
+	if req.ID.Value == "" {
+		req.ID = request.FieldString{
+			Set: true, Valid: true, Value: aID,
+		}
+	}
+
+	if req.ID.Value != aID && aID != request.SystemAccount &&
+		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
+		return nil, errors.New(errors.ErrUnauthorized,
+			"unauthorized request")
 	}
 
 	if err := req.ValidateCreate(); err != nil {
@@ -349,22 +355,27 @@ func (s *Server) createAccount(ctx context.Context,
 
 	doc := &bson.D{}
 
-	request.SetField(doc, "id", req.ID)
 	request.SetField(doc, "name", req.Name)
 	request.SetField(doc, "status", req.Status)
 	request.SetField(doc, "status_data", req.StatusData)
 	request.SetField(doc, "repo", req.Repo)
 	request.SetField(doc, "repo_status", req.RepoStatus)
 	request.SetField(doc, "repo_status_data", req.RepoStatusData)
-	request.SetField(doc, "game_limit", req.GameLimit)
-	request.SetField(doc, "secret", req.Secret)
 	request.SetField(doc, "ai_api_key", req.AIAPIKey)
 	request.SetField(doc, "data", req.Data)
-	request.SetField(doc, "created_at", req.CreatedAt)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 
-	if err := s.DB().Collection("accounts").FindOneAndReplace(ctx, f, doc,
-		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
+	cDoc := &bson.D{}
+
+	request.SetField(cDoc, "id", req.ID)
+	request.SetField(cDoc, "created_at", req.CreatedAt)
+	request.SetField(cDoc, "game_limit", req.GameLimit)
+	request.SetField(cDoc, "secret", req.Secret)
+
+	doc = &bson.D{{Key: "$set", Value: doc}, {Key: "$setOnInsert", Value: cDoc}}
+
+	if err := s.DB().Collection("accounts").FindOneAndUpdate(ctx, f, doc,
+		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0}).
 			SetReturnDocument(options.After).SetUpsert(true)).
 		Decode(&res); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
