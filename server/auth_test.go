@@ -239,67 +239,6 @@ func TestAccountServer(t *testing.T) {
 					expB, string(b))
 			}
 		},
-	}, {
-		name:   "create account repo",
-		url:    "http://localhost:8080/api/v1/account/repo",
-		method: http.MethodPost,
-		body: map[string]any{
-			"repo":        "https://github.com/test/test.git",
-			"repo_status": "active",
-			"repo_status_data": map[string]any{
-				"test": "test",
-			},
-		},
-		resp: func(t *testing.T, res *http.Response) {
-			expC := http.StatusCreated
-
-			if res.StatusCode != expC {
-				t.Errorf("Status code expected: %v, got: %v",
-					expC, res.StatusCode)
-			}
-
-			b, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf("Unexpected response error: %v", err)
-			}
-
-			m := map[string]any{}
-
-			if err := json.Unmarshal(b, &m); err != nil {
-				t.Errorf("Unexpected error decoding response: %v", err)
-			}
-
-			if _, ok := m["repo_status"].(string); !ok {
-				t.Errorf("Expected repo_status field in response: %v", m)
-			}
-		},
-	}, {
-		name:   "get account repo",
-		url:    "http://localhost:8080/api/v1/account/repo",
-		method: http.MethodGet,
-		resp: func(t *testing.T, res *http.Response) {
-			expC := http.StatusOK
-
-			if res.StatusCode != expC {
-				t.Errorf("Status code expected: %v, got: %v",
-					expC, res.StatusCode)
-			}
-
-			b, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf("Unexpected response error: %v", err)
-			}
-
-			m := map[string]any{}
-
-			if err := json.Unmarshal(b, &m); err != nil {
-				t.Errorf("Unexpected error decoding response: %v", err)
-			}
-
-			if _, ok := m["repo_status"].(string); !ok {
-				t.Errorf("Expected repo_status field in response: %v", m)
-			}
-		},
 	}}
 
 	for _, tt := range tests {

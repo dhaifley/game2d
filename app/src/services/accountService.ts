@@ -46,3 +46,33 @@ export const updateAccount = async (updates: Partial<Account>): Promise<Account>
     throw error;
   }
 };
+
+// Set account repository URL
+export const setAccountRepo = async (repoUrl: string): Promise<Account> => {
+  try {
+    const payload = {
+      repo: repoUrl
+    };
+    
+    const response = await axios.post(`${API_BASE_URL}/account`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error setting account repository:', error);
+    throw error;
+  }
+};
+
+// Set account AI API key
+export const setAccountAIKey = async (apiKey: string): Promise<Account> => {
+  try {
+    const payload = {
+      ai_api_key: apiKey
+    };
+    
+    const response = await axios.post(`${API_BASE_URL}/account`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error setting AI API key:', error);
+    throw error;
+  }
+};

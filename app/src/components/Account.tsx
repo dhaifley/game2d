@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Account as AccountType, fetchAccount, updateAccount } from '../services/accountService';
+import { Account as AccountType, fetchAccount, updateAccount, setAccountRepo, setAccountAIKey } from '../services/accountService';
 import { useAuth } from '../contexts/AuthContext';
+import Modal from './Modal';
 
 // Helper function to check if a user has the required scope
 const hasScope = (scopes: string | undefined, requiredScope: string): boolean => {
@@ -25,6 +26,18 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
   const [editedName, setEditedName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  
+  // Repo modal state
+  const [isRepoModalOpen, setIsRepoModalOpen] = useState(false);
+  const [repoUrl, setRepoUrl] = useState('');
+  const [isRepoSaving, setIsRepoSaving] = useState(false);
+  const [repoError, setRepoError] = useState<string | null>(null);
+  
+  // AI Key modal state
+  const [isAIKeyModalOpen, setIsAIKeyModalOpen] = useState(false);
+  const [aiKey, setAIKey] = useState('');
+  const [isAIKeySaving, setIsAIKeySaving] = useState(false);
+  const [aiKeyError, setAIKeyError] = useState<string | null>(null);
 
   // Check if the current user has admin permission
   const canEdit = authUser && hasScope(authUser.scopes, 'account:admin');
@@ -92,6 +105,62 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
       setIsSaving(false);
     }
   };
+  
+  // Handle setting repository URL
+  const handleSetRepo = async () => {
+    if (!repoUrl.trim()) {
+      setRepoError('Repository URL is required');
+      return;
+    }
+    
+    try {
+      setIsRepoSaving(true);
+      setRepoError(null);
+      
+      // Call the API to set the repository URL
+      const updatedAccount = await setAccountRepo(repoUrl.trim());
+      
+      // Close the modal
+      setIsRepoModalOpen(false);
+      setRepoUrl('');
+      
+      // Update the local state with the updated account data
+      setAccount(updatedAccount);
+    } catch (err) {
+      setRepoError(err instanceof Error ? err.message : 'Failed to set repository URL');
+      console.error('Error setting repository URL:', err);
+    } finally {
+      setIsRepoSaving(false);
+    }
+  };
+  
+  // Handle setting AI API key
+  const handleSetAIKey = async () => {
+    if (!aiKey.trim()) {
+      setAIKeyError('AI API Key is required');
+      return;
+    }
+    
+    try {
+      setIsAIKeySaving(true);
+      setAIKeyError(null);
+      
+      // Call the API to set the AI API key
+      const updatedAccount = await setAccountAIKey(aiKey.trim());
+      
+      // Close the modal
+      setIsAIKeyModalOpen(false);
+      setAIKey('');
+      
+      // Update the local state with the updated account data
+      setAccount(updatedAccount);
+    } catch (err) {
+      setAIKeyError(err instanceof Error ? err.message : 'Failed to set AI API key');
+      console.error('Error setting AI API key:', err);
+    } finally {
+      setIsAIKeySaving(false);
+    }
+  };
 
   if (loading) {
     return <div className="loading-indicator">Loading account data...</div>;
@@ -127,7 +196,29 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
             </>
           ) : (
             canEdit && (
-              <button className="edit-button" onClick={handleEditClick}>Edit</button>
+              <>
+                <button 
+                  className="repo-button" 
+                  onClick={() => {
+                    setRepoUrl('');
+                    setRepoError(null);
+                    setIsRepoModalOpen(true);
+                  }}
+                >
+                  Set Repo
+                </button>
+                <button 
+                  className="ai-key-button" 
+                  onClick={() => {
+                    setAIKey('');
+                    setAIKeyError(null);
+                    setIsAIKeyModalOpen(true);
+                  }}
+                >
+                  Set AI Key
+                </button>
+                <button className="edit-button" onClick={handleEditClick}>Edit</button>
+              </>
             )
           )}
           <button className="close-button" onClick={onClose}>Close</button>
@@ -256,6 +347,96 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
       </div>
       
       {saveError && <div className="modal-error">{saveError}</div>}
+      
+      {/* Repository URL Modal */}
+      <Modal
+        isOpen={isRepoModalOpen}
+        onClose={() => {
+          setIsRepoModalOpen(false);
+          setRepoUrl('');
+          setRepoError(null);
+        }}
+        title="Set Import Repository"
+        actions={
+          <>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setIsRepoModalOpen(false);
+                setRepoUrl('');
+                setRepoError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="action-button" 
+              onClick={handleSetRepo}
+              disabled={isRepoSaving}
+            >
+              {isRepoSaving ? 'Setting...' : 'Set'}
+            </button>
+          </>
+        }
+      >
+        <div className="modal-form-group">
+          <label htmlFor="repo-url-input">Repository Connection URL</label>
+          <input
+            id="repo-url-input"
+            type="text"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            placeholder="Enter repository URL"
+            autoFocus
+          />
+        </div>
+        {repoError && <div className="modal-error">{repoError}</div>}
+      </Modal>
+      
+      {/* AI API Key Modal */}
+      <Modal
+        isOpen={isAIKeyModalOpen}
+        onClose={() => {
+          setIsAIKeyModalOpen(false);
+          setAIKey('');
+          setAIKeyError(null);
+        }}
+        title="Set AI API Key"
+        actions={
+          <>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setIsAIKeyModalOpen(false);
+                setAIKey('');
+                setAIKeyError(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="action-button" 
+              onClick={handleSetAIKey}
+              disabled={isAIKeySaving}
+            >
+              {isAIKeySaving ? 'Setting...' : 'Set'}
+            </button>
+          </>
+        }
+      >
+        <div className="modal-form-group">
+          <label htmlFor="ai-key-input">AI API Key</label>
+          <input
+            id="ai-key-input"
+            type="text"
+            value={aiKey}
+            onChange={(e) => setAIKey(e.target.value)}
+            placeholder="Enter AI API key"
+            autoFocus
+          />
+        </div>
+        {aiKeyError && <div className="modal-error">{aiKeyError}</div>}
+      </Modal>
     </div>
   );
 };

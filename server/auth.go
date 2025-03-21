@@ -138,12 +138,6 @@ func (a *Account) ValidateCreate() error {
 			"account", a)
 	}
 
-	if !a.Name.Set {
-		return errors.New(errors.ErrInvalidRequest,
-			"missing name",
-			"account", a)
-	}
-
 	return a.Validate()
 }
 
