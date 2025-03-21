@@ -259,7 +259,6 @@ h1 {
 /* Games Table Component */
 .games-table-container {
   width: 100%;
-  margin-top: 1rem;
 }
 
 .games-table-controls {
@@ -1113,4 +1112,33 @@ textarea[readonly] {
   background-color: #2a2a2a;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
+}
+
+/* Tab controls for games table */
+.games-tabs {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #444;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: #e2e2e2;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  background-color: rgba(100, 100, 255, 0.1);
+  border-color: rgba(100, 100, 255, 0.3);
+}
+
+.tab-button.active {
+  border-bottom: 3px solid #6464ff;
+  color: #ffffff;
 }

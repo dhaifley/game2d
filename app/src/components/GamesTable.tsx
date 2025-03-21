@@ -37,6 +37,7 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
   const [pageSkip, setPageSkip] = useState(0);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [totalGames, setTotalGames] = useState(0);
+  const [activeTab, setActiveTab] = useState<'private' | 'public'>('private');
   
   // New Game Modal State
   const [isNewGameModalOpen, setIsNewGameModalOpen] = useState(false);
@@ -57,9 +58,18 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
     try {
       setLoading(true);
       setError(null);
+      
+      // Construct search object based on text query and active tab
+      // Add private/public filter based on active tab
+      const isPrivate = activeTab === 'private';
+      let searchObj:any = { public: !isPrivate };
+      
+      if (searchQuery) {
+        searchObj = { public: !isPrivate, name: { $regex: searchQuery } };
+      }
 
       const result = await fetchGames(
-        searchQuery,
+        searchObj,
         pageSize,
         pageSkip,
         sortConfig
@@ -77,7 +87,7 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
 
   useEffect(() => {
     loadGames();
-  }, [pageSize, pageSkip, searchQuery, sortConfig]);
+  }, [pageSize, pageSkip, searchQuery, sortConfig, activeTab]);
 
   const handleSort = (key: string) => {
     setSortConfig(prevConfig => {
@@ -187,6 +197,20 @@ const GamesTable = forwardRef<GamesTableHandle, GamesTableProps>(({ onSelectGame
 
   return (
     <div className="games-table-container">
+      <div className="games-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'private' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('private')}
+        >
+          Private
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'public' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('public')}
+        >
+          Public
+        </button>
+      </div>
       <div className="games-table-controls">
         <div className="search-container">
           <input

@@ -492,6 +492,12 @@ func (s *Server) createGame(ctx context.Context,
 		}
 	}
 
+	if !req.Public.Set {
+		req.Public = request.FieldBool{
+			Set: true, Valid: true, Value: false,
+		}
+	}
+
 	if req.PreviousID.Value != "" {
 		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
 			req.PreviousID = request.FieldString{}

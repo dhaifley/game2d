@@ -46,8 +46,7 @@ export const fetchGames = async (
 
     // Add search param if there's a search query
     if (searchQuery) {
-      const searchObj = { name: { $regex: searchQuery } };
-      queryParams.append('search', JSON.stringify(searchObj));
+      queryParams.append('search', JSON.stringify(searchQuery));
     }
 
     // Add sorting if configured
