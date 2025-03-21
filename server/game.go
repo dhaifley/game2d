@@ -736,7 +736,7 @@ func (s *Server) updateGame(ctx context.Context,
 		}
 	}
 
-	if req.PreviousID.Set {
+	if req.PreviousID.Value != "" {
 		if k := ctx.Value(CtxKeyGameAllowPreviousID); k == nil {
 			return nil, errors.New(errors.ErrInvalidRequest,
 				"previous_id not allowed",
@@ -1447,6 +1447,7 @@ func (s *Server) addGameTags(ctx context.Context,
 	}
 
 	ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
+	ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
 	if _, err := s.updateGame(ctx, g); err != nil {
 		return nil, err
@@ -1490,6 +1491,7 @@ func (s *Server) deleteGameTags(ctx context.Context,
 	}
 
 	ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
+	ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
 	if _, err := s.updateGame(ctx, g); err != nil {
 		return err
