@@ -10,10 +10,10 @@ const Welcome: React.FC = () => {
         <p>A platform for 2D game development with generative A.I.</p>
         
         <p className="welcome-item">game2d.ai is an open-source framework for
-        2D game development that combines Go, the ebitengine game engine,
-        Lua scripting, and a WebAssembly client. Built on a declarative object
-        schema, representable in JSON or YAML, it's designed for experimenting
-        with game code and assets created with generative AI.</p>
+        game development that combines a 2D game engine with Lua scripting and
+        a WebAssembly client. Built with a declarative object schema,
+        representable in JSON, it is designed for experimenting with game code
+        and assets created with generative AI.</p>
         
         <p>Please sign in to access the application.</p>
         

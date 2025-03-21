@@ -202,7 +202,7 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
           )}
           
           <div className="account-field-container">
-            <label htmlFor='game_commit_hash'>Game Commit Hash:</label>
+            <label htmlFor='game_commit_hash'>Game Commit:</label>
             <input
               type="text"
               id="game_commit_hash"

@@ -10,9 +10,9 @@
 
 ## 📋 Overview
 
-game2d is an open-source framework for 2D game development that combines Go,
-the ebitengine game engine, Lua scripting, and a WebAssembly client. Built on a
-declarative object schema, representable in JSON or YAML, it's designed for
+game2d is an open-source framework for game development that combines a
+2D game engine with Lua scripting and a WebAssembly client. Built with a
+declarative object schema, representable in JSON, it is designed for
 experimenting with game code and assets created with generative AI.
 
 ### 🏗️ Architecture Overview
@@ -51,7 +51,7 @@ graph TD
 The main client and protocol, typically compiled into WebAssembly (WASM) for
 browser integration, but also buildable for various native architectures.
 
-- **Engine**: Combines Ebitengine 2D game engine with a Lua interpreter
+- **Engine**: Combines the [Ebitengine](https://ebitengine.org/) 2D game engine with a Lua interpreter
 - **State Management**: Shared game state between Lua and Go code
 - **Game Loop**: Renders assets during draw phase, executes scripts during update phase
 - **Game Schema**: Uses a declarative object schema for game definitions
@@ -80,11 +80,12 @@ A React/Vite application for interacting with the service:
 ### Prerequisites
 
 - [Go](https://go.dev/dl/) (1.18+)
+- [Git](https://git-scm.com/)
 - [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
 - [Make](https://www.gnu.org/software/make/)
 - [Node.js](https://nodejs.org/) (16+) & [npm](https://www.npmjs.com/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [React](https://react.dev/)
+
+As long as the all of the above are installed, the build process can install any other requirements.
 
 ## 🔧 Development Workflow
 
@@ -153,6 +154,7 @@ game2d uses a declarative schema for defining games:
 2. Add audio support
 3. Implement public game browsing and search
 4. Play and viability testing
+5. AI controlled Player 2 and NPC's
 
 ## 🤝 Contributing
 
