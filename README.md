@@ -101,8 +101,12 @@ As long as the all of the above are installed, the build process can install any
    LOG_LEVEL='debug'
    DB_CONNECTION='mongodb://game2d:mongodb@localhost:27017/game2d?authSource=admin' 
    CACHE_SERVERS='localhost:6379'
-   SUPERUSER=admin
-   SUPERUSER_PASSWORD=admin
+   ACCOUNT_ID='test'
+   ACCOUNT_NAME='test'
+   SUPERUSER='admin'
+   SUPERUSER_PASSWORD='admin'
+   GUEST_USER='guest'
+   GUEST_USER_PASSWORD='guest'
    AI_API_KEY={your AI API key}
    EOF
 
