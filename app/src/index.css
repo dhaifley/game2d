@@ -1080,6 +1080,6 @@ textarea[readonly] {
 
 .add-tag-button {
   background-color: #2a2a2a;
-  padding: 4px 8px;
+  padding: 0.5rem 1rem;
   font-size: 0.9rem;
 }

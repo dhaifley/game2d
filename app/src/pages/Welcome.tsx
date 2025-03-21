@@ -7,7 +7,7 @@ const Welcome: React.FC = () => {
       <div className="welcome-content">
         <h1>Welcome to game2d.ai</h1>
         
-        <p>A platform for 2D game development with generative A.I.</p>
+        <p>A platform for 2D game development with generative AI.</p>
         
         <p className="welcome-item">game2d.ai is an open-source framework for
         game development that combines a 2D game engine with Lua scripting and

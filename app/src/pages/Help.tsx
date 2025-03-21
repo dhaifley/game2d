@@ -8,8 +8,8 @@ const Help: React.FC = () => {
         <section>
           <h2>Getting Started</h2>
           <p>
-            Welcome to game2d.ai! This platform allows you to create, share, and play 2D games using
-            generative A.I.
+            Welcome to game2d.ai! This platform allows you to create, play and share 2D games using
+            generative AI.
             Below you'll find answers to common questions and guides to help you get started.
           </p>
         </section>

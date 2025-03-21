@@ -463,19 +463,19 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           {currentGame.id && <GameIframe gameId={currentGame.id} gameName={currentGame.name} />}
         </div>
 
-        <div className="ai-field-container">
-          <div className="response-container">
-            <textarea
-              ref={responseTextAreaRef} 
-              id="response"
-              className="response-textarea"
-              readOnly
-              onLoad={() => { setResponseText(currentGame.ai_data?.response || '') }}
-              onChange={(e) => setResponseText(e.target.value)}
-              value={responseText}
-            />
-          </div>
-          {hasWritePermission && (
+        {hasWritePermission && (
+          <div className="ai-field-container">
+            <div className="response-container">
+              <textarea
+                ref={responseTextAreaRef} 
+                id="response"
+                className="response-textarea"
+                readOnly
+                onLoad={() => { setResponseText(currentGame.ai_data?.response || '') }}
+                onChange={(e) => setResponseText(e.target.value)}
+                value={responseText}
+              />
+            </div>
             <div className="prompt-container">
               <textarea
                 id="prompt"
@@ -499,8 +499,8 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 {isUndo ? 'Undo' : 'Redo'}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="game-additional-fields">
           <div className="game-field-container">
