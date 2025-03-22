@@ -38,9 +38,15 @@ type Game struct {
 	log      logger.Logger
 	debug    bool
 	pause    bool
+	public   bool
 	w, h     int
 	id       string
+	pid      string
 	name     string
+	ver      string
+	desc     string
+	icon     string
+	status   string
 	source   string
 	apiURL   string
 	apiToken string
@@ -91,6 +97,7 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 	}
 
 	return &Game{
+		pause:  true,
 		log:    log,
 		w:      w,
 		h:      h,
@@ -107,10 +114,17 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 // MarshalJSON serializes the game to JSON.
 func (g *Game) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		ID      string             `json:"id"`
-		Name    string             `json:"name"`
-		Source  string             `json:"source,omitempty"`
 		Debug   bool               `json:"debug,omitempty"`
+		Pause   bool               `json:"pause,omitempty"`
+		Public  bool               `json:"public,omitempty"`
+		ID      string             `json:"id"`
+		PID     string             `json:"previous_id,omitempty"`
+		Name    string             `json:"name"`
+		Ver     string             `json:"version,omitempty"`
+		Desc    string             `json:"description,omitempty"`
+		Icon    string             `json:"icon,omitempty"`
+		Status  string             `json:"status,omitempty"`
+		Source  string             `json:"source,omitempty"`
 		W       int                `json:"w"`
 		H       int                `json:"h"`
 		Subject *Object            `json:"subject,omitempty"`
@@ -118,12 +132,19 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Images  map[string]*Image  `json:"images,omitempty"`
 		Scripts map[string]*Script `json:"scripts,omitempty"`
 	}{
-		ID:      g.id,
-		Name:    g.name,
-		Source:  g.source,
 		Debug:   g.debug,
+		Pause:   g.pause,
+		Public:  g.public,
 		W:       g.w,
 		H:       g.h,
+		ID:      g.id,
+		PID:     g.pid,
+		Name:    g.name,
+		Ver:     g.ver,
+		Desc:    g.desc,
+		Icon:    g.icon,
+		Status:  g.status,
+		Source:  g.source,
 		Subject: g.sub,
 		Objects: g.obj,
 		Images:  g.img,
@@ -134,12 +155,19 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON deserializes the game from JSON.
 func (g *Game) UnmarshalJSON(data []byte) error {
 	v := &struct {
-		ID      string             `json:"id"`
-		Name    string             `json:"name"`
-		Source  string             `json:"source,omitempty"`
 		Debug   bool               `json:"debug,omitempty"`
+		Pause   bool               `json:"pause,omitempty"`
+		Public  bool               `json:"public,omitempty"`
 		W       int                `json:"w"`
 		H       int                `json:"h"`
+		ID      string             `json:"id"`
+		PID     string             `json:"previous_id,omitempty"`
+		Name    string             `json:"name"`
+		Ver     string             `json:"version,omitempty"`
+		Desc    string             `json:"description,omitempty"`
+		Icon    string             `json:"icon,omitempty"`
+		Status  string             `json:"status,omitempty"`
+		Source  string             `json:"source,omitempty"`
 		Subject *Object            `json:"subject,omitempty"`
 		Objects map[string]*Object `json:"objects,omitempty"`
 		Images  map[string]*Image  `json:"images,omitempty"`
@@ -150,8 +178,16 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	g.debug = v.Debug
+	g.pause = v.Pause
+	g.public = v.Public
 	g.id = v.ID
+	g.pid = v.PID
 	g.name = v.Name
+	g.ver = v.Ver
+	g.desc = v.Desc
+	g.icon = v.Icon
+	g.status = v.Status
 	g.source = v.Source
 	g.debug = v.Debug
 	g.w = v.W
@@ -296,6 +332,10 @@ func (g *Game) Update() error {
 		} else {
 			for i, k := range keys {
 				keyMap[strconv.Itoa(i)] = int(k)
+			}
+
+			if g.pause && len(keyMap) > 0 {
+				pause = true
 			}
 		}
 	}

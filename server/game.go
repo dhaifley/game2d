@@ -35,6 +35,8 @@ const (
 // Game values represent game state data.
 type Game struct {
 	AccountID   request.FieldString      `bson:"account_id"  json:"account_id"  yaml:"account_id"`
+	Debug       request.FieldBool        `bson:"debug"       json:"debug"       yaml:"debug"`
+	Pause       request.FieldBool        `bson:"pause"       json:"pause"       yaml:"pause"`
 	Public      request.FieldBool        `bson:"public"      json:"public"      yaml:"public"`
 	W           request.FieldInt64       `bson:"w"           json:"w"           yaml:"w"`
 	H           request.FieldInt64       `bson:"h"           json:"h"           yaml:"h"`
