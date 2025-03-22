@@ -44,6 +44,7 @@ type Server struct {
 	health        uint32
 	addr          []string
 	cancels       []context.CancelFunc
+	prompts       map[string]context.CancelFunc
 	cfg           *config.Config
 	log           logger.Logger
 	metric        metric.Recorder
@@ -83,12 +84,13 @@ func NewServer(cfg *config.Config,
 	}
 
 	s := &Server{
-		cfg:    cfg,
-		addr:   strings.Split(cfg.ServerAddress(), " "),
-		health: http.StatusOK,
-		log:    log,
-		tracer: tracer,
-		metric: metric,
+		cfg:     cfg,
+		addr:    strings.Split(cfg.ServerAddress(), " "),
+		prompts: make(map[string]context.CancelFunc),
+		health:  http.StatusOK,
+		log:     log,
+		tracer:  tracer,
+		metric:  metric,
 	}
 
 	s.Server.IdleTimeout = 30 * time.Second
@@ -199,6 +201,42 @@ func (s *Server) SetDB(db *mongo.Client) {
 	s.db = db
 }
 
+// addCancelFunc adds a context cancellation function to the list of cancel
+// functions the server needs to call when closing.
+func (s *Server) addCancelFunc(cf context.CancelFunc) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.cancels = append(s.cancels, cf)
+}
+
+// addPrompt adds a prompt to the server.
+func (s *Server) addPrompt(id string, cancel context.CancelFunc) {
+	if cancel == nil || id == "" {
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+
+	s.prompts[id] = cancel
+}
+
+// removePrompt removes a prompt from the server.
+func (s *Server) removePrompt(id string) {
+	if id == "" {
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+
+	if cancel, ok := s.prompts[id]; ok {
+		cancel()
+		delete(s.prompts, id)
+	}
+}
+
 // Mux routes and serves a request.
 func (s *Server) Mux(w http.ResponseWriter, r *http.Request) {
 	s.r.ServeHTTP(w, r)
@@ -216,7 +254,7 @@ func (s *Server) ConnectDB() {
 
 			for {
 				if retry {
-					time.Sleep(time.Second)
+					time.Sleep(time.Second * 2)
 				} else {
 					retry = true
 				}
@@ -453,9 +491,15 @@ func (s *Server) Close() {
 			"error", err)
 	}
 
-	for _, canc := range s.cancels {
-		if canc != nil {
-			canc()
+	for _, cancel := range s.prompts {
+		if cancel != nil {
+			cancel()
+		}
+	}
+
+	for _, cancel := range s.cancels {
+		if cancel != nil {
+			cancel()
 		}
 	}
 
@@ -498,9 +542,15 @@ func (s *Server) Shutdown(ctx context.Context) {
 		return
 	}
 
-	for _, canc := range s.cancels {
-		if canc != nil {
-			canc()
+	for _, cancel := range s.prompts {
+		if cancel != nil {
+			cancel()
+		}
+	}
+
+	for _, cancel := range s.cancels {
+		if cancel != nil {
+			cancel()
 		}
 	}
 
@@ -511,15 +561,6 @@ func (s *Server) Shutdown(ctx context.Context) {
 				"error", err)
 		}
 	}
-}
-
-// addCancelFunc adds a context cancellation function to the list of cancel
-// functions the server needs to call when closing.
-func (s *Server) addCancelFunc(cf context.CancelFunc) {
-	s.Lock()
-	defer s.Unlock()
-
-	s.cancels = append(s.cancels, cf)
 }
 
 // initRouter configures the server routing.

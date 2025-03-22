@@ -56,6 +56,11 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   const [isVisibilityProcessing, setIsVisibilityProcessing] = useState(false);
   
+  const clientIframeRef = useRef<HTMLIFrameElement>(null);
+  
+  // State to keep track of the current game data
+  const [currentGame, setCurrentGame] = useState<GameType>(game);
+  
   // State for prompt and response
   const [promptText, setPromptText] = useState('');
   const [responseText, setResponseText] = useState(game.ai_data?.response || '');
@@ -63,11 +68,10 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUndo, setIsUndo] = useState(true); // true for Undo, false for Redo
   const [isPublic, setIsPublic] = useState(game.public || false);
-
-  const clientIframeRef = useRef<HTMLIFrameElement>(null);
   
-  // State to keep track of the current game data
-  const [currentGame, setCurrentGame] = useState<GameType>(game);
+  // Update polling state
+  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const isUpdatingStatus = currentGame.status === "updating";
   
   // Check if user has write permission and belongs to the game's account
   const hasWritePermission = authUser && 
@@ -87,6 +91,46 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       clientIframeRef.current.src = `/client?game_id=${game.id}&game_name=${game.name}&api_url=${window.location.origin}/api/v1&api_token=${localStorage.getItem('token')}`;
     }
   }, [game]);
+
+  // Set up polling for game status updates when status is "updating"
+  useEffect(() => {
+    // Clear any existing polling interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    
+    // If game status is "updating", set up a polling interval
+    if (currentGame.status === "updating") {
+      const interval = setInterval(async () => {
+        try {
+          // Fetch the latest game data
+          const updatedGame = await fetchGame(currentGame.id);
+          setCurrentGame(updatedGame);
+          
+          // If status is no longer "updating", clear the interval
+          if (updatedGame.status !== "updating") {
+            clearInterval(interval);
+            setPollingInterval(null);
+            setResponseText(updatedGame.ai_data?.response || '');
+            // Refresh the games table
+            await onGameUpdated();
+          }
+        } catch (err) {
+          console.error("Error polling game status:", err);
+          clearInterval(interval);
+          setPollingInterval(null);
+        }
+      }, 1000); // Poll every second
+      
+      setPollingInterval(interval);
+      
+      // Cleanup function to clear interval when component unmounts or game changes
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  }, [currentGame.status, currentGame.id, onGameUpdated]);
 
   useEffect(() => {
     if (responseTextAreaRef.current) {
@@ -394,8 +438,20 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         <div className="game-buttons">
           {hasWritePermission && (
             <>
-              <button className="delete-button" onClick={() => setIsDeleteModalOpen(true)}>Delete</button>
-              <button className="copy-button" onClick={() => setIsCopyModalOpen(true)}>Copy</button>
+              <button 
+                className="delete-button" 
+                onClick={() => setIsDeleteModalOpen(true)}
+                disabled={isUpdatingStatus}
+              >
+                Delete
+              </button>
+              <button 
+                className="copy-button" 
+                onClick={() => setIsCopyModalOpen(true)}
+                disabled={isUpdatingStatus}
+              >
+                Copy
+              </button>
               {isEditMode ? (
                 <>
                   <button 
@@ -413,11 +469,22 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                   </button>
                 </>
               ) : (
-                <button className="edit-button" onClick={handleEditClick}>Edit</button>
+                <button 
+                  className="edit-button" 
+                  onClick={handleEditClick}
+                  disabled={isUpdatingStatus}
+                >
+                  Edit
+                </button>
               )}
             </>
           )}
-          <button className="export-button" onClick={handleExport}>Export</button>
+          <button 
+            className="export-button" 
+            onClick={handleExport}
+          >
+            Export
+          </button>
           <button className="close-button" onClick={handleCloseAndRefresh}>Close</button>
         </div>
       </div>
@@ -472,6 +539,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 setTagError(null);
                 setIsAddTagModalOpen(true);
               }}
+              disabled={isEditMode || isUpdatingStatus}
             >
               Add Tag
             </button>
@@ -483,9 +551,9 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
             currentGame.tags.map((tag, index) => (
               <span 
                 key={index} 
-                className={hasScope(authUser?.scopes, 'user:write') ? "tag-item clickable" : "tag-item"}
+                className={hasScope(authUser?.scopes, 'user:write') && !isEditMode && !isUpdatingStatus ? "tag-item clickable" : "tag-item"}
                 onClick={() => {
-                  if (hasScope(authUser?.scopes, 'user:write')) {
+                  if (hasScope(authUser?.scopes, 'user:write') && !isEditMode && !isUpdatingStatus) {
                     setSelectedTag(tag);
                     setTagError(null);
                     setIsDeleteTagModalOpen(true);
@@ -524,20 +592,21 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 onChange={(e) => setPromptText(e.target.value)}
                 placeholder="Enter prompt"
                 className="prompt-textarea"
+                disabled={isEditMode || isProcessing || isUpdatingStatus}
               />
               <button 
-                className="prompt-button" 
+                className={isUpdatingStatus ? "prompt-button updating-button" : "prompt-button"} 
                 onClick={handlePromptClick}
-                disabled={isProcessing}
+                disabled={isEditMode || isProcessing || isUpdatingStatus}
               >
-                {isProcessing ? 'Processing...' : 'Prompt'}
+                {isUpdatingStatus ? 'Updating...' : isProcessing ? 'Processing...' : 'Prompt'}
               </button>
               <button 
-                className={currentGame.previous_id || !isUndo ? "undo-button" : "undo-button-disabled"} 
+                className="undo-button"
                 onClick={handleUndoRedoClick}
-                disabled={isProcessing || (!currentGame.previous_id && isUndo)}
+                disabled={isEditMode || isProcessing || (!currentGame.previous_id)}
               >
-                {isUndo ? 'Undo' : 'Redo'}
+                {isUpdatingStatus ? 'Cancel' : isUndo ? 'Undo' : 'Redo'}
               </button>
             </div>
           </div>

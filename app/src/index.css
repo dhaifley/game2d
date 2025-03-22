@@ -445,6 +445,58 @@ h1 {
   border-color: #6464ffff;
 }
 
+.prompt-container .prompt-button:disabled {
+  background-color: #1a1a1a;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Updating button styles */
+.prompt-container .updating-button {
+  background-color: #6464ffaa;
+  border: 2px solid #6464ffaa;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.prompt-container .updating-button:hover {
+  background-color: #6464ffdd;
+  border-color: #6464ffff;
+}
+
+.prompt-container .updating-button:disabled {
+  cursor: not-allowed;
+}
+
+@keyframes pulse {
+  0% {
+    background-color: #6464ffaa;
+  }
+  50% {
+    background-color: #6464ff00;
+  }
+  100% {
+    background-color: #6464ffaa;
+  }
+}
+
+.undo-button {
+  background-color: #ff6464aa;
+  padding: 0.5rem 1rem;
+}
+
+.undo-button:hover {
+  background-color: #ff6464dd;
+  color: white;
+  border-color: #ff6464ff;
+}
+
+.undo-button:disabled {
+  background-color: #1a1a1a;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .ai-field-container {
   display: flex;
   flex-direction: column;
@@ -555,6 +607,12 @@ h1 {
   width: 100%;
 }
 
+.prompt-textarea:disabled {
+  background-color: #1a1a1a;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .name-input {
   padding: 0.75rem;
   border-radius: 4px;
@@ -610,22 +668,6 @@ h1 {
   padding: 0.5rem 1rem;
 }
 
-.undo-button {
-  background-color: #ff6464aa;
-  padding: 0.5rem 1rem;
-}
-
-.undo-button:hover {
-  background-color: #ff6464dd;
-  color: white;
-  border-color: #ff6464ff;
-}
-
-.undo-button-disabled {
-  background-color: #1a1a1a;
-  padding: 0.5rem 1rem;
-}
-
 .delete-button {
   background-color: #ff6464aa;
   padding: 0.5rem 1rem;
@@ -637,11 +679,22 @@ h1 {
   border-color: #ff6464ff;
 }
 
+.delete-button:disabled {
+  background-color: #1a1a1a;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .copy-button {
   background-color: #2a2a2a;
   padding: 0.5rem 1rem;
 }
 
+.copy-button:disabled {
+  background-color: #1a1a1a;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* Game component buttons - additional styles */
 .save-button {
@@ -660,6 +713,7 @@ h1 {
 
 .save-button:disabled {
   background-color: #1a1a1a;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -815,20 +869,6 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-}
 
 /* Modal styles */
 .modal-overlay {
@@ -1112,6 +1152,12 @@ textarea[readonly] {
   background-color: #2a2a2a;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
+}
+
+.add-tag-button:disabled {
+  background-color: #1a1a1a;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Tab controls for games table */

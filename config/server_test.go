@@ -20,6 +20,7 @@ func TestServerConfig(t *testing.T) {
 		Key:            "test",
 		Timeout:        time.Second * 10,
 		IdleTimeout:    time.Second * 10,
+		PromptTimeout:  time.Second * 10,
 		Host:           "test.com",
 		PathPrefix:     "/api/v2",
 		MaxRequestSize: 10,
@@ -44,6 +45,11 @@ func TestServerConfig(t *testing.T) {
 	if cfg.ServerIdleTimeout() != time.Second*10 {
 		t.Errorf("Expected idle timeout: 10s, got: %v",
 			cfg.ServerIdleTimeout())
+	}
+
+	if cfg.ServerPromptTimeout() != time.Second*10 {
+		t.Errorf("Expected prompt timeout: 10s, got: %v",
+			cfg.ServerPromptTimeout())
 	}
 
 	if cfg.ServerHost() != "test.com" {

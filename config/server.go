@@ -12,6 +12,7 @@ const (
 	KeyServerKey            = "server/key"
 	KeyServerTimeout        = "server/timeout"
 	KeyServerIdleTimeout    = "server/idle_timeout"
+	KeyServerPromptTimeout  = "server/prompt_timeout"
 	KeyServerHost           = "server/host"
 	KeyServerPathPrefix     = "server/path_prefix"
 	KeyServerMaxRequestSize = "server/max_request_size"
@@ -21,6 +22,7 @@ const (
 	DefaultServerKey            = ""
 	DefaultServerTimeout        = time.Second * 30
 	DefaultServerIdleTimeout    = time.Second * 5
+	DefaultServerPromptTimeout  = time.Minute * 5
 	DefaultServerHost           = "game2d.ai"
 	DefaultServerPathPrefix     = "/api/v1"
 	DefaultServerMaxRequestSize = int64(20 * 1024 * 1023) // 20 MB
@@ -33,6 +35,7 @@ type ServerConfig struct {
 	Key            string        `json:"key,omitempty"              yaml:"key,omitempty"`
 	Timeout        time.Duration `json:"timeout,omitempty"          yaml:"timeout,omitempty"`
 	IdleTimeout    time.Duration `json:"idle_timeout,omitempty"     yaml:"idle_timeout,omitempty"`
+	PromptTimeout  time.Duration `json:"prompt_timeout,omitempty"   yaml:"prompt_timeout,omitempty"`
 	Host           string        `json:"host,omitempty"             yaml:"host,omitempty"`
 	PathPrefix     string        `json:"path_prefix,omitempty"      yaml:"path_prefix,omitempty"`
 	MaxRequestSize int64         `json:"max_request_size,omitempty" yaml:"max_request_size,omitempty"`
@@ -89,6 +92,19 @@ func (c *ServerConfig) Load() {
 
 	if c.IdleTimeout == 0 {
 		c.IdleTimeout = DefaultServerIdleTimeout
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyServerPromptTimeout)); v != "" {
+		v, err := time.ParseDuration(v)
+		if err != nil {
+			v = DefaultServerPromptTimeout
+		}
+
+		c.PromptTimeout = v
+	}
+
+	if c.PromptTimeout == 0 {
+		c.PromptTimeout = DefaultServerPromptTimeout
 	}
 
 	if v := os.Getenv(ReplaceEnv(KeyServerHost)); v != "" {
@@ -173,6 +189,19 @@ func (c *Config) ServerTimeout() time.Duration {
 	}
 
 	return c.server.Timeout
+}
+
+// ServerPromptTimeout returns a duration representing the maximum time a server
+// will wait for a prompt request to run before timing out.
+func (c *Config) ServerPromptTimeout() time.Duration {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.server == nil {
+		return DefaultServerPromptTimeout
+	}
+
+	return c.server.PromptTimeout
 }
 
 // ServerIdleTimeout returns a duration representing the maximum duration a

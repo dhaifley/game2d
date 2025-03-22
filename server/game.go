@@ -247,7 +247,8 @@ func (g *Game) Validate() error {
 		}
 
 		switch g.Status.Value {
-		case request.StatusActive, request.StatusInactive:
+		case request.StatusActive, request.StatusInactive,
+			request.StatusUpdating:
 		default:
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid status",
@@ -685,6 +686,24 @@ func (s *Server) createGame(ctx context.Context,
 			pg.Status = request.FieldString{
 				Set: true, Valid: true, Value: request.StatusInactive,
 			}
+
+			if pg.AIData.Value == nil {
+				pg.AIData = request.FieldJSON{
+					Set: true, Valid: true, Value: map[string]any{},
+				}
+			}
+
+			aiData := aiDataFromFieldJSON(pg.AIData)
+
+			if aiData == nil {
+				aiData = &AIData{}
+			}
+
+			aiData.GameID = request.FieldString{
+				Set: true, Valid: true, Value: res.ID.Value,
+			}
+
+			pg.AIData = fieldJSONFromAIData(aiData)
 
 			if pg.PreviousID.Value != res.ID.Value &&
 				pg.PreviousID.Value != "" {
@@ -1589,6 +1608,11 @@ func (s *Server) getGameHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
+	if qp := r.URL.Query().Get("minimal"); qp != "" && qp != "0" &&
+		!strings.EqualFold(qp, "false") && !strings.EqualFold(qp, "f") {
+		ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
+	}
+
 	res, err := s.getGame(ctx, id)
 	if err != nil {
 		s.error(err, w, r)
@@ -1890,6 +1914,14 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		return
 	}
 
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		s.error(errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context"), w, r)
+
+		return
+	}
+
 	req := &AIData{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -1904,114 +1936,160 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		return
 	}
 
-	doPrompt := func(req *AIData) (*AIData, error) {
-		if req == nil {
-			return nil, errors.New(errors.ErrInvalidRequest,
-				"missing request")
-		}
-
-		if req.GameID.Value == "" {
-			return nil, errors.New(errors.ErrInvalidRequest,
-				"missing game id",
-				"req", req)
-		}
-
-		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
-		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
-
-		g, err := s.getGame(ctx, req.GameID.Value)
-		if err != nil {
-			return nil, errors.Wrap(err, errors.ErrDatabase,
-				"unable to get game for prompt",
-				"req", req)
-		}
-
-		if g == nil {
-			return nil, errors.New(errors.ErrNotFound,
-				"game not found for prompt",
-				"req", req)
-		}
-
-		if g.Source.Value == "git" {
-			return nil, errors.New(errors.ErrInvalidRequest,
-				"unable to create prompts for games with source git",
-				"req", req)
-		}
-
-		if g.Status.Value == request.StatusInactive {
-			return nil, errors.New(errors.ErrInvalidRequest,
-				"unable to create prompts for inactive games",
-				"req", req)
-		}
-
-		aid := aiDataFromFieldJSON(g.AIData)
-		if aid == nil {
-			aid = req
-		}
-
-		if aid.Response.Value != "" {
-			aid.Response.Value += "\n\n"
-		}
-
-		req.Response = request.FieldString{
-			Set: true, Valid: true, Value: aid.Response.Value +
-				"Prompt:\n" + req.Prompt.Value +
-				"\n\nResponse:\nThe AI has responded.",
-		}
-
-		aid.Prompt = request.FieldString{
-			Set: true, Valid: true, Value: req.Prompt.Value,
-		}
-
-		aid.Response = request.FieldString{
-			Set: true, Valid: true, Value: req.Response.Value,
-		}
-
-		ng := &Game{
-			AccountID: g.AccountID,
-			W:         g.W,
-			H:         g.H,
-			PreviousID: request.FieldString{
-				Set: true, Valid: true, Value: g.ID.Value,
-			},
-			Name:        g.Name,
-			Version:     g.Version,
-			Description: g.Description,
-			Icon:        g.Icon,
-			Status:      g.Status,
-			StatusData:  g.StatusData,
-			Subject:     g.Subject,
-			Objects:     g.Objects,
-			Images:      g.Images,
-			Scripts:     g.Scripts,
-			Source: request.FieldString{
-				Set: true, Valid: true, Value: "app",
-			},
-			Tags:   g.Tags,
-			AIData: fieldJSONFromAIData(aid),
-		}
-
-		ng, err = s.createGame(ctx, ng)
-		if err != nil {
-			return nil, errors.Wrap(err, errors.ErrDatabase,
-				"unable to create new game from prompt",
-				"req", req,
-				"new_game", ng)
-		}
-
-		req.GameID = request.FieldString{
-			Set: true, Valid: true, Value: ng.ID.Value,
-		}
-
-		return req, nil
-	}
-
-	res, err := doPrompt(req)
-	if err != nil {
-		s.error(err, w, r)
+	if req == nil {
+		s.error(errors.New(errors.ErrInvalidRequest,
+			"missing request"), w, r)
 
 		return
 	}
+
+	if req.GameID.Value == "" {
+		s.error(errors.New(errors.ErrInvalidRequest,
+			"missing game id",
+			"req", req), w, r)
+
+		return
+	}
+
+	ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
+	ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
+
+	g, err := s.getGame(ctx, req.GameID.Value)
+	if err != nil {
+		s.error(errors.Wrap(err, errors.ErrDatabase,
+			"unable to get game for prompt",
+			"req", req), w, r)
+
+		return
+	}
+
+	if g == nil {
+		s.error(errors.New(errors.ErrNotFound,
+			"game not found for prompt",
+			"req", req), w, r)
+
+		return
+	}
+
+	if g.AccountID.Value != aID && aID != request.SystemAccount &&
+		!request.ContextHasScope(ctx, request.ScopeSuperuser) {
+		s.error(errors.New(errors.ErrNotFound,
+			"unable to get game for prompt",
+			"req", req), w, r)
+
+		return
+	}
+
+	if g.Source.Value == "git" {
+		s.error(errors.New(errors.ErrInvalidRequest,
+			"unable to create prompts for games with source git",
+			"req", req), w, r)
+
+		return
+	}
+
+	if g.Status.Value == request.StatusInactive {
+		s.error(errors.New(errors.ErrInvalidRequest,
+			"unable to create prompts for inactive games",
+			"req", req), w, r)
+
+		return
+	}
+
+	if g.Status.Value == request.StatusUpdating {
+		s.error(errors.New(errors.ErrInvalidRequest,
+			"unable to create prompts for games with a prompt in progress",
+			"req", req), w, r)
+
+		return
+	}
+
+	g.Status = request.FieldString{
+		Set: true, Valid: true, Value: request.StatusUpdating,
+	}
+
+	aid := aiDataFromFieldJSON(g.AIData)
+	if aid == nil {
+		aid = req
+	}
+
+	if aid.Response.Value != "" {
+		aid.Response.Value += "\n\n"
+	}
+
+	aid.Response = request.FieldString{
+		Set: true, Valid: true, Value: aid.Response.Value +
+			"Prompt:\n" + req.Prompt.Value +
+			"\n\nResponse:\nThe AI has responded.",
+	}
+
+	aid.Prompt = request.FieldString{
+		Set: true, Valid: true, Value: req.Prompt.Value,
+	}
+
+	ng := &Game{
+		AccountID: g.AccountID,
+		W:         g.W,
+		H:         g.H,
+		PreviousID: request.FieldString{
+			Set: true, Valid: true, Value: g.ID.Value,
+		},
+		Name:        g.Name,
+		Version:     g.Version,
+		Description: g.Description,
+		Icon:        g.Icon,
+		Status: request.FieldString{
+			Set: true, Valid: true, Value: request.StatusUpdating,
+		},
+		StatusData: g.StatusData,
+		Subject:    g.Subject,
+		Objects:    g.Objects,
+		Images:     g.Images,
+		Scripts:    g.Scripts,
+		Source: request.FieldString{
+			Set: true, Valid: true, Value: "app",
+		},
+		Tags:   g.Tags,
+		AIData: g.AIData,
+	}
+
+	ng, err = s.createGame(ctx, ng)
+	if err != nil {
+		s.error(errors.Wrap(err, errors.ErrDatabase,
+			"unable to create new game from prompt",
+			"req", req), w, r)
+
+		return
+	}
+
+	aid.GameID = request.FieldString{
+		Set: true, Valid: true, Value: ng.ID.Value,
+	}
+
+	ctx, cancel := request.ContextReplaceTimeout(ctx,
+		s.cfg.ServerPromptTimeout())
+
+	s.addPrompt(g.ID.Value, cancel)
+
+	go func(ctx context.Context, g *Game, res *AIData) {
+		defer s.removePrompt(g.ID.Value)
+
+		g.Status = request.FieldString{
+			Set: true, Valid: true, Value: request.StatusActive,
+		}
+
+		g.AIData = fieldJSONFromAIData(res)
+
+		time.Sleep(time.Second * 2)
+
+		if _, err := s.updateGame(ctx, g); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to update game with prompt result",
+				"error", err,
+				"game_id", g.ID.Value,
+				"res", res)
+		}
+	}(ctx, ng, aid)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -2028,7 +2106,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 
 	w.Header().Set("Location", loc.String())
 
-	if err := json.NewEncoder(w).Encode(res); err != nil {
+	if err := json.NewEncoder(w).Encode(aid); err != nil {
 		s.error(err, w, r)
 	}
 }
@@ -2061,6 +2139,8 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 	}
 
 	doUndo := func(req *AIData) (*AIData, error) {
+		s.removePrompt(req.GameID.Value)
+
 		if req == nil {
 			return nil, errors.New(errors.ErrInvalidRequest,
 				"missing request")

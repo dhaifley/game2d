@@ -10,6 +10,7 @@ import (
 const (
 	StatusActive       = "active"
 	StatusInactive     = "inactive"
+	StatusUpdating     = "updating"
 	StatusNew          = "new"
 	StatusError        = "error"
 	StatusPending      = "pending"
