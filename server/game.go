@@ -2013,16 +2013,6 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		aid = req
 	}
 
-	if aid.Response.Value != "" {
-		aid.Response.Value += "\n\n"
-	}
-
-	aid.Response = request.FieldString{
-		Set: true, Valid: true, Value: aid.Response.Value +
-			"Prompt:\n" + req.Prompt.Value +
-			"\n\nResponse:\nThe AI has responded.",
-	}
-
 	aid.Prompt = request.FieldString{
 		Set: true, Valid: true, Value: req.Prompt.Value,
 	}
@@ -2050,7 +2040,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 			Set: true, Valid: true, Value: "app",
 		},
 		Tags:   g.Tags,
-		AIData: g.AIData,
+		AIData: fieldJSONFromAIData(aid),
 	}
 
 	ng, err = s.createGame(ctx, ng)
@@ -2071,23 +2061,73 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 
 	s.addPrompt(g.ID.Value, cancel)
 
-	go func(ctx context.Context, g *Game, res *AIData) {
+	go func(ctx context.Context, g *Game, req *AIData) {
 		defer s.removePrompt(g.ID.Value)
+
+		gb, err := json.Marshal(g)
+		if err != nil {
+			req.Error = request.FieldJSON{
+				Set: true, Valid: true, Value: map[string]any{
+					"message": "unable to encode game state for prompt",
+					"error":   err.Error(),
+				},
+			}
+
+			s.log.Log(ctx, logger.LvlError,
+				"unable to encode game state for prompt",
+				"error", err,
+				"game_id", g.ID.Value,
+				"req", req)
+
+			return
+		}
+
+		p := s.getPrompter()
+
+		res, gs, err := p.Prompt(ctx, req.Prompt.Value, gb)
+		if err != nil {
+			req.Error = request.FieldJSON{
+				Set: true, Valid: true, Value: map[string]any{
+					"message": "unable to get prompt response",
+					"error":   err.Error(),
+				},
+			}
+		} else if err := json.Unmarshal(gs, &g); err != nil {
+			req.Error = request.FieldJSON{
+				Set: true, Valid: true, Value: map[string]any{
+					"message": "unable to decode game state from prompt response",
+					"error":   err.Error(),
+				},
+			}
+
+			s.log.Log(ctx, logger.LvlError,
+				"unable to decode game state from prompt response",
+				"error", err,
+				"game_id", g.ID.Value,
+				"req", req,
+				"game_state", string(gs))
+
+			return
+		}
+
+		req.Response = request.FieldString{
+			Set: true, Valid: true, Value: req.Response.Value +
+				"\n\nPrompt:\n" + req.Prompt.Value +
+				"\n\nResponse:\n" + res,
+		}
+
+		g.AIData = fieldJSONFromAIData(req)
 
 		g.Status = request.FieldString{
 			Set: true, Valid: true, Value: request.StatusActive,
 		}
-
-		g.AIData = fieldJSONFromAIData(res)
-
-		time.Sleep(time.Second * 2)
 
 		if _, err := s.updateGame(ctx, g); err != nil {
 			s.log.Log(ctx, logger.LvlError,
 				"unable to update game with prompt result",
 				"error", err,
 				"game_id", g.ID.Value,
-				"res", res)
+				"res", req)
 		}
 	}(ctx, ng, aid)
 
