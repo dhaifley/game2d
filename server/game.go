@@ -2118,6 +2118,12 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"\n\nResponse:\n" + res,
 		}
 
+		const MB = 1024 * 1024
+
+		if len(req.Response.Value) > MB {
+			req.Response.Value = req.Response.Value[len(req.Response.Value)-MB:]
+		}
+
 		g.AIData = fieldJSONFromAIData(req)
 
 		g.Status = request.FieldString{
