@@ -476,6 +476,8 @@ func (g *Game) Save() (rErr error) {
 		if rErr != nil {
 			g.err = rErr
 		}
+
+		ebiten.SetWindowTitle(g.name)
 	}()
 
 	b, err := json.MarshalIndent(&g, "", "  ")
@@ -543,8 +545,6 @@ func (g *Game) Save() (rErr error) {
 				"file", g.name+".json")
 		}
 	}
-
-	ebiten.SetWindowTitle(g.name)
 
 	return nil
 }
@@ -633,6 +633,8 @@ func (g *Game) Load() (rErr error) {
 	}
 
 	g.debug = g2.debug
+	g.pause = g2.pause
+	g.public = g2.public
 
 	if g2.w <= 0 || g2.h <= 0 {
 		return errors.New(errors.ErrClient,
@@ -643,7 +645,13 @@ func (g *Game) Load() (rErr error) {
 	g.w = g2.w
 	g.h = g2.h
 	g.id = g2.id
+	g.pid = g2.pid
 	g.name = g2.name
+	g.ver = g2.ver
+	g.desc = g2.desc
+	g.icon = g2.icon
+	g.status = g2.status
+	g.source = g2.source
 	g.img = g2.img
 	g.src = g2.src
 
