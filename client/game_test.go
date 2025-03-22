@@ -27,7 +27,7 @@ func TestUpdate(t *testing.T) {
 		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
 	game.AddScript(client.NewScript(TestID, TestName, TestScript, nil))
-	game.AddImage(client.NewImage(TestID, TestName, TestImage))
+	game.AddImage(client.NewImage(TestID, TestName, TestImage, 0, 0))
 	game.AddSubject(client.NewSubject(game, TestID, TestName, TestID, TestID,
 		nil))
 	game.AddObject(client.NewObject(game, TestID, TestName, TestID, TestID,
@@ -83,7 +83,7 @@ func TestGameSaveLoad(t *testing.T) {
 		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
 	game.AddScript(client.NewScript(TestID, TestName, TestScript, nil))
-	game.AddImage(client.NewImage(TestID, TestName, TestImage))
+	game.AddImage(client.NewImage(TestID, TestName, TestImage, 0, 0))
 	game.AddSubject(client.NewSubject(game, TestID, TestName, TestID, TestID,
 		nil))
 	game.AddObject(client.NewObject(game, TestID, TestName, TestID, TestID,

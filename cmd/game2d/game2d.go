@@ -41,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	g.AddImage(client.NewImage("p1", "avatar.png", ib))
+	g.AddImage(client.NewImagePNG("p1", "avatar.png", ib))
 
 	script, err := assets.GetScript("avatar.lua")
 	if err != nil {
@@ -71,7 +71,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	g.AddImage(client.NewImage("bg", "bg.png", ibb))
+	g.AddImage(client.NewImagePNG("bg", "bg.png", ibb))
 
 	for i := 0; i <= 9; i++ {
 		for j := 0; j <= 7; j++ {
