@@ -311,7 +311,7 @@ func (g *Game) AddScript(src *Script) {
 func (g *Game) Update() error {
 	keyMap := map[string]any{}
 
-	debug, save, load, pause := false, false, false, false
+	debug, save, load, pause, reset := false, false, false, false, false
 
 	if keys := inpututil.AppendPressedKeys(nil); len(keys) > 0 {
 		if slices.Contains(keys, ebiten.KeyControl) {
@@ -326,6 +326,8 @@ func (g *Game) Update() error {
 						load = true
 					case ebiten.KeyP:
 						pause = true
+					case ebiten.KeyQ:
+						reset = true
 					}
 				}
 			}
@@ -405,12 +407,14 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if load {
+	if reset || load {
 		if err := g.Load(); err != nil {
 			g.log.Log(context.Background(), logger.LvlError,
 				"unable to load game",
 				"error", err)
 		}
+
+		pause = true
 	}
 
 	if pause {

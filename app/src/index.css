@@ -668,6 +668,11 @@ h1 {
   padding: 0.5rem 1rem;
 }
 
+.refresh-button {
+  background-color: #2a2a2a;
+  padding: 0.5rem 1rem;
+}
+
 .delete-button {
   background-color: #ff6464aa;
   padding: 0.5rem 1rem;
