@@ -67,10 +67,10 @@ function Update(data)
 		obj.x = obj.x + obj.data.speed
 	end
 
-	if obj.x > 320 - obj.w then
-		obj.x = 320 - obj.w
-	elseif obj.x < -320 + obj.w then
-		obj.x = -320 + obj.w
+	if obj.x > 640 - obj.w then
+		obj.x = 640 - obj.w
+	elseif obj.x < 0 then
+		obj.x = 0
 	end
 
 	if string.find(obj.data.dir, "w") then
@@ -81,10 +81,10 @@ function Update(data)
 		obj.y = obj.y + obj.data.speed
 	end
 
-	if obj.y > 256 - obj.h then
-		obj.y = 256 - obj.h
-	elseif obj.y < -256 + obj.h then
-		obj.y = -256 + obj.h
+	if obj.y > 480 - obj.h then
+		obj.y = 480 - obj.h
+	elseif obj.y < 0 then
+		obj.y = 0
 	end
 
 	if game.subject ~= nil and game.subject.id == data.id then

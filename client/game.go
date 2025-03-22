@@ -493,7 +493,7 @@ func (g *Game) Save() (rErr error) {
 				"response", string(rb))
 		}
 	} else {
-		if err := os.WriteFile(g.name+".json", b, 0o644); err != nil {
+		if err := os.WriteFile("game2d.json", b, 0o644); err != nil {
 			return errors.Wrap(err, errors.ErrClient,
 				"unable to write game save",
 				"file", g.name+".json")
@@ -512,6 +512,8 @@ func (g *Game) Load() (rErr error) {
 	ebiten.SetWindowTitle(g.name + " (loading...)")
 
 	defer func() {
+		ebiten.SetWindowTitle(g.name)
+
 		if rErr != nil {
 			g.err = rErr
 		}
@@ -570,7 +572,7 @@ func (g *Game) Load() (rErr error) {
 
 		b = rb
 	} else {
-		if fb, err := os.ReadFile(g.name + ".json"); err != nil {
+		if fb, err := os.ReadFile("game2d.json"); err != nil {
 			return errors.Wrap(err, errors.ErrClient,
 				"unable to load game",
 				"file", g.name+".json")
@@ -628,8 +630,6 @@ func (g *Game) Load() (rErr error) {
 
 	g.lua = lua.NewState()
 	lua.OpenLibraries(g.lua)
-
-	ebiten.SetWindowTitle(g.name)
 
 	return nil
 }

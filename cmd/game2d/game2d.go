@@ -55,7 +55,11 @@ func main() {
 
 	g.AddScript(client.NewScript("p1", "avatar.lua", script, []string{"image"}))
 
-	g.AddSubject(client.NewSubject(g, "p1", "Hello Aaron!", "p1", "p1", nil))
+	sub := client.NewSubject(g, "p1", "Player 1", "p1", "p1", nil)
+	sub.SetX(288)
+	sub.SetY(174)
+
+	g.AddSubject(sub)
 
 	ibb, err := assets.GetImage("bg.png")
 	if err != nil {
@@ -69,8 +73,8 @@ func main() {
 
 	g.AddImage(client.NewImage("bg", "bg.png", ibb))
 
-	for i := -4; i <= 4; i++ {
-		for j := -3; j <= 3; j++ {
+	for i := 0; i <= 9; i++ {
+		for j := 0; j <= 7; j++ {
 			ids := "bg_" + strconv.Itoa(i) + "_" + strconv.Itoa(j)
 
 			obj := client.NewObject(g, ids, ids, "", "bg", nil)

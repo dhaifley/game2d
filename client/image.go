@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"image/png"
 
+	"github.com/dhaifley/game2d/errors"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 // Image values represent the images in the game.
@@ -46,18 +47,24 @@ func (i *Image) UnmarshalJSON(data []byte) error {
 
 	b, err := base64.StdEncoding.DecodeString(v.Data)
 	if err != nil {
-		return err
+		return errors.Wrap(err, errors.ErrClient,
+			"unable to base64 decode image",
+			"id", i.id,
+			"name", i.name)
 	}
 
 	i.data = b
 
 	if len(i.data) > 0 {
-		img, _, err := ebitenutil.NewImageFromReader(bytes.NewBuffer(i.data))
+		img, err := png.Decode(bytes.NewBuffer(i.data))
 		if err != nil {
-			return err
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to decode image",
+				"id", i.id,
+				"name", i.name)
 		}
 
-		i.img = img
+		i.img = ebiten.NewImageFromImage(img)
 	} else {
 		i.img = nil
 	}
@@ -70,9 +77,9 @@ func NewImage(id, name string, data []byte) *Image {
 	var i *ebiten.Image
 
 	if len(data) > 0 {
-		img, _, err := ebitenutil.NewImageFromReader(bytes.NewBuffer(data))
+		img, err := png.Decode(bytes.NewBuffer(data))
 		if err == nil {
-			i = img
+			i = ebiten.NewImageFromImage(img)
 		}
 	}
 

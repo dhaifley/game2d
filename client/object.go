@@ -294,12 +294,7 @@ func (o *Object) Draw(screen *ebiten.Image) {
 	}
 
 	geo := ebiten.GeoM{}
-	geo.Translate(float64(screen.Bounds().Dx()/2-o.w/2),
-		float64(screen.Bounds().Dy()/2-o.h/2))
-
-	if !o.sub && o.game.sub != nil {
-		geo.Translate(float64(o.x-o.game.sub.x), float64(o.y-o.game.sub.y))
-	}
+	geo.Translate(float64(o.x), float64(o.y))
 
 	op := &ebiten.DrawImageOptions{GeoM: geo}
 
