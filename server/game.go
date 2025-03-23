@@ -1979,7 +1979,7 @@ func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
 			PreviousID: request.FieldString{
 				Set: true, Valid: false,
 			},
-			Name:        req.Name,
+			Name:        g.Name,
 			Version:     g.Version,
 			Description: g.Description,
 			Icon:        g.Icon,

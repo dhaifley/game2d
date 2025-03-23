@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	_ "image/png"
 	"os"
 	"strconv"
 
@@ -31,17 +30,17 @@ func main() {
 	g.SetAPIToken(os.Getenv("GAME2D_API_TOKEN"))
 	initJS(g)
 
-	ib, err := assets.GetImage("avatar.png")
+	ib, err := assets.GetImage("avatar.svg")
 	if err != nil {
 		log.Log(ctx, logger.LvlError,
 			"unable to read image",
 			"error", err,
-			"file", "avatar.png")
+			"file", "avatar.svg")
 
 		os.Exit(1)
 	}
 
-	g.AddImage(client.NewImagePNG("p1", "avatar.png", ib))
+	g.AddImage(client.NewImage("p1", "avatar.svg", ib, 64, 64))
 
 	script, err := assets.GetScript("avatar.lua")
 	if err != nil {
@@ -61,17 +60,17 @@ func main() {
 
 	g.AddSubject(sub)
 
-	ibb, err := assets.GetImage("bg.png")
+	ibb, err := assets.GetImage("bg.svg")
 	if err != nil {
 		log.Log(ctx, logger.LvlError,
 			"unable to read image",
 			"error", err,
-			"file", "bg.png")
+			"file", "bg.svg")
 
 		os.Exit(1)
 	}
 
-	g.AddImage(client.NewImagePNG("bg", "bg.png", ibb))
+	g.AddImage(client.NewImage("bg", "bg.svg", ibb, 64, 64))
 
 	for i := 0; i <= 9; i++ {
 		for j := 0; j <= 7; j++ {

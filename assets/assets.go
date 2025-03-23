@@ -2,7 +2,7 @@ package assets
 
 import "embed"
 
-//go:embed *.png *.lua
+//go:embed *.svg *.lua
 var afs embed.FS
 
 // GetImage retrieves an image from the embedded assets.

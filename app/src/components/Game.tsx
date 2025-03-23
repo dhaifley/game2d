@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, ChangeEvent, useImperativeHandle } from 'react';
 import { Game as GameType, copyGame, deleteGame, updateGame, fetchGame } from '../services/gameService';
-import avatarImage from '../assets/avatar.png';
+import avatarImage from '../assets/avatar.svg';
 import Modal from './Modal';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,7 +20,7 @@ interface GameProps {
 const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const { user: authUser } = useAuth();
 
-  // Determine icon source: use base64 SVG from game.icon or fallback to avatar.png
+  // Determine icon source: use base64 SVG from game.icon or fallback to avatar.svg
   const iconSrc = game.icon ? `data:image/svg+xml;base64,${game.icon}` : avatarImage;
 
   // Edit mode state

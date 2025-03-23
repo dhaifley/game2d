@@ -14,12 +14,12 @@ func TestGetImage(t *testing.T) {
 	}{
 		{
 			name:     "existing file",
-			filename: "avatar.png",
+			filename: "avatar.svg",
 			wantErr:  false,
 		},
 		{
 			name:     "non-existing file",
-			filename: "nonexistent.png",
+			filename: "nonexistent.svg",
 			wantErr:  true,
 		},
 	}

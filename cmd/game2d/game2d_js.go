@@ -3,7 +3,6 @@
 package main
 
 import (
-	_ "image/png"
 	"syscall/js"
 
 	"github.com/dhaifley/game2d/client"

@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
-import avatarLogo from '../assets/avatar.png';
+import avatarLogo from '../assets/avatar.svg';
 import { Game, fetchGames, createGame } from '../services/gameService';
 import Modal from './Modal';
 import axios from 'axios';

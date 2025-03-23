@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"image"
-	"image/png"
 	"io"
 
 	"github.com/dhaifley/game2d/errors"
@@ -28,25 +27,6 @@ func NewImage(id, name string, data []byte, w, h int) *Image {
 
 	if len(data) > 0 {
 		img, err := svgToImage(bytes.NewBuffer(data), w, h)
-		if err == nil {
-			i = ebiten.NewImageFromImage(img)
-		}
-	}
-
-	return &Image{
-		id:   id,
-		name: name,
-		data: data,
-		img:  i,
-	}
-}
-
-// NewImagePNG creates and initializes a new image object from a PNG image.
-func NewImagePNG(id, name string, data []byte) *Image {
-	var i *ebiten.Image
-
-	if len(data) > 0 {
-		img, err := png.Decode(bytes.NewBuffer(data))
 		if err == nil {
 			i = ebiten.NewImageFromImage(img)
 		}

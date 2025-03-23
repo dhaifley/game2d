@@ -379,6 +379,112 @@ func TestGamesServer(t *testing.T) {
 			}
 		},
 	}, {
+		name:   "prompt game",
+		url:    "http://localhost:8080/api/v1/games/prompt",
+		method: http.MethodPost,
+		body:   map[string]any{"game_id": TestUUID, "prompt": "test"},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusCreated
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			if err := json.Unmarshal(b, &m); err != nil {
+				t.Errorf("Unexpected error decoding response: %v ", err)
+			}
+
+			id, ok := m["game_id"].(string)
+			if !ok {
+				t.Errorf("Expected game_id in response: %v", m)
+			}
+
+			dataLock.Lock()
+			data["game_id"] = id
+			dataLock.Unlock()
+		},
+	}, {
+		name:   "undo prompt",
+		url:    "http://localhost:8080/api/v1/games/undo",
+		method: http.MethodPost,
+		body:   map[string]any{"game_id": TestUUID},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusCreated
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			if err := json.Unmarshal(b, &m); err != nil {
+				t.Errorf("Unexpected error decoding response: %v ", err)
+			}
+
+			if _, ok := m["game_id"].(string); !ok {
+				t.Errorf("Expected id in response: %v", m)
+			}
+		},
+	}, {
+		name:   "copy game",
+		url:    "http://localhost:8080/api/v1/games/copy",
+		method: http.MethodPost,
+		body:   map[string]any{"id": TestUUID},
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusCreated
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Errorf("Unexpected response error: %v", err)
+			}
+
+			m := map[string]any{}
+
+			if err := json.Unmarshal(b, &m); err != nil {
+				t.Errorf("Unexpected error decoding response: %v ", err)
+			}
+
+			id, ok := m["id"].(string)
+			if !ok {
+				t.Errorf("Expected id in response: %v", m)
+			}
+
+			dataLock.Lock()
+			data["copy_id"] = id
+			dataLock.Unlock()
+		},
+	}, {
+		name:   "delete game copy",
+		url:    "http://localhost:8080/api/v1/games/{{copy_id}}",
+		method: http.MethodDelete,
+		resp: func(t *testing.T, res *http.Response) {
+			expC := http.StatusNoContent
+
+			if res.StatusCode != expC {
+				t.Errorf("Status code expected: %v, got: %v",
+					expC, res.StatusCode)
+			}
+		},
+	}, {
 		name:   "delete game",
 		url:    "http://localhost:8080/api/v1/games/{{id}}",
 		method: http.MethodDelete,
@@ -400,6 +506,15 @@ func TestGamesServer(t *testing.T) {
 				dataLock.Unlock()
 
 				tt.url = strings.ReplaceAll(tt.url, "{{id}}",
+					gameID)
+			}
+
+			if strings.Contains(tt.url, "{{copy_id}}") {
+				dataLock.Lock()
+				gameID, _ := data["copy_id"].(string)
+				dataLock.Unlock()
+
+				tt.url = strings.ReplaceAll(tt.url, "{{copy_id}}",
 					gameID)
 			}
 
@@ -431,9 +546,29 @@ func TestGamesServer(t *testing.T) {
 				}
 
 				if buf.Len() == 0 {
-					b, err := json.Marshal(tt.body)
-					if err != nil {
-						t.Error(err)
+					var (
+						b   []byte
+						err error
+					)
+
+					if bm, ok := tt.body.(map[string]any); ok {
+						dataLock.Lock()
+						gID, _ := data["game_id"].(string)
+						dataLock.Unlock()
+
+						if gID != "" {
+							bm["game_id"] = gID
+						}
+
+						b, err = json.Marshal(bm)
+						if err != nil {
+							t.Error(err)
+						}
+					} else {
+						b, err = json.Marshal(tt.body)
+						if err != nil {
+							t.Error(err)
+						}
 					}
 
 					buf = bytes.NewBuffer(b)
