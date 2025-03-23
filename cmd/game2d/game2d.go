@@ -56,7 +56,7 @@ func main() {
 
 	sub := client.NewSubject(g, "p1", "Player 1", "p1", "p1", nil)
 	sub.SetX(288)
-	sub.SetY(174)
+	sub.SetY(208)
 
 	g.AddSubject(sub)
 

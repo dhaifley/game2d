@@ -594,15 +594,17 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           )}
         </div>
 
-        <div className="client-container">
-          {currentGame.id && (
-            <GameIframe 
-              ref={gameIframeRef}
-              gameId={currentGame.id} 
-              gameName={currentGame.name} 
-            />
-          )}
-        </div>
+        {!isUpdatingStatus && (
+          <div className="client-container">
+            {currentGame.id && (
+              <GameIframe 
+                ref={gameIframeRef}
+                gameId={currentGame.id} 
+                gameName={currentGame.name} 
+              />
+            )}
+          </div>
+        )}
 
         {hasWritePermission && (
           <div className="ai-field-container">
@@ -610,7 +612,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
               <textarea
                 ref={responseTextAreaRef}
                 id="response"
-                className="response-textarea"
+                className={isUpdatingStatus ? "response-textarea-expanded" : "response-textarea"}
                 readOnly
                 onLoad={() => { setResponseText(currentGame.ai_data?.response || '') }}
                 onChange={(e) => setResponseText(e.target.value)}
