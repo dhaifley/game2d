@@ -103,7 +103,7 @@ func TestGameSaveLoad(t *testing.T) {
 
 	t.Cleanup(func() {
 		game.SetAPIURL(au)
-		os.Remove("test.json")
+		os.Remove("game2d.json")
 	})
 
 	err = game.Load()

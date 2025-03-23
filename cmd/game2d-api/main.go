@@ -107,6 +107,7 @@ func (s *Service) Start(ctx context.Context) error {
 		svr.ConnectDB()
 		svr.UpdateAuthConfig()
 		svr.UpdateGameImports()
+		svr.UpdateGamePrompts()
 	}(ctx, s.svr)
 
 	return s.svr.Serve()

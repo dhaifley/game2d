@@ -412,6 +412,19 @@ func (s *Server) UpdateGameImports() {
 	})
 }
 
+// UpdateGamePrompts periodically updates pending game prompts.
+func (s *Server) UpdateGamePrompts() {
+	s.gameOnce.Do(func() {
+		go func() {
+			for s.db == nil {
+				time.Sleep(100 * time.Millisecond)
+			}
+
+			s.addCancelFunc(s.updateGamePrompts(context.Background()))
+		}()
+	})
+}
+
 // Serve listens for and processes HTTP requests.
 func (s *Server) Serve() error {
 	ctx := context.Background()

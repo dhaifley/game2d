@@ -1412,6 +1412,139 @@ func (s *Server) updateGameImports(ctx context.Context,
 	return cancel
 }
 
+// updateGamePrompts periodically updates pending game prompts.
+func (s *Server) updateGamePrompts(ctx context.Context,
+) context.CancelFunc {
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func(ctx context.Context) {
+		tick := time.NewTimer(time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				accounts, err := s.getAllAccounts(ctx)
+				if err != nil {
+					s.log.Log(ctx, logger.LvlError,
+						"unable to get accounts to import games",
+						"error", err)
+
+					break
+				}
+
+				var wg sync.WaitGroup
+
+				for _, aID := range accounts {
+					wg.Add(1)
+
+					go func(ctx context.Context, accountID string) {
+						ctx = context.WithValue(ctx, request.CtxKeyAccountID,
+							accountID)
+						ctx = context.WithValue(ctx, request.CtxKeyUserID,
+							request.SystemUser)
+						ctx = context.WithValue(ctx, request.CtxKeyScopes,
+							request.ScopeSuperuser)
+
+						if n, err := s.updatePrompts(ctx); err != nil {
+							s.log.Log(ctx, logger.LvlError,
+								"unable to update game prompts",
+								"error", err)
+						} else if n > 0 {
+							s.log.Log(ctx, logger.LvlInfo,
+								"updated game prompt timeouts",
+								"account_id", accountID,
+								"updated", n)
+						}
+
+						wg.Done()
+					}(ctx, aID)
+				}
+
+				wg.Wait()
+			}
+
+			tick = time.NewTimer(time.Minute)
+		}
+	}(ctx)
+
+	return cancel
+}
+
+// updatePrompts updates any games with status updating to status error if
+// updated_at is older than the configured prompt timeout.
+func (s *Server) updatePrompts(ctx context.Context) (int, error) {
+	aID, err := request.ContextAccountID(ctx)
+	if err != nil {
+		return 0, errors.New(errors.ErrUnauthorized,
+			"unable to get account id from context")
+	}
+
+	ts := time.Now().Add(s.cfg.ServerPromptTimeout() * -1).Unix()
+
+	f := bson.M{
+		"account_id": aID,
+		"status":     request.StatusUpdating,
+		"updated_at": bson.M{"$lt": ts},
+	}
+
+	pro := bson.M{"id": 1}
+
+	cur, err := s.DB().Collection("games").Find(ctx, f,
+		options.Find().SetProjection(pro))
+	if err != nil {
+		return 0, errors.Wrap(err, errors.ErrDatabase,
+			"unable to get games to delete",
+			"filter", f)
+	}
+
+	defer func() {
+		if err := cur.Close(ctx); err != nil {
+			s.log.Log(ctx, logger.LvlError,
+				"unable to close cursor",
+				"err", err)
+		}
+	}()
+
+	n := 0
+
+	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
+
+	for cur.Next(ctx) {
+		var g *Game
+
+		if err := cur.Decode(&g); err != nil {
+			return n, errors.Wrap(err, errors.ErrDatabase,
+				"unable to decode game")
+		}
+
+		if g == nil {
+			continue
+		}
+
+		g.Status = request.FieldString{
+			Set: true, Valid: true, Value: request.StatusError,
+		}
+
+		if _, err := s.updateGame(ctx, g); err != nil {
+			return n, errors.Wrap(err, errors.ErrDatabase,
+				"unable to update prompt timeout game",
+				"game", g)
+		}
+
+		n++
+	}
+
+	if err := cur.Err(); err != nil {
+		return n, errors.Wrap(err, errors.ErrDatabase,
+			"unable to update prompt timeout games",
+			"filter", f)
+	}
+
+	return n, nil
+}
+
 // getAllGameTags retrieves all game tags.
 func (s *Server) getAllGameTags(ctx context.Context,
 ) ([]string, error) {
@@ -2066,6 +2199,22 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 	go func(ctx context.Context, g *Game, req *AIData) {
 		defer s.removePrompt(g.ID.Value)
 
+		g.Status = request.FieldString{
+			Set: true, Valid: true, Value: request.StatusActive,
+		}
+
+		updateGame := func(req *AIData, g *Game) {
+			g.AIData = fieldJSONFromAIData(req)
+
+			if _, err := s.updateGame(ctx, g); err != nil {
+				s.log.Log(ctx, logger.LvlError,
+					"unable to update game with prompt result",
+					"error", err,
+					"game_id", g.ID.Value,
+					"res", req)
+			}
+		}
+
 		gb, err := json.Marshal(g)
 		if err != nil {
 			req.Error = request.FieldJSON{
@@ -2075,11 +2224,17 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				},
 			}
 
+			g.Status = request.FieldString{
+				Set: true, Valid: true, Value: request.StatusError,
+			}
+
 			s.log.Log(ctx, logger.LvlError,
 				"unable to encode game state for prompt",
 				"error", err,
 				"game_id", g.ID.Value,
 				"req", req)
+
+			updateGame(req, g)
 
 			return
 		}
@@ -2094,6 +2249,10 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 					"error":   err.Error(),
 				},
 			}
+
+			g.Status = request.FieldString{
+				Set: true, Valid: true, Value: request.StatusError,
+			}
 		} else if err := json.Unmarshal(gs, &g); err != nil {
 			req.Error = request.FieldJSON{
 				Set: true, Valid: true, Value: map[string]any{
@@ -2102,14 +2261,16 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				},
 			}
 
+			g.Status = request.FieldString{
+				Set: true, Valid: true, Value: request.StatusError,
+			}
+
 			s.log.Log(ctx, logger.LvlError,
 				"unable to decode game state from prompt response",
 				"error", err,
 				"game_id", g.ID.Value,
 				"req", req,
 				"game_state", string(gs))
-
-			return
 		}
 
 		req.Response = request.FieldString{
@@ -2124,19 +2285,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 			req.Response.Value = req.Response.Value[len(req.Response.Value)-MB:]
 		}
 
-		g.AIData = fieldJSONFromAIData(req)
-
-		g.Status = request.FieldString{
-			Set: true, Valid: true, Value: request.StatusActive,
-		}
-
-		if _, err := s.updateGame(ctx, g); err != nil {
-			s.log.Log(ctx, logger.LvlError,
-				"unable to update game with prompt result",
-				"error", err,
-				"game_id", g.ID.Value,
-				"res", req)
-		}
+		updateGame(req, g)
 	}(ctx, ng, aid)
 
 	w.WriteHeader(http.StatusCreated)
