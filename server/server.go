@@ -115,7 +115,7 @@ func NewServer(cfg *config.Config,
 	}
 
 	s.getPrompter = func() Prompter {
-		return NewMockPrompter("The AI has responded.", nil, time.Second*2)
+		return NewMockPrompter("The AI has responded.", nil, time.Second*3)
 	}
 
 	s.initRouter()

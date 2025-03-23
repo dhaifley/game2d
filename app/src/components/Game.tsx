@@ -66,6 +66,8 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [promptText, setPromptText] = useState('');
   const [responseText, setResponseText] = useState(game.ai_data?.response || '');
   const responseTextAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [workingText, setWorkingText] = useState(game.ai_data?.data?.working || '');
+  const workingTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUndo, setIsUndo] = useState(true); // true for Undo, false for Redo
   const [isPublic, setIsPublic] = useState(game.public || false);
@@ -86,6 +88,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     setEditedDescription(game.description || '');
     setEditedTags(game.tags?.join(', ') || '');
     setResponseText(game.ai_data?.response || '');
+    setWorkingText(game.ai_data?.data?.working || '');
     setIsUndo(true); // Reset to Undo when game changes
     setIsPublic(game.public || false);
     if (clientIframeRef.current) {
@@ -114,6 +117,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
             clearInterval(interval);
             setPollingInterval(null);
             setResponseText(updatedGame.ai_data?.response || '');
+            setWorkingText(updatedGame.ai_data?.data?.working || '');
             // Refresh the games table
             await onGameUpdated();
           }
@@ -138,6 +142,12 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
     }
   }, [responseText]);
+
+  useEffect(() => {
+    if (workingTextAreaRef.current) {
+      workingTextAreaRef.current.scrollTop = workingTextAreaRef.current.scrollHeight;
+    }
+  }, [workingText]);
 
   // Handle public checkbox change
   const handlePublicChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -594,7 +604,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           )}
         </div>
 
-        {!isUpdatingStatus && (
+        {!isUpdatingStatus ? (
           <div className="client-container">
             {currentGame.id && (
               <GameIframe 
@@ -604,6 +614,20 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
               />
             )}
           </div>
+        ) : (
+          <div className="working-field-container">
+            <div className="working-container">
+              <textarea
+                ref={workingTextAreaRef}
+                id="working"
+                className="working-textarea"
+                readOnly
+                onLoad={() => { setWorkingText(currentGame.ai_data?.data?.working || '') }}
+                onChange={(e) => setWorkingText(e.target.value)}
+                value={workingText}
+              />
+            </div>
+          </div>
         )}
 
         {hasWritePermission && (
@@ -612,7 +636,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
               <textarea
                 ref={responseTextAreaRef}
                 id="response"
-                className={isUpdatingStatus ? "response-textarea-expanded" : "response-textarea"}
+                className="response-textarea"
                 readOnly
                 onLoad={() => { setResponseText(currentGame.ai_data?.response || '') }}
                 onChange={(e) => setResponseText(e.target.value)}

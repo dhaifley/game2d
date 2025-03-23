@@ -2194,7 +2194,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 	ctx, cancel := request.ContextReplaceTimeout(ctx,
 		s.cfg.ServerPromptTimeout())
 
-	s.addPrompt(g.ID.Value, cancel)
+	s.addPrompt(ng.ID.Value, cancel)
 
 	go func(ctx context.Context, g *Game, req *AIData) {
 		defer s.removePrompt(g.ID.Value)
