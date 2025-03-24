@@ -15,12 +15,13 @@ func TestServiceConfig(t *testing.T) {
 	cfg.Load(nil)
 
 	cfg.SetService(&config.ServiceConfig{
-		Name:             "test name",
-		AccountID:        "test id",
-		AccountName:      "test name",
-		Maintenance:      true,
-		ImportInterval:   time.Second,
-		GameLimitDefault: 5,
+		Name:              "test name",
+		AccountID:         "test id",
+		AccountName:       "test name",
+		Maintenance:       true,
+		ImportInterval:    time.Second,
+		GameLimitDefault:  5,
+		PromptHistorySize: 10,
 	})
 
 	if cfg.ServiceName() != "test name" {
@@ -49,5 +50,10 @@ func TestServiceConfig(t *testing.T) {
 	if cfg.GameLimitDefault() != 5 {
 		t.Errorf("Expected game limit default: 5, got: %v",
 			cfg.GameLimitDefault())
+	}
+
+	if cfg.PromptHistorySize() != 10 {
+		t.Errorf("Expected prompt history size: 10, got: %v",
+			cfg.PromptHistorySize())
 	}
 }

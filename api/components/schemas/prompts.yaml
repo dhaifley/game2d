@@ -1,0 +1,44 @@
+# components/schemas/prompts.yaml
+type: object
+description: A data exchange with an AI service.
+properties:
+  game_id:
+    type: string
+    description: The ID of the game.
+    examples: [11223344-5566-7788-9900-aabbccddeeff]
+  current:
+    type: object
+    description: >
+      The most recent prompt and response responsible for the current state of
+      the game.
+    properties:
+      prompt:
+        type: string
+        description: A prompt to an AI service.
+        examples: ["prompt"]
+      response:
+        type: string
+        description: A response from an AI service.
+        examples: ["response"]
+  history:
+    type: array
+    description: >
+      The history of prompts and responses, prior to the current one,
+      responsible for the state of the game.
+    items:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: A prompt to an AI service.
+          examples: ["prompt"]
+        response:
+          type: string
+          description: A response from an AI service.
+          examples: ["response"]
+  data:
+    type: object
+    description: Additional data related to AI prompt or response.
+  error:
+    type: object
+    description: An error response from the AI service.

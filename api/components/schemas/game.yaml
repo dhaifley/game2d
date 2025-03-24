@@ -87,10 +87,10 @@ properties:
     items:
       type: string
       examples: ["tag1:value1", "tag2:value2"]
-  ai_data:
+  prompts:
     description: >
-      Data related to the last AI prompt and response for the game.
-    $ref: "./ai_data.yaml"
+      AI prompt and response data responsible for the current game.
+    $ref: "./prompts.yaml"
   created_at:
     type: integer
     description: >

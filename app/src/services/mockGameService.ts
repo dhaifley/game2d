@@ -53,7 +53,7 @@ const generateMockGame = (index: number) => {
     status: statuses[Math.floor(Math.random() * statuses.length)],
     source: "app",
     tags: ["test:test"],
-    ai_data: {"prompt": "test", "response": "test", data: {}},
+    prompts: {"current":{"prompt": "test", "response": "test"}, data: {}},
     created_at: getRandomDate(),
     created_by: users[Math.floor(Math.random() * users.length)],
     updated_at: getRandomDate(),

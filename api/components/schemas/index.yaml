@@ -1,8 +1,6 @@
 # components/schemas/index.yaml
 account:
   $ref: "./account.yaml"
-ai_data:
-  $ref: "./ai_data.yaml"
 error:
   $ref: "./error.yaml"
 game:
@@ -11,6 +9,8 @@ image:
   $ref: "./image.yaml"
 object:
   $ref: "./object.yaml"
+prompts:
+  $ref: "./prompts.yaml"
 script:
   $ref: "./script.yaml"
 tags:

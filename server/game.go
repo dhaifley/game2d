@@ -55,146 +55,68 @@ type Game struct {
 	Source      request.FieldString      `bson:"source"      json:"source"      yaml:"source"`
 	CommitHash  request.FieldString      `bson:"commit_hash" json:"commit_hash" yaml:"commit_hash"`
 	Tags        request.FieldStringArray `bson:"tags"        json:"tags"        yaml:"tags"`
-	AIData      request.FieldJSON        `bson:"ai_data"     json:"ai_data"     yaml:"ai_data"`
+	Prompts     request.FieldJSON        `bson:"prompts"     json:"prompts"     yaml:"prompts"`
 	CreatedAt   request.FieldTime        `bson:"created_at"  json:"created_at"  yaml:"created_at"`
 	CreatedBy   request.FieldString      `bson:"created_by"  json:"created_by"  yaml:"created_by"`
 	UpdatedAt   request.FieldTime        `bson:"updated_at"  json:"updated_at"  yaml:"updated_at"`
 	UpdatedBy   request.FieldString      `bson:"updated_by"  json:"updated_by"  yaml:"updated_by"`
 }
 
-// AIData values contain the AI data for a game.
-type AIData struct {
+// Prompt values represent a single AI prompt and response.
+type Prompt struct {
 	Prompt   request.FieldString `bson:"prompt"   json:"prompt"   yaml:"prompt"`
 	Response request.FieldString `bson:"response" json:"response" yaml:"response"`
-	Data     request.FieldJSON   `bson:"data"     json:"data"     yaml:"data"`
-	Error    request.FieldJSON   `bson:"error"    json:"error"    yaml:"error"`
-	GameID   request.FieldString `bson:"game_id"  json:"game_id"  yaml:"game_id"`
 }
 
-// Map converts the AIData to a map.
-func (a *AIData) Map() map[string]any {
-	var res map[string]any
-
-	if a == nil {
-		return res
-	}
-
-	res = map[string]any{}
-
-	if a.Prompt.Valid {
-		res["prompt"] = a.Prompt.Value
-	}
-
-	if a.Response.Valid {
-		res["response"] = a.Response.Value
-	}
-
-	if a.Data.Valid {
-		res["data"] = a.Data.Value
-	}
-
-	if a.Error.Valid {
-		res["error"] = a.Error.Value
-	}
-
-	if a.GameID.Valid {
-		res["game_id"] = a.GameID.Value
-	}
-
-	return res
+// Prompts values contain the AI prompt data for a game.
+type Prompts struct {
+	Current Prompt              `bson:"current" json:"current" yaml:"current"`
+	History []Prompt            `bson:"history" json:"history" yaml:"history"`
+	Data    request.FieldJSON   `bson:"data"    json:"data"    yaml:"data"`
+	Error   request.FieldJSON   `bson:"error"   json:"error"   yaml:"error"`
+	GameID  request.FieldString `bson:"game_id" json:"game_id" yaml:"game_id"`
 }
 
-// aiDataFromFieldJSON converts FieldJSON to AIData.
-func aiDataFromMap(m map[string]any) *AIData {
-	if m == nil {
-		return nil
+// promptsToFieldJSON converts a Prompts struct to a FieldJSON value.
+func promptsToFieldJSON(p *Prompts) (request.FieldJSON, error) {
+	if p == nil {
+		return request.FieldJSON{}, nil
 	}
 
-	res := &AIData{}
-
-	if v, ok := m["prompt"]; ok {
-		if s, ok := v.(string); ok {
-			res.Prompt = request.FieldString{
-				Set: true, Valid: true, Value: s,
-			}
-		}
+	b, err := json.Marshal(p)
+	if err != nil {
+		return request.FieldJSON{}, err
 	}
 
-	if v, ok := m["response"]; ok {
-		if s, ok := v.(string); ok {
-			res.Response = request.FieldString{
-				Set: true, Valid: true, Value: s,
-			}
-		}
-	}
-
-	if v, ok := m["data"]; ok {
-		if v == nil {
-			res.Data = request.FieldJSON{
-				Set: true, Valid: false, Value: nil,
-			}
-		}
-
-		if s, ok := v.(map[string]any); ok {
-			res.Data = request.FieldJSON{
-				Set: true, Valid: true, Value: s,
-			}
-		} else if s, ok := v.(string); ok {
-			var m map[string]any
-
-			if err := json.Unmarshal([]byte(s), &m); err == nil {
-				res.Data = request.FieldJSON{
-					Set: true, Valid: true, Value: m,
-				}
-			}
-		}
-	}
-
-	if v, ok := m["error"]; ok {
-		if s, ok := v.(map[string]any); ok {
-			res.Error = request.FieldJSON{
-				Set: true, Valid: true, Value: s,
-			}
-		} else if s, ok := v.(string); ok {
-			var m map[string]any
-
-			if err := json.Unmarshal([]byte(s), &m); err == nil {
-				res.Error = request.FieldJSON{
-					Set: true, Valid: true, Value: m,
-				}
-			}
-		}
-	}
-
-	if v, ok := m["game_id"]; ok {
-		if s, ok := v.(string); ok {
-			res.GameID = request.FieldString{
-				Set: true, Valid: true, Value: s,
-			}
-		}
-	}
-
-	return res
-}
-
-// fieldJSONFromAIData converts an AIData to a FieldJSON.
-func fieldJSONFromAIData(req *AIData) request.FieldJSON {
-	if req == nil {
-		return request.FieldJSON{}
+	m := make(map[string]any)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return request.FieldJSON{}, err
 	}
 
 	return request.FieldJSON{
-		Set: true, Valid: true, Value: req.Map(),
-	}
+		Set:   true,
+		Valid: true,
+		Value: m,
+	}, nil
 }
 
-// aiDataFromFieldJSON converts a FieldJSON to an AIData.
-func aiDataFromFieldJSON(req request.FieldJSON) *AIData {
-	if !req.Set || !req.Valid {
-		return nil
+// promptsFromFieldJSON converts a FieldJSON value to a Prompts struct.
+func promptsFromFieldJSON(f request.FieldJSON) (*Prompts, error) {
+	if !f.Set || !f.Valid || f.Value == nil {
+		return nil, nil
 	}
 
-	return aiDataFromMap(req.Value)
+	b, err := json.Marshal(f.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &Prompts{}
+	if err := json.Unmarshal(b, p); err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 // Validate checks that the value contains valid data.
@@ -604,7 +526,7 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "images", req.Images)
 	request.SetField(doc, "scripts", req.Scripts)
 	request.SetField(doc, "commit_hash", req.CommitHash)
-	request.SetField(doc, "ai_data", req.AIData)
+	request.SetField(doc, "prompts", req.Prompts)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
@@ -689,23 +611,27 @@ func (s *Server) createGame(ctx context.Context,
 				Set: true, Valid: true, Value: request.StatusInactive,
 			}
 
-			if pg.AIData.Value == nil {
-				pg.AIData = request.FieldJSON{
-					Set: true, Valid: true, Value: map[string]any{},
-				}
+			prompts, err := promptsFromFieldJSON(pg.Prompts)
+			if err != nil {
+				return nil, errors.Wrap(err, errors.ErrDatabase,
+					"unable to decode previous game prompts",
+					"previous_id", res.PreviousID.Value)
 			}
 
-			aiData := aiDataFromFieldJSON(pg.AIData)
-
-			if aiData == nil {
-				aiData = &AIData{}
+			if prompts == nil {
+				prompts = &Prompts{}
 			}
 
-			aiData.GameID = request.FieldString{
+			prompts.GameID = request.FieldString{
 				Set: true, Valid: true, Value: res.ID.Value,
 			}
 
-			pg.AIData = fieldJSONFromAIData(aiData)
+			pg.Prompts, err = promptsToFieldJSON(prompts)
+			if err != nil {
+				return nil, errors.Wrap(err, errors.ErrDatabase,
+					"unable to encode previous game prompts",
+					"previous_id", res.PreviousID.Value)
+			}
 
 			if pg.PreviousID.Value != res.ID.Value &&
 				pg.PreviousID.Value != "" {
@@ -807,7 +733,7 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "images", req.Images)
 	request.SetField(doc, "scripts", req.Scripts)
 	request.SetField(doc, "commit_hash", req.CommitHash)
-	request.SetField(doc, "ai_data", req.AIData)
+	request.SetField(doc, "prompts", req.Prompts)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
@@ -1994,8 +1920,8 @@ func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
 			Source: request.FieldString{
 				Set: true, Valid: true, Value: "app",
 			},
-			Tags:   g.Tags,
-			AIData: g.AIData,
+			Tags:    g.Tags,
+			Prompts: g.Prompts,
 		}
 
 		res, err = s.createGame(ctx, res)
@@ -2057,7 +1983,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		return
 	}
 
-	req := &AIData{}
+	req := &Prompts{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		switch e := err.(type) {
@@ -2143,13 +2069,45 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		Set: true, Valid: true, Value: request.StatusUpdating,
 	}
 
-	aid := aiDataFromFieldJSON(g.AIData)
-	if aid == nil {
-		aid = req
+	prompts, err := promptsFromFieldJSON(g.Prompts)
+	if err != nil {
+		s.error(errors.Wrap(err, errors.ErrInvalidRequest,
+			"unable to decode prompts",
+			"req", req), w, r)
 	}
 
-	aid.Prompt = request.FieldString{
-		Set: true, Valid: true, Value: req.Prompt.Value,
+	if prompts == nil {
+		prompts = &Prompts{}
+	}
+
+	prompts.History = append(prompts.History, prompts.Current)
+
+	hb, err := json.Marshal(prompts.History)
+	if err != nil {
+		s.error(errors.Wrap(err, errors.ErrServer,
+			"unable to encode prompt history",
+			"req", req), w, r)
+	}
+
+	for len(hb) > int(s.cfg.PromptHistorySize()) && len(prompts.History) > 1 {
+		prompts.History = prompts.History[1:]
+
+		hb, err = json.Marshal(prompts.History)
+		if err != nil {
+			s.error(errors.Wrap(err, errors.ErrServer,
+				"unable to encode prompt history",
+				"req", req), w, r)
+		}
+	}
+
+	prompts.Current = req.Current
+	prompts.Error = request.FieldJSON{}
+
+	ps, err := promptsToFieldJSON(prompts)
+	if err != nil {
+		s.error(errors.Wrap(err, errors.ErrServer,
+			"unable to encode prompt history",
+			"req", req), w, r)
 	}
 
 	ng := &Game{
@@ -2174,8 +2132,8 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		Source: request.FieldString{
 			Set: true, Valid: true, Value: "app",
 		},
-		Tags:   g.Tags,
-		AIData: fieldJSONFromAIData(aid),
+		Tags:    g.Tags,
+		Prompts: ps,
 	}
 
 	ng, err = s.createGame(ctx, ng)
@@ -2187,7 +2145,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		return
 	}
 
-	aid.GameID = request.FieldString{
+	prompts.GameID = request.FieldString{
 		Set: true, Valid: true, Value: ng.ID.Value,
 	}
 
@@ -2196,28 +2154,26 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 
 	s.addPrompt(ng.ID.Value, cancel)
 
-	go func(ctx context.Context, g *Game, req *AIData) {
+	go func(ctx context.Context, g *Game, prompts *Prompts) {
 		defer s.removePrompt(g.ID.Value)
 
 		g.Status = request.FieldString{
 			Set: true, Valid: true, Value: request.StatusActive,
 		}
 
-		updateGame := func(req *AIData, g *Game) {
-			g.AIData = fieldJSONFromAIData(req)
-
+		updateGame := func(g *Game) {
 			if _, err := s.updateGame(ctx, g); err != nil {
 				s.log.Log(ctx, logger.LvlError,
 					"unable to update game with prompt result",
 					"error", err,
 					"game_id", g.ID.Value,
-					"res", req)
+					"prompts", prompts)
 			}
 		}
 
 		gb, err := json.Marshal(g)
 		if err != nil {
-			req.Error = request.FieldJSON{
+			prompts.Error = request.FieldJSON{
 				Set: true, Valid: true, Value: map[string]any{
 					"message": "unable to encode game state for prompt",
 					"error":   err.Error(),
@@ -2232,18 +2188,20 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"unable to encode game state for prompt",
 				"error", err,
 				"game_id", g.ID.Value,
-				"req", req)
+				"prompts", prompts)
 
-			updateGame(req, g)
+			updateGame(g)
 
 			return
 		}
 
 		p := s.getPrompter()
 
-		res, gs, err := p.Prompt(ctx, req.Prompt.Value, gb)
+		var ng *Game
+
+		res, gs, err := p.Prompt(ctx, prompts.Current.Prompt.Value, gb)
 		if err != nil {
-			req.Error = request.FieldJSON{
+			prompts.Error = request.FieldJSON{
 				Set: true, Valid: true, Value: map[string]any{
 					"message": "unable to get prompt response",
 					"error":   err.Error(),
@@ -2253,8 +2211,8 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 			g.Status = request.FieldString{
 				Set: true, Valid: true, Value: request.StatusError,
 			}
-		} else if err := json.Unmarshal(gs, &g); err != nil {
-			req.Error = request.FieldJSON{
+		} else if err := json.Unmarshal(gs, &ng); err != nil {
+			prompts.Error = request.FieldJSON{
 				Set: true, Valid: true, Value: map[string]any{
 					"message": "unable to decode game state from prompt response",
 					"error":   err.Error(),
@@ -2269,24 +2227,44 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 				"unable to decode game state from prompt response",
 				"error", err,
 				"game_id", g.ID.Value,
-				"req", req,
+				"prompts", g.Prompts,
 				"game_state", string(gs))
 		}
 
-		req.Response = request.FieldString{
-			Set: true, Valid: true, Value: req.Response.Value +
-				"\n\nPrompt:\n" + req.Prompt.Value +
-				"\n\nResponse:\n" + res,
+		prompts.Current.Response = request.FieldString{
+			Set: true, Valid: true, Value: res,
 		}
 
-		const MB = 1024 * 1024
+		ng.Prompts, err = promptsToFieldJSON(prompts)
+		if err != nil {
+			g.Status = request.FieldString{
+				Set: true, Valid: true, Value: request.StatusError,
+			}
 
-		if len(req.Response.Value) > MB {
-			req.Response.Value = req.Response.Value[len(req.Response.Value)-MB:]
+			s.log.Log(ctx, logger.LvlError,
+				"unable to encode prompt response for game state",
+				"error", err,
+				"game_id", g.ID.Value,
+				"prompts", g.Prompts,
+				"game_state", string(gs))
 		}
 
-		updateGame(req, g)
-	}(ctx, ng, aid)
+		ng.AccountID = g.AccountID
+		ng.Public = g.Public
+		ng.ID = g.ID
+		ng.PreviousID = g.PreviousID
+		ng.Status = g.Status
+		ng.StatusData = g.StatusData
+		ng.Source = g.Source
+		ng.CommitHash = g.CommitHash
+		ng.Tags = g.Tags
+		ng.CreatedAt = g.CreatedAt
+		ng.CreatedBy = g.CreatedBy
+		ng.UpdatedAt = g.UpdatedAt
+		ng.UpdatedBy = g.UpdatedBy
+
+		updateGame(ng)
+	}(ctx, ng, prompts)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -2303,7 +2281,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 
 	w.Header().Set("Location", loc.String())
 
-	if err := json.NewEncoder(w).Encode(aid); err != nil {
+	if err := json.NewEncoder(w).Encode(prompts); err != nil {
 		s.error(err, w, r)
 	}
 }
@@ -2321,7 +2299,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 		return
 	}
 
-	req := &AIData{}
+	req := &Prompts{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		switch e := err.(type) {
@@ -2335,9 +2313,7 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 		return
 	}
 
-	doUndo := func(req *AIData) (*AIData, error) {
-		s.removePrompt(req.GameID.Value)
-
+	doUndo := func(req *Prompts) (*Prompts, error) {
 		if req == nil {
 			return nil, errors.New(errors.ErrInvalidRequest,
 				"missing request")
@@ -2348,6 +2324,8 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 				"missing game id",
 				"req", req)
 		}
+
+		s.removePrompt(req.GameID.Value)
 
 		ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
 		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
@@ -2427,10 +2405,15 @@ func (s *Server) postGamesUndoHandler(w http.ResponseWriter,
 				"game", g)
 		}
 
-		req.Response = request.FieldString{
-			Set: true, Valid: true, Value: req.Response.Value +
-				"\n\nUndo." + req.Prompt.Value +
-				"\n\nResponse:\nThe previous prompt has been undone.",
+		req.Current = Prompt{
+			Prompt: request.FieldString{
+				Set: true, Valid: true,
+				Value: "Undo." + req.Current.Prompt.Value,
+			},
+			Response: request.FieldString{
+				Set: true, Valid: true,
+				Value: "The previous prompt has been undone.",
+			},
 		}
 
 		req.GameID = request.FieldString{

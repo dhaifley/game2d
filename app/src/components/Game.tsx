@@ -64,9 +64,9 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
 
   // State for prompt and response
   const [promptText, setPromptText] = useState('');
-  const [responseText, setResponseText] = useState(game.ai_data?.response || '');
+  const [responseText, setResponseText] = useState(game.prompts?.current?.response || '');
   const responseTextAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [workingText, setWorkingText] = useState(game.ai_data?.data?.working || '');
+  const [workingText, setWorkingText] = useState(game.prompts?.data?.working || '');
   const workingTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUndo, setIsUndo] = useState(true); // true for Undo, false for Redo
@@ -87,8 +87,25 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     setEditedName(game.name);
     setEditedDescription(game.description || '');
     setEditedTags(game.tags?.join(', ') || '');
-    setResponseText(game.ai_data?.response || '');
-    setWorkingText(game.ai_data?.data?.working || '');
+
+    let respText = '';
+    game.prompts?.history?.forEach((prompt: any) => {
+      if (prompt.prompt) {
+        respText += "\nPrompt:\n" + prompt.prompt + "\n";
+      }
+      if (prompt.response) {
+        respText += "\nResponse:\n" + prompt.response + "\n";
+      }
+    });
+    if (game.prompts?.current?.prompt) {
+      respText += "\nPrompt:\n" + game.prompts?.current?.prompt + "\n";
+    }
+    if (game.prompts?.current?.response) {
+      respText += "\nResponse:\n" + game.prompts?.current?.response + "\n";
+    }
+    setResponseText(respText.trim());
+
+    setWorkingText(game.prompts?.data?.working || '');
     setIsUndo(true); // Reset to Undo when game changes
     setIsPublic(game.public || false);
     if (clientIframeRef.current) {
@@ -116,8 +133,25 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           if (updatedGame.status !== "updating") {
             clearInterval(interval);
             setPollingInterval(null);
-            setResponseText(updatedGame.ai_data?.response || '');
-            setWorkingText(updatedGame.ai_data?.data?.working || '');
+
+            let respText = '';
+            updatedGame.prompts?.history?.forEach((prompt: any) => {
+              if (prompt.prompt) {
+                respText += "\nPrompt:\n" + prompt.prompt + "\n";
+              }
+              if (prompt.response) {
+                respText += "\nResponse:\n" + prompt.response + "\n";
+              }
+            });
+            if (updatedGame.prompts?.current?.prompt) {
+              respText += "\nPrompt:\n" + updatedGame.prompts?.current?.prompt + "\n";
+            }
+            if (updatedGame.prompts?.current?.response) {
+              respText += "\nResponse:\n" + updatedGame.prompts?.current?.response + "\n";
+            }
+            setResponseText(respText.trim());
+
+            setWorkingText(updatedGame.prompts?.data?.working || '');
             // Refresh the games table
             await onGameUpdated();
           }
@@ -330,7 +364,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
 
       // Make the POST request to the prompt API
       const response = await axios.post('/api/v1/games/prompt', {
-        prompt: promptText,
+        current: {prompt: promptText},
         game_id: currentGame.id
       });
 
@@ -341,11 +375,33 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       setIsUndo(true);
 
       // Fetch the updated game to refresh the component
+      console.log('Prompt response:', response.data);
       const updatedGame = await fetchGame(response.data.game_id);
       setCurrentGame(updatedGame);
-      setResponseText(updatedGame.ai_data?.response || '');
+      
+      let respText = '';
+      updatedGame.prompts?.history?.forEach((prompt: any) => {
+        if (prompt.prompt) {
+          respText += "\nPrompt:\n" + prompt.prompt + "\n";
+        }
+        if (prompt.response) {
+          respText += "\nResponse:\n" + prompt.response + "\n";
+        }
+      });
+      if (updatedGame.prompts?.current?.prompt) {
+        respText += "\nPrompt:\n" + updatedGame.prompts?.current?.prompt + "\n";
+      }
+      if (updatedGame.prompts?.current?.response) {
+        respText += "\nResponse:\n" + updatedGame.prompts?.current?.response + "\n";
+      }
+      setResponseText(respText.trim());
       if (responseTextAreaRef.current) {
         responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
+      }
+
+      setWorkingText(updatedGame.prompts?.data?.working || '');
+      if (workingTextAreaRef.current) {
+        workingTextAreaRef.current.scrollTop = workingTextAreaRef.current.scrollHeight;
       }
 
       // Refresh the games table
@@ -381,9 +437,30 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         // Fetch the updated game
         const updatedGame = await fetchGame(response.data.game_id);
         setCurrentGame(updatedGame);
-        setResponseText(updatedGame.ai_data?.response || '');
+
+        let respText = '';
+        updatedGame.prompts?.history?.forEach((prompt: any) => {
+          if (prompt.prompt) {
+            respText += "\nPrompt:\n" + prompt.prompt + "\n";
+          }
+          if (prompt.response) {
+            respText += "\nResponse:\n" + prompt.response + "\n";
+          }
+        });
+        if (updatedGame.prompts?.current?.prompt) {
+          respText += "\nPrompt:\n" + updatedGame.prompts?.current?.prompt + "\n";
+        }
+        if (updatedGame.prompts?.current?.response) {
+          respText += "\nResponse:\n" + updatedGame.prompts?.current?.response + "\n";
+        }
+        setResponseText(respText.trim());
         if (responseTextAreaRef.current) {
           responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
+        }
+
+        setWorkingText(updatedGame.prompts?.data?.working || '');
+        if (workingTextAreaRef.current) {
+          workingTextAreaRef.current.scrollTop = workingTextAreaRef.current.scrollHeight;
         }
 
         // Refresh the games table
@@ -622,7 +699,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 id="working"
                 className="working-textarea"
                 readOnly
-                onLoad={() => { setWorkingText(currentGame.ai_data?.data?.working || '') }}
+                onLoad={() => { setWorkingText(currentGame.prompts?.data?.working || '') }}
                 onChange={(e) => setWorkingText(e.target.value)}
                 value={workingText}
               />
@@ -638,7 +715,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 id="response"
                 className="response-textarea"
                 readOnly
-                onLoad={() => { setResponseText(currentGame.ai_data?.response || '') }}
+                onLoad={() => { setResponseText(currentGame.prompts?.current?.response || '') }}
                 onChange={(e) => setResponseText(e.target.value)}
                 value={responseText}
               />

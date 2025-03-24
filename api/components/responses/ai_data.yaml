@@ -1,7 +1,0 @@
-# components/responses/ai_data.yaml
-description: >
-  A response containing details about a data exchange with an AI service.
-content:
-  application/json:
-    schema:
-      $ref: "../schemas/ai_data.yaml"

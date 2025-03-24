@@ -19,7 +19,7 @@ export interface Game {
   status_data?: any;
   source?: string;
   tags?: string[];
-  ai_data?: any;
+  prompts?: any;
   created_at?: number;
   created_by?: string;
   updated_at?: number;

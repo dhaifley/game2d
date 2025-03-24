@@ -1,14 +1,15 @@
 # components/responses/index.yaml
 account:
   $ref: "./account.yaml"
-ai_data:
-  $ref: "./ai_data.yaml"
+
 error:
   $ref: "./error.yaml"
 game:
   $ref: "./game.yaml"
 games:
   $ref: "./games.yaml"
+prompts:
+  $ref: "./prompts.yaml"
 tags:
   $ref: "./tags.yaml"
 user:

@@ -1,0 +1,7 @@
+# components/responses/prompts.yaml
+description: >
+  A response containing details about exchanges with an AI service.
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/prompts.yaml"

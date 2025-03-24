@@ -13,6 +13,7 @@ const (
 	KeyServiceMaintenance = "service/maintenance"
 	KeyImportInterval     = "service/import_interval"
 	KeyGameLimitDefault   = "service/game_limit_default"
+	KeyPromptHistorySize  = "service/prompt_history_size"
 
 	DefaultServiceName        = "game2d-api"
 	DefaultAccountID          = "game2d"
@@ -20,16 +21,18 @@ const (
 	DefaultServiceMaintenance = false
 	DefaultImportInterval     = time.Minute * 5
 	DefaultGameLimitDefault   = 10
+	DefaultPromptHistorySize  = 1024 * 1024 // 1 MB
 )
 
 // ServiceConfig values represent telemetry configuration data.
 type ServiceConfig struct {
-	Name             string        `json:"name,omitempty"               yaml:"name,omitempty"`
-	AccountID        string        `json:"account_id,omitempty"         yaml:"account_id,omitempty"`
-	AccountName      string        `json:"account_name,omitempty"       yaml:"account_name,omitempty"`
-	Maintenance      bool          `json:"maintenance,omitempty"        yaml:"maintenance,omitempty"`
-	ImportInterval   time.Duration `json:"import_interval,omitempty"    yaml:"import_interval,omitempty"`
-	GameLimitDefault int64         `json:"game_limit_default,omitempty" yaml:"game_limit_default,omitempty"`
+	Name              string        `json:"name,omitempty"                yaml:"name,omitempty"`
+	AccountID         string        `json:"account_id,omitempty"          yaml:"account_id,omitempty"`
+	AccountName       string        `json:"account_name,omitempty"        yaml:"account_name,omitempty"`
+	Maintenance       bool          `json:"maintenance,omitempty"         yaml:"maintenance,omitempty"`
+	ImportInterval    time.Duration `json:"import_interval,omitempty"     yaml:"import_interval,omitempty"`
+	GameLimitDefault  int64         `json:"game_limit_default,omitempty"  yaml:"game_limit_default,omitempty"`
+	PromptHistorySize int64         `json:"prompt_history_size,omitempty" yaml:"prompt_history_size,omitempty"`
 }
 
 // Load reads configuration data from environment variables and applies defaults
@@ -88,6 +91,19 @@ func (c *ServiceConfig) Load() {
 
 	if c.GameLimitDefault == 0 {
 		c.GameLimitDefault = DefaultGameLimitDefault
+	}
+
+	if v := os.Getenv(ReplaceEnv(KeyPromptHistorySize)); v != "" {
+		v, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			v = DefaultPromptHistorySize
+		}
+
+		c.PromptHistorySize = v
+	}
+
+	if c.PromptHistorySize == 0 {
+		c.PromptHistorySize = DefaultPromptHistorySize
 	}
 }
 
@@ -163,4 +179,16 @@ func (c *Config) GameLimitDefault() int64 {
 	}
 
 	return c.service.GameLimitDefault
+}
+
+// PromptHistorySize returns the size limit for prompt history in bytes.
+func (c *Config) PromptHistorySize() int64 {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.service == nil {
+		return DefaultPromptHistorySize
+	}
+
+	return c.service.PromptHistorySize
 }

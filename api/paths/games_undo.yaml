@@ -13,10 +13,10 @@ post:
     content:
       application/json:
         schema:
-          $ref: "../components/schemas/ai_data.yaml"
+          $ref: "../components/schemas/prompts.yaml"
   responses:
     "201":
-      $ref: "../components/responses/ai_data.yaml"
+      $ref: "../components/responses/prompts.yaml"
     "400":
       $ref: "../components/responses/user_error.yaml"
     "500":
