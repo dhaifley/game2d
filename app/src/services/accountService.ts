@@ -36,7 +36,6 @@ export const fetchAccount = async (): Promise<Account> => {
 // Update current account
 export const updateAccount = async (updates: Partial<Account>): Promise<Account> => {
   try {
-    // According to requirements, we'll only update name and other specific fields as needed
     const payload = updates;
     
     const response = await axios.post(`${API_BASE_URL}/account`, payload);

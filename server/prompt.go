@@ -423,6 +423,13 @@ func (p *anthropicPrompter) Prompt(ctx context.Context,
 			"file", "script.go")
 	}
 
+	keysFile, err := client.SourceFS.ReadFile("keys.go")
+	if err != nil {
+		return errors.Wrap(err, errors.ErrServer,
+			"unable to read client keys file",
+			"file", "keys.go")
+	}
+
 	gb, err := json.MarshalIndent(game, "", "  ")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrServer,
@@ -508,8 +515,7 @@ func (p *anthropicPrompter) Prompt(ctx context.Context,
 			})),
 		Messages: anthropic.F(messages),
 		System: anthropic.F([]anthropic.TextBlockParam{
-			anthropic.NewTextBlock(`You are an expert 2D game developer,
-meticulously careful to avoid bugs and skilled working with limited resources.
+			anthropic.NewTextBlock(`You are a world-class 2D game developer.
 You work with game2d, a framework which let's you express 2D games as game
 definitions in JSON format. The game definitions include images, scripts and
 objects which are used to define the game. The images are all SVG format images
@@ -527,13 +533,30 @@ field to the game definition, containing the name of the game, a "description"
 field to the game definition, containing the game controls and features, and add
 an "icon" field containing a base64 encoded SVG image of an icon for the game.
 
+It is very important that you keep the scope of the game minimal so that it
+can be built entirely within your context window. You must maintain full
+comprehension of all the game functions and scripts so that you can be sure
+they will definitely run without error when executed in the client. If you are
+not extremely confident that the game definition will run without error, you
+should make a simpler game.
+
 The history of messages between you and the user has had the previous game
 definitions replaced with the text "{{game definition}}". The current game
 definition in the most recent user message is the last game definition in the
 history.
 
-The following text contains the Go source code of the game2d client, which is
-used to run the game definitions.`),
+Your responses to the user will be rendered in plain monospaced text. Do not
+use any markdown in your responses. The ` + "```" + `game definition\n" and
+"\n` +
+				"```" + `\n" text used to surround the game definition is not
+considered to be markdown.
+
+The following text blocks contain the Go source code of the game2d client, which
+is used to run the game definitions. You should reference this code carefully
+when generating the game definition to make sure it will work when run using
+this client. They keys.go file contains the key codes used by the client which
+must be determining the numbers to use as keys in the Lua scripts since the
+numbers to not correspond to the default ASCII values for the keys`),
 			anthropic.NewTextBlock("```game.go\n" +
 				string(gameFile) + "\n```\n"),
 			anthropic.NewTextBlock("```image.go\n" +
@@ -542,6 +565,8 @@ used to run the game definitions.`),
 				string(objectFile) + "\n```\n"),
 			anthropic.NewTextBlock("```script.go\n" +
 				string(scriptFile) + "\n```\n"),
+			anthropic.NewTextBlock("```keys.go\n" +
+				string(keysFile) + "\n```\n"),
 		}),
 	})
 
@@ -692,11 +717,13 @@ func (m *mockPrompter) Prompt(ctx context.Context,
 ) error {
 	res := "The AI has responded."
 
-	hp := prompts.Current
+	if prompts.Current.Prompt.Value != "" {
+		hp := prompts.Current
 
-	hp.Thinking = request.FieldString{Set: true}
+		hp.Thinking = request.FieldString{Set: true}
+		prompts.History = append(prompts.History, hp)
+	}
 
-	prompts.History = append(prompts.History, hp)
 	prompts.Current = Prompt{
 		Prompt:   prompts.Current.Prompt,
 		Response: request.FieldString{Set: true, Valid: true, Value: res},

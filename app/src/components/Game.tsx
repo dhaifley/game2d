@@ -23,7 +23,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   // Game icon state
   const [gameIcon, setGameIcon] = useState<string | undefined>(game.icon);
   
-  // Determine icon source: use base64 SVG from gameIcon or fallback to avatar.svg
   const iconSrc = gameIcon ? `data:image/svg+xml;base64,${gameIcon}` : avatarImage;
 
   // Edit mode state
@@ -94,10 +93,10 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
 
     let respText = '';
     game.prompts?.history?.forEach((prompt: any) => {
-      if (prompt.prompt) {
+      if (prompt.prompt && prompt.prompt.trim() !== '') {
         respText += "\nPrompt:\n" + prompt.prompt + "\n";
       }
-      if (prompt.response) {
+      if (prompt.response && prompt.prompt.trim() !== '') {
         respText += "\nResponse:\n" + prompt.response + "\n";
       }
     });
@@ -324,7 +323,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       await onGameUpdated();
 
       // Open the newly copied game
-      // For now, we'll just update the current game with the copied one
       setCurrentGame(copiedGame);
     } catch (err) {
       setCopyError(err instanceof Error ? err.message : 'Failed to copy game');

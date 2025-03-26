@@ -14,7 +14,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
-    // You could show a loading spinner here
     return <div>Loading...</div>;
   }
   

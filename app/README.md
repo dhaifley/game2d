@@ -14,11 +14,11 @@ selected game definition below the list view.
 It centrally displays a large canvas for rendering the WASM version of the
 game2d client, which is running the currently selected game definition.
 
-It also displays a prompt window for interacting with a generative AI service.
+It also displays a prompt textbox for interacting with a generative AI service.
 The game2d-api back end can submit a prompt to an AI service, along with the
 current game state, and information about the game engine, and have the AI
 service generate new game state. The prompt window is used to collect user
-prompts, and display dialog history for the currently selected game definition.
+prompts, and display prompt history for the currently selected game definition.
 
 ## Getting Started
 
@@ -72,5 +72,5 @@ npm run preview
 ### Connecting to game2d-api
 
 Make sure the game2d-api backend service is running and properly configured to
-connect with this frontend application.
-
+connect with this frontend application. See the top-level README.md for details
+about running and testing the full service.

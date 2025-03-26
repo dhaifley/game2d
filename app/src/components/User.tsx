@@ -75,7 +75,6 @@ const User: React.FC<UserProps> = ({ onClose }) => {
       setIsSaving(true);
       setSaveError(null);
       
-      // Prepare the update payload
       const updates: Partial<UserType> = {
         last_name: editedLastName.trim(),
         first_name: editedFirstName.trim()
@@ -84,7 +83,6 @@ const User: React.FC<UserProps> = ({ onClose }) => {
       // Call the API to update the user
       const updatedUser = await updateUser(updates);
       
-      // Exit edit mode
       setIsEditMode(false);
       
       // Update the local state with the updated user data

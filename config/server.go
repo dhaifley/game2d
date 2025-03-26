@@ -22,7 +22,7 @@ const (
 	DefaultServerKey            = ""
 	DefaultServerTimeout        = time.Second * 30
 	DefaultServerIdleTimeout    = time.Second * 5
-	DefaultServerPromptTimeout  = time.Minute * 5
+	DefaultServerPromptTimeout  = time.Minute * 15
 	DefaultServerHost           = "game2d.ai"
 	DefaultServerPathPrefix     = "/api/v1"
 	DefaultServerMaxRequestSize = int64(20 * 1024 * 1023) // 20 MB

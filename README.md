@@ -112,7 +112,6 @@ As long as the all of the above are installed, the build process can install any
    SUPERUSER_PASSWORD='admin'
    GUEST_USER='guest'
    GUEST_USER_PASSWORD='guest'
-   AI_API_KEY={your AI API key}
    EOF
 
    set -a
@@ -132,11 +131,20 @@ As long as the all of the above are installed, the build process can install any
    - Web UI: [http://localhost:8080/](http://localhost:8080/)
    - API docs: [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs)
 
-5. **Stop and cleanup the services**
+   When signing into a local test environment, use either the superuser or
+   guest user account configured in the local environment settings above.
+
+5. **Play some games**
+
+   Once in the application, you can import and play any of the games in the
+   `/examples` directory by clicking the `Import` button on the `Games` page.
+
+6. **Stop and cleanup the services**
    ```sh
    make stop
    ```
-6. **Run all tests locally**
+
+7. **Run all automated tests locally**
    ```sh
    make tests
    ```
@@ -161,8 +169,8 @@ game2d uses a declarative schema for defining games:
 
 1. Get to a minimum viable demo release
 2. Add audio support
-3. Implement public game browsing and search
-4. Play and viability testing
+3. Implement user and account management and/or integration with external IDPs
+4. Play and viability testing and system prompt enhancements
 5. AI controlled Player 2 and NPC's
 
 ## 🤝 Contributing

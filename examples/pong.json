@@ -1,0 +1,314 @@
+{
+  "account_id": "test",
+  "debug": null,
+  "pause": null,
+  "public": false,
+  "w": 640,
+  "h": 480,
+  "id": "490cf9fe-5978-4792-93f7-588f67c03c70",
+  "previous_id": "e18e29fa-5eab-416f-a0b7-3d317ad26f35",
+  "name": "Pong",
+  "version": "0.1.0",
+  "description": "A classic game of Pong with a computer opponent.\n\nControls: Use UP/DOWN arrow keys or W/S keys to move your paddle up and down. Press SPACE to start the game.\n\nFirst player to reach 10 points wins!",
+  "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiMwMDAiIHJ4PSI4IiByeT0iOCIvPgogIDxyZWN0IHg9IjQiIHk9IjIyIiB3aWR0aD0iMTAiIGhlaWdodD0iMjAiIHJ4PSIyIiByeT0iMiIgZmlsbD0id2hpdGUiLz4KICA8cmVjdCB4PSI1MCIgeT0iMjIiIHdpZHRoPSIxMCIgaGVpZ2h0PSIyMCIgcng9IjIiIHJ5PSIyIiBmaWxsPSJ3aGl0ZSIvPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjYiIGZpbGw9IndoaXRlIi8+CiAgPGxpbmUgeDE9IjMyIiB5MT0iMCIgeDI9IjMyIiB5Mj0iNjQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+Cjwvc3ZnPg==",
+  "status": "active",
+  "status_data": null,
+  "subject": {
+    "data": {
+      "computer_score": 0,
+      "player_score": 0,
+      "speed": 5,
+      "state": "start",
+      "vx": 0,
+      "vy": 0
+    },
+    "h": 16,
+    "hidden": false,
+    "id": "ball",
+    "image": "ball",
+    "name": "Ball",
+    "script": "ball",
+    "w": 16,
+    "x": 320,
+    "y": 240,
+    "z": 0
+  },
+  "objects": {
+    "computer": {
+      "data": {
+        "difficulty": 0.8,
+        "speed": 5
+      },
+      "h": 80,
+      "hidden": false,
+      "id": "computer",
+      "image": "paddle",
+      "name": "Computer Paddle",
+      "script": "computer",
+      "w": 16,
+      "x": 604,
+      "y": 200,
+      "z": 0
+    },
+    "computer_score": {
+      "data": {
+        "score": 0
+      },
+      "h": 80,
+      "hidden": false,
+      "id": "computer_score",
+      "image": "score_0",
+      "name": "Computer Score",
+      "script": "computer_score",
+      "w": 80,
+      "x": 420,
+      "y": 50,
+      "z": 0
+    },
+    "divider": {
+      "data": {},
+      "h": 480,
+      "hidden": false,
+      "id": "divider",
+      "image": "divider",
+      "name": "Center Line",
+      "w": 4,
+      "x": 318,
+      "y": 0,
+      "z": 0
+    },
+    "game_state": {
+      "data": {
+        "state": "start"
+      },
+      "h": 100,
+      "hidden": false,
+      "id": "game_state",
+      "image": "press_space",
+      "name": "Game State",
+      "script": "game_state",
+      "w": 400,
+      "x": 320,
+      "y": 240,
+      "z": 0
+    },
+    "player": {
+      "data": {
+        "speed": 8
+      },
+      "h": 80,
+      "hidden": false,
+      "id": "player",
+      "image": "paddle",
+      "name": "Player Paddle",
+      "script": "player",
+      "w": 16,
+      "x": 20,
+      "y": 200,
+      "z": 0
+    },
+    "player_score": {
+      "data": {
+        "score": 0
+      },
+      "h": 80,
+      "hidden": false,
+      "id": "player_score",
+      "image": "score_0",
+      "name": "Player Score",
+      "script": "player_score",
+      "w": 80,
+      "x": 220,
+      "y": 50,
+      "z": 0
+    }
+  },
+  "images": {
+    "ball": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2Ij4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iOCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+",
+      "h": 16,
+      "id": "ball",
+      "name": "Ball",
+      "w": 16
+    },
+    "computer_wins": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSIjZmYwMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+Q09NUFVURVIgV0lOUzwvdGV4dD4KICA8dGV4dCB4PSIyMDAiIHk9IjcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+UHJlc3MgU1BBQ0UgdG8gdHJ5IGFnYWluPC90ZXh0Pgo8L3N2Zz4=",
+      "h": 100,
+      "id": "computer_wins",
+      "name": "Computer Wins",
+      "w": 400
+    },
+    "divider": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0IDQ4MCIgd2lkdGg9IjQiIGhlaWdodD0iNDgwIj4KICA8cGF0aCBkPSJNIDIsMCBMIDIsNDgwIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1kYXNoYXJyYXk9IjIwLDIwIi8+Cjwvc3ZnPg==",
+      "h": 480,
+      "id": "divider",
+      "name": "Divider",
+      "w": 4
+    },
+    "game_over": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPkdBTUUgT1ZFUjwvdGV4dD4KICA8dGV4dCB4PSIyMDAiIHk9IjcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+UHJlc3MgU1BBQ0UgdG8gcmVzdGFydDwvdGV4dD4KPC9zdmc+",
+      "h": 100,
+      "id": "game_over",
+      "name": "Game Over",
+      "w": 400
+    },
+    "paddle": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiA4MCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjgwIj4KICA8cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iODAiIGZpbGw9IndoaXRlIiByeD0iMyIgcnk9IjMiLz4KPC9zdmc+",
+      "h": 80,
+      "id": "paddle",
+      "name": "Paddle",
+      "w": 16
+    },
+    "player_wins": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSIjMDBmZjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+WU9VIFdJTiE8L3RleHQ+CiAgPHRleHQgeD0iMjAwIiB5PSI3MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjIwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPlByZXNzIFNQQUNFIHRvIHBsYXkgYWdhaW48L3RleHQ+Cjwvc3ZnPg==",
+      "h": 100,
+      "id": "player_wins",
+      "name": "Player Wins",
+      "w": 400
+    },
+    "press_space": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPlByZXNzIFNQQUNFIHRvIHN0YXJ0PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 100,
+      "id": "press_space",
+      "name": "Press Space",
+      "w": 400
+    },
+    "score_0": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4wPC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_0",
+      "name": "Score 0",
+      "w": 80
+    },
+    "score_1": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4xPC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_1",
+      "name": "Score 1",
+      "w": 80
+    },
+    "score_10": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4xMDwvdGV4dD4KPC9zdmc+",
+      "h": 80,
+      "id": "score_10",
+      "name": "Score 10",
+      "w": 80
+    },
+    "score_2": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4yPC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_2",
+      "name": "Score 2",
+      "w": 80
+    },
+    "score_3": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4zPC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_3",
+      "name": "Score 3",
+      "w": 80
+    },
+    "score_4": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj40PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_4",
+      "name": "Score 4",
+      "w": 80
+    },
+    "score_5": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj41PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_5",
+      "name": "Score 5",
+      "w": 80
+    },
+    "score_6": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj42PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_6",
+      "name": "Score 6",
+      "w": 80
+    },
+    "score_7": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj43PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_7",
+      "name": "Score 7",
+      "w": 80
+    },
+    "score_8": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj44PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_8",
+      "name": "Score 8",
+      "w": 80
+    },
+    "score_9": {
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj45PC90ZXh0Pgo8L3N2Zz4=",
+      "h": 80,
+      "id": "score_9",
+      "name": "Score 9",
+      "w": 80
+    }
+  },
+  "scripts": {
+    "ball": {
+      "data": "ZnVuY3Rpb24gY2hlY2tQYWRkbGVDb2xsaXNpb24oYmFsbCwgcGFkZGxlKQogIGxvY2FsIGJhbGxMZWZ0ID0gYmFsbC54CiAgbG9jYWwgYmFsbFJpZ2h0ID0gYmFsbC54ICsgYmFsbC53CiAgbG9jYWwgYmFsbFRvcCA9IGJhbGwueQogIGxvY2FsIGJhbGxCb3R0b20gPSBiYWxsLnkgKyBiYWxsLmgKICBsb2NhbCBwYWRkbGVMZWZ0ID0gcGFkZGxlLngKICBsb2NhbCBwYWRkbGVSaWdodCA9IHBhZGRsZS54ICsgcGFkZGxlLncKICBsb2NhbCBwYWRkbGVUb3AgPSBwYWRkbGUueQogIGxvY2FsIHBhZGRsZUJvdHRvbSA9IHBhZGRsZS55ICsgcGFkZGxlLmgKICAgIAogIHJldHVybiBiYWxsTGVmdCA8IHBhZGRsZVJpZ2h0IGFuZCBiYWxsUmlnaHQgPiBwYWRkbGVMZWZ0IGFuZCBiYWxsVG9wIDwgcGFkZGxlQm90dG9tIGFuZCBiYWxsQm90dG9tID4gcGFkZGxlVG9wCmVuZAoKZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBiYWxsID0gZ2FtZS5zdWJqZWN0CiAgbG9jYWwgcGxheWVyUGFkZGxlID0gZ2FtZS5vYmplY3RzLnBsYXllcgogIGxvY2FsIGNvbXB1dGVyUGFkZGxlID0gZ2FtZS5vYmplY3RzLmNvbXB1dGVyCiAgbG9jYWwgZ2FtZVN0YXRlID0gZ2FtZS5vYmplY3RzLmdhbWVfc3RhdGUKICBsb2NhbCBzcGFjZUtleSA9IDExNiAgLS0gU3BhY2UgS2V5CiAgbG9jYWwgaXNTcGFjZVByZXNzZWQgPSBmYWxzZQoKICBmb3IgayxfIGluIHBhaXJzKGdhbWUua2V5cykgZG8KICAgIGlmIGdhbWUua2V5c1trXSA9PSBzcGFjZUtleSB0aGVuCiAgICAgIGlzU3BhY2VQcmVzc2VkID0gdHJ1ZQogICAgZW5kCiAgZW5kCgogIC0tIEdhbWUgU3RhdGUgSGFuZGxpbmcKICBpZiBiYWxsLmRhdGEuc3RhdGUgPT0gInN0YXJ0IiB0aGVuCiAgICBiYWxsLnggPSBnYW1lLncgLyAyCiAgICBiYWxsLnkgPSBnYW1lLmggLyAyCiAgICBiYWxsLmRhdGEudnggPSAwCiAgICBiYWxsLmRhdGEudnkgPSAwCiAgICBiYWxsLmRhdGEuc3BlZWQgPSA1CiAgICBiYWxsLmRhdGEucGxheWVyX3Njb3JlID0gMAogICAgYmFsbC5kYXRhLmNvbXB1dGVyX3Njb3JlID0gMAogICAgZ2FtZVN0YXRlLmltYWdlID0gInByZXNzX3NwYWNlIgogICAgZ2FtZVN0YXRlLmhpZGRlbiA9IGZhbHNlCiAgICBnYW1lU3RhdGUuZGF0YS5zdGF0ZSA9ICJzdGFydCIKICAgIAogICAgaWYgaXNTcGFjZVByZXNzZWQgdGhlbgogICAgICBiYWxsLmRhdGEudnggPSBiYWxsLmRhdGEuc3BlZWQKICAgICAgYmFsbC5kYXRhLnZ5ID0gYmFsbC5kYXRhLnNwZWVkIC8gMiAqIChtYXRoLnJhbmRvbSgpIDwgMC41IGFuZCAtMSBvciAxKQogICAgICBiYWxsLmRhdGEuc3RhdGUgPSAicGxheWluZyIKICAgICAgZ2FtZVN0YXRlLmhpZGRlbiA9IHRydWUKICAgIGVuZAogIGVsc2VpZiBiYWxsLmRhdGEuc3RhdGUgPT0gInBsYXlpbmciIHRoZW4KICAgIGdhbWVTdGF0ZS5oaWRkZW4gPSB0cnVlCiAgICAKICAgIC0tIE1vdmUgdGhlIGJhbGwKICAgIGJhbGwueCAgPSBiYWxsLnggKyBiYWxsLmRhdGEudngKICAgIGJhbGwueSA9IGJhbGwueSArIGJhbGwuZGF0YS52eQogICAgCiAgICAtLSBDaGVjayBib3VuZGFyaWVzCiAgICAtLSBUb3AgYW5kIGJvdHRvbSB3YWxscwogICAgaWYgYmFsbC55IDw9IDAgdGhlbgogICAgICBiYWxsLnkgPSAwCiAgICAgIGJhbGwuZGF0YS52eSA9IC1iYWxsLmRhdGEudnkKICAgIGVuZAogICAgCiAgICBpZiBiYWxsLnkgKyBiYWxsLmggPj0gZ2FtZS5oIHRoZW4KICAgICAgYmFsbC55ID0gZ2FtZS5oIC0gYmFsbC5oCiAgICAgIGJhbGwuZGF0YS52eSA9IC1iYWxsLmRhdGEudnkKICAgIGVuZAogICAgCiAgICAtLSBTY29yaW5nCiAgICBpZiBiYWxsLnggKyBiYWxsLncgPD0gMCB0aGVuIC0tIENvbXB1dGVyIHNjb3JlcwogICAgICBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgPSBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgKyAxCiAgICAgIAogICAgICBpZiBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgPj0gMTAgdGhlbgogICAgICAgIGJhbGwuZGF0YS5zdGF0ZSA9ICJnYW1lX292ZXIiCiAgICAgICAgZ2FtZVN0YXRlLmltYWdlID0gImNvbXB1dGVyX3dpbnMiCiAgICAgICAgZ2FtZVN0YXRlLmhpZGRlbiA9IGZhbHNlCiAgICAgIGVsc2UKICAgICAgICBiYWxsLnggPSBnYW1lLncgLyAyCiAgICAgICAgYmFsbC55ID0gZ2FtZS5oIC8gMgogICAgICAgIGJhbGwuZGF0YS52eCA9IGJhbGwuZGF0YS5zcGVlZAogICAgICAgIGJhbGwuZGF0YS52eSA9IGJhbGwuZGF0YS5zcGVlZCAvIDIgKiAobWF0aC5yYW5kb20oKSA8IDAuNSBhbmQgLTEgb3IgMSkKICAgICAgZW5kCiAgICBlbHNlaWYgYmFsbC54ID49IGdhbWUudyB0aGVuIC0tIFBsYXllciBzY29yZXMKICAgICAgYmFsbC5kYXRhLnBsYXllcl9zY29yZSA9IGJhbGwuZGF0YS5wbGF5ZXJfc2NvcmUgKyAxCiAgICAgIAogICAgICBpZiBiYWxsLmRhdGEucGxheWVyX3Njb3JlID49IDEwIHRoZW4KICAgICAgICBiYWxsLmRhdGEuc3RhdGUgPSAiZ2FtZV9vdmVyIgogICAgICAgIGdhbWVTdGF0ZS5pbWFnZSA9ICJwbGF5ZXJfd2lucyIKICAgICAgICBnYW1lU3RhdGUuaGlkZGVuID0gZmFsc2UKICAgICAgZWxzZQogICAgICAgIGJhbGwueCA9IGdhbWUudyAvIDIKICAgICAgICBiYWxsLnkgPSBnYW1lLmggLyAyCiAgICAgICAgYmFsbC5kYXRhLnZ4ID0gLWJhbGwuZGF0YS5zcGVlZAogICAgICAgIGJhbGwuZGF0YS52eSA9IGJhbGwuZGF0YS5zcGVlZCAvIDIgKiAobWF0aC5yYW5kb20oKSA8IDAuNSBhbmQgLTEgb3IgMSkKICAgICAgZW5kCiAgICBlbmQKICAgIAogICAgLS0gQ2hlY2sgcGFkZGxlIGNvbGxpc2lvbnMKICAgIC0tIFBsYXllciBwYWRkbGUKICAgIGlmIGJhbGwuZGF0YS52eCA8IDAgYW5kIGNoZWNrUGFkZGxlQ29sbGlzaW9uKGJhbGwsIHBsYXllclBhZGRsZSkgdGhlbgogICAgICBiYWxsLnggPSBwbGF5ZXJQYWRkbGUueCArIHBsYXllclBhZGRsZS53CiAgICAgIGJhbGwuZGF0YS52eCA9IC1iYWxsLmRhdGEudngKICAgICAgCiAgICAgIC0tIENoYW5nZSBhbmdsZSBiYXNlZCBvbiB3aGVyZSB0aGUgYmFsbCBoaXRzIHRoZSBwYWRkbGUKICAgICAgbG9jYWwgcmVsYXRpdmVJbnRlcnNlY3Rpb24gPSAoYmFsbC55ICsgYmFsbC5oIC8gMikgLSAocGxheWVyUGFkZGxlLnkgKyBwbGF5ZXJQYWRkbGUuaCAvIDIpCiAgICAgIGxvY2FsIG5vcm1hbGl6ZWRSZWxhdGl2ZUludGVyc2VjdGlvbiA9IHJlbGF0aXZlSW50ZXJzZWN0aW9uIC8gKHBsYXllclBhZGRsZS5oIC8gMikKICAgICAgbG9jYWwgYm91bmNlQW5nbGUgPSBub3JtYWxpemVkUmVsYXRpdmVJbnRlcnNlY3Rpb24gKiAwLjcgLS0gbWF4aW11bSBhbmdsZSBvZiA0NSBkZWdyZWVzCiAgICAgIAogICAgICAtLSBVcGRhdGUgdmVsb2NpdGllcyBiYXNlZCBvbiBib3VuY2UgYW5nbGUKICAgICAgYmFsbC5kYXRhLnZ5ID0gYmFsbC5kYXRhLnNwZWVkICogYm91bmNlQW5nbGUKICAgICAgCiAgICAgIC0tIEluY3JlYXNlIHNwZWVkIHNsaWdodGx5IHdpdGggZWFjaCBoaXQsIGJ1dCBjYXAgaXQKICAgICAgYmFsbC5kYXRhLnNwZWVkID0gbWF0aC5taW4oYmFsbC5kYXRhLnNwZWVkICsgMC4yLCAxMCkKICAgIGVuZAogICAgCiAgICAtLSBDb21wdXRlciBwYWRkbGUKICAgIGlmIGJhbGwuZGF0YS52eCA+IDAgYW5kIGNoZWNrUGFkZGxlQ29sbGlzaW9uKGJhbGwsIGNvbXB1dGVyUGFkZGxlKSB0aGVuCiAgICAgIGJhbGwueCA9IGNvbXB1dGVyUGFkZGxlLnggLSBiYWxsLncKICAgICAgYmFsbC5kYXRhLnZ4ID0gLWJhbGwuZGF0YS52eAogICAgICAKICAgICAgLS0gQ2hhbmdlIGFuZ2xlIGJhc2VkIG9uIHdoZXJlIHRoZSBiYWxsIGhpdHMgdGhlIHBhZGRsZQogICAgICBsb2NhbCByZWxhdGl2ZUludGVyc2VjdGlvbiA9IChiYWxsLnkgKyBiYWxsLmggLyAyKSAtIChjb21wdXRlclBhZGRsZS55ICsgY29tcHV0ZXJQYWRkbGUuaCAvIDIpCiAgICAgIGxvY2FsIG5vcm1hbGl6ZWRSZWxhdGl2ZUludGVyc2VjdGlvbiA9IHJlbGF0aXZlSW50ZXJzZWN0aW9uIC8gKGNvbXB1dGVyUGFkZGxlLmggLyAyKQogICAgICBsb2NhbCBib3VuY2VBbmdsZSA9IG5vcm1hbGl6ZWRSZWxhdGl2ZUludGVyc2VjdGlvbiAqIDAuNyAtLSBtYXhpbXVtIGFuZ2xlIG9mIDQ1IGRlZ3JlZXMKICAgICAgCiAgICAgIC0tIFVwZGF0ZSB2ZWxvY2l0aWVzIGJhc2VkIG9uIGJvdW5jZSBhbmdsZQogICAgICBiYWxsLmRhdGEudnkgPSBiYWxsLmRhdGEuc3BlZWQgKiBib3VuY2VBbmdsZQogICAgICAKICAgICAgLS0gSW5jcmVhc2Ugc3BlZWQgc2xpZ2h0bHkgd2l0aCBlYWNoIGhpdCwgYnV0IGNhcCBpdAogICAgICBiYWxsLmRhdGEuc3BlZWQgPSBtYXRoLm1pbihiYWxsLmRhdGEuc3BlZWQgKyAwLjIsIDEwKQogICAgZW5kCiAgICAgIAogIGVsc2VpZiBiYWxsLmRhdGEuc3RhdGUgPT0gImdhbWVfb3ZlciIgdGhlbgogICAgaWYgaXNTcGFjZVByZXNzZWQgdGhlbgogICAgICBiYWxsLmRhdGEuc3RhdGUgPSAic3RhcnQiCiAgICBlbmQKICBlbmQKZW5k",
+      "id": "ball",
+      "name": "Ball Script"
+    },
+    "computer": {
+      "data": "ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBwYWRkbGUgPSBnYW1lLm9iamVjdHMuY29tcHV0ZXIKICBsb2NhbCBiYWxsID0gZ2FtZS5zdWJqZWN0CiAgbG9jYWwgZGlmZmljdWx0eSA9IHBhZGRsZS5kYXRhLmRpZmZpY3VsdHkgLS0gQmV0d2VlbiAwIGFuZCAxLCBoaWdoZXIgaXMgaGFyZGVyCiAgbG9jYWwgcmFuZG9tRXJyb3IgPSBtYXRoLnJhbmRvbSgpICogKDEgLSBkaWZmaWN1bHR5KSAqIHBhZGRsZS5oIC8gMiAtLSBJbnRyb2R1Y2Ugc29tZSByYW5kb21uZXNzIHRvIG1ha2UgaXQgYmVhdGFibGUKCiAgLS0gT25seSBtb3ZlIGlmIHRoZSBiYWxsIGlzIG1vdmluZyB0b3dhcmQgdGhlIGNvbXB1dGVyIHBhZGRsZQogIGlmIGJhbGwuZGF0YS5zdGF0ZSA9PSAicGxheWluZyIgdGhlbgogICAgaWYgYmFsbC5kYXRhLnZ4ID4gMCB0aGVuIC0tIEJhbGwgbW92aW5nIHRvd2FyZCBjb21wdXRlcgogICAgICAtLSBUcnkgdG8ga2VlcCB0aGUgcGFkZGxlIGNlbnRlciBhbGlnbmVkIHdpdGggdGhlIGJhbGwsCiAgICAgIC0tIGJ1dCB3aXRoIHNvbWUgZGVsYXkgYW5kIGVycm9yIHRvIG1ha2UgaXQgYmVhdGFibGUKICAgICAgbG9jYWwgdGFyZ2V0WSA9IGJhbGwueSArIChiYWxsLmggLyAyKSAtIChwYWRkbGUuaCAvIDIpICsgcmFuZG9tRXJyb3IKICAgICAgCiAgICAgIGlmIHBhZGRsZS55ICsgKHBhZGRsZS5oIC8gMikgPCB0YXJnZXRZIHRoZW4KICAgICAgICBwYWRkbGUueSA9IHBhZGRsZS55ICsgcGFkZGxlLmRhdGEuc3BlZWQgKiBkaWZmaWN1bHR5CiAgICAgIGVsc2VpZiBwYWRkbGUueSArIChwYWRkbGUuaCAvIDIpID4gdGFyZ2V0WSB0aGVuCiAgICAgICAgcGFkZGxlLnkgPSBwYWRkbGUueSAtIHBhZGRsZS5kYXRhLnNwZWVkICogZGlmZmljdWx0eQogICAgICBlbmQKICAgIGVsc2UgLS0gQmFsbCBtb3ZpbmcgYXdheSBmcm9tIGNvbXB1dGVyCiAgICAgIC0tIFNsb3dseSByZXR1cm4gdG8gY2VudGVyIHBvc2l0aW9uCiAgICAgIGxvY2FsIGNlbnRlclkgPSAoZ2FtZS5oIC8gMikgLSAocGFkZGxlLmggLyAyKQogICAgICBpZiBwYWRkbGUueSA8IGNlbnRlclkgLSA1IHRoZW4KICAgICAgICBwYWRkbGUueSA9IHBhZGRsZS55ICsgMgogICAgICBlbHNlaWYgcGFkZGxlLnkgPiBjZW50ZXJZICsgNSB0aGVuCiAgICAgICAgcGFkZGxlLnkgPSBwYWRkbGUueSAtIDIKICAgICAgZW5kCiAgICBlbmQKICBlbmQKCiAgLS0gS2VlcCB0aGUgcGFkZGxlIHdpdGhpbiB0aGUgZ2FtZSBib3VuZHMKICBpZiBwYWRkbGUueSA8IDAgdGhlbgogICAgcGFkZGxlLnkgPSAwCiAgZWxzZWlmIHBhZGRsZS55ICsgcGFkZGxlLmggPiBnYW1lLmggdGhlbgogICAgcGFkZGxlLnkgPSBnYW1lLmggLSBwYWRkbGUuaAogIGVuZAplbmQ=",
+      "id": "computer",
+      "name": "Computer Paddle Script"
+    },
+    "computer_score": {
+      "data": "ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBjb21wdXRlclNjb3JlT2JqID0gZ2FtZS5vYmplY3RzLmNvbXB1dGVyX3Njb3JlCiAgbG9jYWwgYmFsbCA9IGdhbWUuc3ViamVjdAogIGxvY2FsIHNjb3JlID0gYmFsbC5kYXRhLmNvbXB1dGVyX3Njb3JlCiAgCiAgaWYgc2NvcmUgfj0gY29tcHV0ZXJTY29yZU9iai5kYXRhLnNjb3JlIHRoZW4KICAgIGNvbXB1dGVyU2NvcmVPYmouZGF0YS5zY29yZSA9IHNjb3JlCiAgICBjb21wdXRlclNjb3JlT2JqLmltYWdlID0gInNjb3JlXyIgLi4gdG9zdHJpbmcoc2NvcmUpCiAgZW5kCmVuZA==",
+      "id": "computer_score",
+      "name": "Computer Score Script"
+    },
+    "game_state": {
+      "data": "ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBnYW1lU3RhdGVPYmogPSBnYW1lLm9iamVjdHMuZ2FtZV9zdGF0ZQogIGxvY2FsIGJhbGwgPSBnYW1lLnN1YmplY3QKICBsb2NhbCBzcGFjZUtleSA9IDExNiAtLSBLZXlTcGFjZQogIGxvY2FsIGlzU3BhY2VQcmVzc2VkID0gZmFsc2UKCiAgZm9yIGssXyBpbiBwYWlycyhnYW1lLmtleXMpIGRvCiAgICBpZiBnYW1lLmtleXNba10gPT0gc3BhY2VLZXkgdGhlbgogICAgICBpc1NwYWNlUHJlc3NlZCA9IHRydWUKICAgIGVuZAogIGVuZAoKICBpZiBiYWxsLmRhdGEuc3RhdGUgPT0gInN0YXJ0IiB0aGVuCiAgICBnYW1lU3RhdGVPYmouaW1hZ2UgPSAicHJlc3Nfc3BhY2UiCiAgICBnYW1lU3RhdGVPYmouaGlkZGVuID0gZmFsc2UKICBlbHNlaWYgYmFsbC5kYXRhLnN0YXRlID09ICJwbGF5aW5nIiB0aGVuCiAgICBnYW1lU3RhdGVPYmouaGlkZGVuID0gdHJ1ZQogIGVsc2VpZiBiYWxsLmRhdGEuc3RhdGUgPT0gImdhbWVfb3ZlciIgdGhlbgogICAgaWYgYmFsbC5kYXRhLnBsYXllcl9zY29yZSA+PSAxMCB0aGVuCiAgICAgIGdhbWVTdGF0ZU9iai5pbWFnZSA9ICJwbGF5ZXJfd2lucyIKICAgIGVsc2VpZiBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgPj0gMTAgdGhlbgogICAgICBnYW1lU3RhdGVPYmouaW1hZ2UgPSAiY29tcHV0ZXJfd2lucyIKICAgIGVuZAogICAgZ2FtZVN0YXRlT2JqLmhpZGRlbiA9IGZhbHNlCiAgZW5kCmVuZA==",
+      "id": "game_state",
+      "name": "Game State Script"
+    },
+    "player": {
+      "data": "ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBwYWRkbGUgPSBnYW1lLm9iamVjdHMucGxheWVyCiAgbG9jYWwgYXJyb3dVcEtleSA9IDMxIC0tIEtleUFycm93VXAKICBsb2NhbCBhcnJvd0Rvd25LZXkgPSAyOCAtLSBLZXlBcnJvd0Rvd24KICBsb2NhbCB3S2V5ID0gMjIgLS0gS2V5VwogIGxvY2FsIHNLZXkgPSAxOCAtLSBLZXlTCiAgbG9jYWwgaXNVcFByZXNzZWQgPSBmYWxzZQogIGxvY2FsIGlzRG93blByZXNzZWQgPSBmYWxzZQoKICAtLSBDaGVjayBmb3Iga2V5IHByZXNzZXMKICBmb3IgayxfIGluIHBhaXJzKGdhbWUua2V5cykgZG8KICAgIGlmIGdhbWUua2V5c1trXSA9PSBhcnJvd1VwS2V5IG9yIGdhbWUua2V5c1trXSA9PSB3S2V5IHRoZW4KICAgICAgaXNVcFByZXNzZWQgPSB0cnVlCiAgICBlbHNlaWYgZ2FtZS5rZXlzW2tdID09IGFycm93RG93bktleSBvciBnYW1lLmtleXNba10gPT0gc0tleSB0aGVuCiAgICAgIGlzRG93blByZXNzZWQgPSB0cnVlCiAgICBlbmQKICBlbmQKCiAgLS0gTW92ZSB0aGUgcGFkZGxlIGJhc2VkIG9uIGtleSBwcmVzc2VzCiAgaWYgaXNVcFByZXNzZWQgdGhlbgogICAgcGFkZGxlLnkgPSBwYWRkbGUueSAtIHBhZGRsZS5kYXRhLnNwZWVkCiAgZWxzZWlmIGlzRG93blByZXNzZWQgdGhlbgogICAgcGFkZGxlLnkgPSBwYWRkbGUueSArIHBhZGRsZS5kYXRhLnNwZWVkCiAgZW5kCgogIC0tIEtlZXAgdGhlIHBhZGRsZSB3aXRoaW4gdGhlIGdhbWUgYm91bmRzCiAgaWYgcGFkZGxlLnkgPCAwIHRoZW4KICAgIHBhZGRsZS55ID0gMCAgCiAgZWxzZWlmIHBhZGRsZS55ICsgcGFkZGxlLmggPiBnYW1lLmggdGhlbgogICAgcGFkZGxlLnkgPSBnYW1lLmggLSBwYWRkbGUuaAogIGVuZAplbmQ=",
+      "id": "player",
+      "name": "Player Paddle Script"
+    },
+    "player_score": {
+      "data": "ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBwbGF5ZXJTY29yZU9iaiA9IGdhbWUub2JqZWN0cy5wbGF5ZXJfc2NvcmUKICBsb2NhbCBiYWxsID0gZ2FtZS5zdWJqZWN0CiAgbG9jYWwgc2NvcmUgPSBiYWxsLmRhdGEucGxheWVyX3Njb3JlCiAgCiAgaWYgc2NvcmUgfj0gcGxheWVyU2NvcmVPYmouZGF0YS5zY29yZSB0aGVuCiAgICBwbGF5ZXJTY29yZU9iai5kYXRhLnNjb3JlID0gc2NvcmUKICAgIHBsYXllclNjb3JlT2JqLmltYWdlID0gInNjb3JlXyIgLi4gdG9zdHJpbmcoc2NvcmUpCiAgZW5kCmVuZA==",
+      "id": "player_score",
+      "name": "Player Score Script"
+    }
+  },
+  "source": "app",
+  "commit_hash": null,
+  "tags": null,
+  "prompts": {
+    "current": {
+      "prompt": "This game is perfect, it just needs the numbers used to detect key presses in the Lua scripts updated to match those used by the client, defined in keys.go. Thank you.",
+      "response": "I'll update the key codes in the Lua scripts to match those defined in the keys.go file. According to that file, these are the correct key codes we need:\n\n- W: 22 (KeyW)\n- S: 18 (KeyS)\n- Up Arrow: 31 (KeyArrowUp)\n- Down Arrow: 28 (KeyArrowDown)\n- Space: 116 (KeySpace)\n\nHere's the updated game with the correct key codes:\n\n{{game definition}}\n\nThe key codes have now been updated to match the keys.go file:\n- W key: 22 (KeyW)\n- S key: 18 (KeyS)\n- Up Arrow: 31 (KeyArrowUp)\n- Down Arrow: 28 (KeyArrowDown)\n- Space: 116 (KeySpace)\n\nThese changes should ensure the game responds correctly to keyboard input with the client's key mapping system. Everything else remains the same as in the original version.",
+      "thinking": "1741 tokens input\n\nI need to update the key codes used in the Lua scripts to match the ones defined in the `keys.go` file. Let me examine what we need to change.\n\nFrom the `keys.go` file, I can see the key constants:\n\n```go\nconst (\n    KeyA              Key = 0\n    KeyB                  = 1\n    KeyC                  = 2\n    KeyD                  = 3\n    KeyE                  = 4\n    KeyF                  = 5\n    KeyG                  = 6\n    KeyH                  = 7\n    KeyI                  = 8\n    KeyJ                  = 9\n    KeyK                  = 10\n    KeyL                  = 11\n    KeyM                  = 12\n    KeyN                  = 13\n    KeyO                  = 14\n    KeyP                  = 15\n    KeyQ                  = 16\n    KeyR                  = 17\n    KeyS                  = 18\n    KeyT                  = 19\n    KeyU                  = 20\n    KeyV                  = 21\n    KeyW                  = 22\n    KeyX                  = 23\n    KeyY                  = 24\n    KeyZ                  = 25\n    KeyAltLeft            = 26\n    KeyAltRight           = 27\n    KeyArrowDown          = 28\n    KeyArrowLeft          = 29\n    KeyArrowRight         = 30\n    KeyArrowUp            = 31\n    KeyBackquote          = 32\n    KeyBackslash          = 33\n    KeyBackspace          = 34\n    KeyBracketLeft        = 35\n    KeyBracketRight       = 36\n    KeyCapsLock           = 37\n    KeyComma              = 38\n    KeyContextMenu        = 39\n    KeyControlLeft        = 40\n    KeyControlRight       = 41\n    KeyDelete             = 42\n    KeyDigit0             = 43\n    KeyDigit1             = 44\n    KeyDigit2             = 45\n    KeyDigit3             = 46\n    KeyDigit4             = 47\n    KeyDigit5             = 48\n    KeyDigit6             = 49\n    KeyDigit7             = 50\n    KeyDigit8             = 51\n    KeyDigit9             = 52\n    KeyEnd                = 53\n    KeyEnter              = 54\n    KeyEqual              = 55\n    KeyEscape             = 56\n    KeyF1                 = 57\n    KeyF2                 = 58\n    KeyF3                 = 59\n    KeyF4                 = 60\n    KeyF5                 = 61\n    KeyF6                 = 62\n    KeyF7                 = 63\n    KeyF8                 = 64\n    KeyF9                 = 65\n    KeyF10                = 66\n    KeyF11                = 67\n    KeyF12                = 68\n    KeyF13                = 69\n    KeyF14                = 70\n    KeyF15                = 71\n    KeyF16                = 72\n    KeyF17                = 73\n    KeyF18                = 74\n    KeyF19                = 75\n    KeyF20                = 76\n    KeyF21                = 77\n    KeyF22                = 78\n    KeyF23                = 79\n    KeyF24                = 80\n    KeyHome               = 81\n    KeyInsert             = 82\n    KeyIntlBackslash      = 83\n    KeyMetaLeft           = 84\n    KeyMetaRight          = 85\n    KeyMinus              = 86\n    KeyNumLock            = 87\n    KeyNumpad0            = 88\n    KeyNumpad1            = 89\n    KeyNumpad2            = 90\n    KeyNumpad3            = 91\n    KeyNumpad4            = 92\n    KeyNumpad5            = 93\n    KeyNumpad6            = 94\n    KeyNumpad7            = 95\n    KeyNumpad8            = 96\n    KeyNumpad9            = 97\n    KeyNumpadAdd          = 98\n    KeyNumpadDecimal      = 99\n    KeyNumpadDivide       = 100\n    KeyNumpadEnter        = 101\n    KeyNumpadEqual        = 102\n    KeyNumpadMultiply     = 103\n    KeyNumpadSubtract     = 104\n    KeyPageDown           = 105\n    KeyPageUp             = 106\n    KeyPause              = 107\n    KeyPeriod             = 108\n    KeyPrintScreen        = 109\n    KeyQuote              = 110\n    KeyScrollLock         = 111\n    KeySemicolon          = 112\n    KeyShiftLeft          = 113\n    KeyShiftRight         = 114\n    KeySlash              = 115\n    KeySpace              = 116\n    KeyTab                = 117\n    KeyReserved0          = 118\n    KeyReserved1          = 119\n    KeyReserved2          = 120\n    KeyReserved3          = 121\n    KeyMax                = KeyReserved3\n)\n```\n\nThe keys we're using in the Pong game are:\n- W (KeyW = 22)\n- S (KeyS = 18)\n- Up Arrow (KeyArrowUp = 31)\n- Down Arrow (KeyArrowDown = 28)\n- Space (KeySpace = 116)\n\nI'll reconstruct the game definition with these updated key codes.\n\nFor a Pong game I'll need:\n1. Update the ball script to use the proper key codes\n2. Update the player paddle script to use the proper key codes\n3. Update the computer paddle script\n4. Update any UI elements\n\nLet me build the full game definition with the correct key codes.I'll update the key codes in the Lua scripts to match those defined in the keys.go file. According to that file, these are the correct key codes we need:\n\n- W: 22 (KeyW)\n- S: 18 (KeyS)\n- Up Arrow: 31 (KeyArrowUp)\n- Down Arrow: 28 (KeyArrowDown)\n- Space: 116 (KeySpace)\n\nHere's the updated game with the correct key codes:\n\n```game definition\n{\n  \"debug\": false,\n  \"pause\": true,\n  \"public\": false,\n  \"w\": 640,\n  \"h\": 480,\n  \"id\": \"490cf9fe-5978-4792-93f7-588f67c03c70\",\n  \"name\": \"Pong\",\n  \"description\": \"A classic game of Pong with a computer opponent.\\n\\nControls: Use UP/DOWN arrow keys or W/S keys to move your paddle up and down. Press SPACE to start the game.\\n\\nFirst player to reach 10 points wins!\",\n  \"icon\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiMwMDAiIHJ4PSI4IiByeT0iOCIvPgogIDxyZWN0IHg9IjQiIHk9IjIyIiB3aWR0aD0iMTAiIGhlaWdodD0iMjAiIHJ4PSIyIiByeT0iMiIgZmlsbD0id2hpdGUiLz4KICA8cmVjdCB4PSI1MCIgeT0iMjIiIHdpZHRoPSIxMCIgaGVpZ2h0PSIyMCIgcng9IjIiIHJ5PSIyIiBmaWxsPSJ3aGl0ZSIvPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjYiIGZpbGw9IndoaXRlIi8+CiAgPGxpbmUgeDE9IjMyIiB5MT0iMCIgeDI9IjMyIiB5Mj0iNjQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+Cjwvc3ZnPg==\",\n  \"subject\": {\n    \"id\": \"ball\",\n    \"name\": \"Ball\",\n    \"hidden\": false,\n    \"x\": 320,\n    \"y\": 240,\n    \"z\": 0,\n    \"w\": 16,\n    \"h\": 16,\n    \"image\": \"ball\",\n    \"script\": \"ball\",\n    \"data\": {\n      \"vx\": 0,\n      \"vy\": 0,\n      \"speed\": 5,\n      \"state\": \"start\",\n      \"player_score\": 0,\n      \"computer_score\": 0\n    }\n  },\n  \"objects\": {\n    \"player\": {\n      \"id\": \"player\",\n      \"name\": \"Player Paddle\",\n      \"hidden\": false,\n      \"x\": 20,\n      \"y\": 200,\n      \"z\": 0,\n      \"w\": 16,\n      \"h\": 80,\n      \"image\": \"paddle\",\n      \"script\": \"player\",\n      \"data\": {\n        \"speed\": 8\n      }\n    },\n    \"computer\": {\n      \"id\": \"computer\",\n      \"name\": \"Computer Paddle\",\n      \"hidden\": false,\n      \"x\": 604,\n      \"y\": 200,\n      \"z\": 0,\n      \"w\": 16,\n      \"h\": 80,\n      \"image\": \"paddle\",\n      \"script\": \"computer\",\n      \"data\": {\n        \"speed\": 5,\n        \"difficulty\": 0.8\n      }\n    },\n    \"divider\": {\n      \"id\": \"divider\",\n      \"name\": \"Center Line\",\n      \"hidden\": false,\n      \"x\": 318,\n      \"y\": 0,\n      \"z\": 0,\n      \"w\": 4,\n      \"h\": 480,\n      \"image\": \"divider\",\n      \"data\": {}\n    },\n    \"player_score\": {\n      \"id\": \"player_score\",\n      \"name\": \"Player Score\",\n      \"hidden\": false,\n      \"x\": 220,\n      \"y\": 50,\n      \"z\": 0,\n      \"w\": 80,\n      \"h\": 80,\n      \"image\": \"score_0\",\n      \"script\": \"player_score\",\n      \"data\": {\n        \"score\": 0\n      }\n    },\n    \"computer_score\": {\n      \"id\": \"computer_score\",\n      \"name\": \"Computer Score\",\n      \"hidden\": false,\n      \"x\": 420,\n      \"y\": 50,\n      \"z\": 0,\n      \"w\": 80,\n      \"h\": 80,\n      \"image\": \"score_0\",\n      \"script\": \"computer_score\",\n      \"data\": {\n        \"score\": 0\n      }\n    },\n    \"game_state\": {\n      \"id\": \"game_state\",\n      \"name\": \"Game State\",\n      \"hidden\": false,\n      \"x\": 320,\n      \"y\": 240,\n      \"z\": 0,\n      \"w\": 400,\n      \"h\": 100,\n      \"image\": \"press_space\",\n      \"script\": \"game_state\",\n      \"data\": {\n        \"state\": \"start\"\n      }\n    }\n  },\n  \"images\": {\n    \"ball\": {\n      \"id\": \"ball\",\n      \"name\": \"Ball\",\n      \"w\": 16,\n      \"h\": 16,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2Ij4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iOCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+\"\n    },\n    \"paddle\": {\n      \"id\": \"paddle\",\n      \"name\": \"Paddle\",\n      \"w\": 16,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiA4MCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjgwIj4KICA8cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iODAiIGZpbGw9IndoaXRlIiByeD0iMyIgcnk9IjMiLz4KPC9zdmc+\"\n    },\n    \"divider\": {\n      \"id\": \"divider\",\n      \"name\": \"Divider\",\n      \"w\": 4,\n      \"h\": 480,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0IDQ4MCIgd2lkdGg9IjQiIGhlaWdodD0iNDgwIj4KICA8cGF0aCBkPSJNIDIsMCBMIDIsNDgwIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1kYXNoYXJyYXk9IjIwLDIwIi8+Cjwvc3ZnPg==\"\n    },\n    \"press_space\": {\n      \"id\": \"press_space\",\n      \"name\": \"Press Space\",\n      \"w\": 400,\n      \"h\": 100,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPlByZXNzIFNQQUNFIHRvIHN0YXJ0PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"game_over\": {\n      \"id\": \"game_over\",\n      \"name\": \"Game Over\",\n      \"w\": 400,\n      \"h\": 100,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPkdBTUUgT1ZFUjwvdGV4dD4KICA8dGV4dCB4PSIyMDAiIHk9IjcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+UHJlc3MgU1BBQ0UgdG8gcmVzdGFydDwvdGV4dD4KPC9zdmc+\"\n    },\n    \"player_wins\": {\n      \"id\": \"player_wins\",\n      \"name\": \"Player Wins\",\n      \"w\": 400,\n      \"h\": 100,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSIjMDBmZjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+WU9VIFdJTiE8L3RleHQ+CiAgPHRleHQgeD0iMjAwIiB5PSI3MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjIwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPlByZXNzIFNQQUNFIHRvIHBsYXkgYWdhaW48L3RleHQ+Cjwvc3ZnPg==\"\n    },\n    \"computer_wins\": {\n      \"id\": \"computer_wins\",\n      \"name\": \"Computer Wins\",\n      \"w\": 400,\n      \"h\": 100,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEwMCI+CiAgPHRleHQgeD0iMjAwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjMwIiBmaWxsPSIjZmYwMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+Q09NUFVURVIgV0lOUzwvdGV4dD4KICA8dGV4dCB4PSIyMDAiIHk9IjcwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+UHJlc3MgU1BBQ0UgdG8gdHJ5IGFnYWluPC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_0\": {\n      \"id\": \"score_0\",\n      \"name\": \"Score 0\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4wPC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_1\": {\n      \"id\": \"score_1\",\n      \"name\": \"Score 1\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4xPC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_2\": {\n      \"id\": \"score_2\",\n      \"name\": \"Score 2\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4yPC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_3\": {\n      \"id\": \"score_3\",\n      \"name\": \"Score 3\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4zPC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_4\": {\n      \"id\": \"score_4\",\n      \"name\": \"Score 4\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj40PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_5\": {\n      \"id\": \"score_5\",\n      \"name\": \"Score 5\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj41PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_6\": {\n      \"id\": \"score_6\",\n      \"name\": \"Score 6\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj42PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_7\": {\n      \"id\": \"score_7\",\n      \"name\": \"Score 7\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj43PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_8\": {\n      \"id\": \"score_8\",\n      \"name\": \"Score 8\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj44PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_9\": {\n      \"id\": \"score_9\",\n      \"name\": \"Score 9\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj45PC90ZXh0Pgo8L3N2Zz4=\"\n    },\n    \"score_10\": {\n      \"id\": \"score_10\",\n      \"name\": \"Score 10\",\n      \"w\": 80,\n      \"h\": 80,\n      \"data\": \"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj4KICA8dGV4dCB4PSI0MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIj4xMDwvdGV4dD4KPC9zdmc+\"\n    }\n  },\n  \"scripts\": {\n    \"ball\": {\n      \"id\": \"ball\",\n      \"name\": \"Ball Script\",\n      \"data\": \"ZnVuY3Rpb24gY2hlY2tQYWRkbGVDb2xsaXNpb24oYmFsbCwgcGFkZGxlKQogIGxvY2FsIGJhbGxMZWZ0ID0gYmFsbC54CiAgbG9jYWwgYmFsbFJpZ2h0ID0gYmFsbC54ICsgYmFsbC53CiAgbG9jYWwgYmFsbFRvcCA9IGJhbGwueQogIGxvY2FsIGJhbGxCb3R0b20gPSBiYWxsLnkgKyBiYWxsLmgKICBsb2NhbCBwYWRkbGVMZWZ0ID0gcGFkZGxlLngKICBsb2NhbCBwYWRkbGVSaWdodCA9IHBhZGRsZS54ICsgcGFkZGxlLncKICBsb2NhbCBwYWRkbGVUb3AgPSBwYWRkbGUueQogIGxvY2FsIHBhZGRsZUJvdHRvbSA9IHBhZGRsZS55ICsgcGFkZGxlLmgKICAgIAogIHJldHVybiBiYWxsTGVmdCA8IHBhZGRsZVJpZ2h0IGFuZCBiYWxsUmlnaHQgPiBwYWRkbGVMZWZ0IGFuZCBiYWxsVG9wIDwgcGFkZGxlQm90dG9tIGFuZCBiYWxsQm90dG9tID4gcGFkZGxlVG9wCmVuZAoKZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBiYWxsID0gZ2FtZS5zdWJqZWN0CiAgbG9jYWwgcGxheWVyUGFkZGxlID0gZ2FtZS5vYmplY3RzLnBsYXllcgogIGxvY2FsIGNvbXB1dGVyUGFkZGxlID0gZ2FtZS5vYmplY3RzLmNvbXB1dGVyCiAgbG9jYWwgZ2FtZVN0YXRlID0gZ2FtZS5vYmplY3RzLmdhbWVfc3RhdGUKICBsb2NhbCBzcGFjZUtleSA9IDExNiAgLS0gU3BhY2UgS2V5CiAgbG9jYWwgaXNTcGFjZVByZXNzZWQgPSBmYWxzZQoKICBmb3IgayxfIGluIHBhaXJzKGdhbWUua2V5cykgZG8KICAgIGlmIGdhbWUua2V5c1trXSA9PSBzcGFjZUtleSB0aGVuCiAgICAgIGlzU3BhY2VQcmVzc2VkID0gdHJ1ZQogICAgZW5kCiAgZW5kCgogIC0tIEdhbWUgU3RhdGUgSGFuZGxpbmcKICBpZiBiYWxsLmRhdGEuc3RhdGUgPT0gInN0YXJ0IiB0aGVuCiAgICBiYWxsLnggPSBnYW1lLncgLyAyCiAgICBiYWxsLnkgPSBnYW1lLmggLyAyCiAgICBiYWxsLmRhdGEudnggPSAwCiAgICBiYWxsLmRhdGEudnkgPSAwCiAgICBiYWxsLmRhdGEuc3BlZWQgPSA1CiAgICBiYWxsLmRhdGEucGxheWVyX3Njb3JlID0gMAogICAgYmFsbC5kYXRhLmNvbXB1dGVyX3Njb3JlID0gMAogICAgZ2FtZVN0YXRlLmltYWdlID0gInByZXNzX3NwYWNlIgogICAgZ2FtZVN0YXRlLmhpZGRlbiA9IGZhbHNlCiAgICBnYW1lU3RhdGUuZGF0YS5zdGF0ZSA9ICJzdGFydCIKICAgIAogICAgaWYgaXNTcGFjZVByZXNzZWQgdGhlbgogICAgICBiYWxsLmRhdGEudnggPSBiYWxsLmRhdGEuc3BlZWQKICAgICAgYmFsbC5kYXRhLnZ5ID0gYmFsbC5kYXRhLnNwZWVkIC8gMiAqIChtYXRoLnJhbmRvbSgpIDwgMC41IGFuZCAtMSBvciAxKQogICAgICBiYWxsLmRhdGEuc3RhdGUgPSAicGxheWluZyIKICAgICAgZ2FtZVN0YXRlLmhpZGRlbiA9IHRydWUKICAgIGVuZAogIGVsc2VpZiBiYWxsLmRhdGEuc3RhdGUgPT0gInBsYXlpbmciIHRoZW4KICAgIGdhbWVTdGF0ZS5oaWRkZW4gPSB0cnVlCiAgICAKICAgIC0tIE1vdmUgdGhlIGJhbGwKICAgIGJhbGwueCAgPSBiYWxsLnggKyBiYWxsLmRhdGEudngKICAgIGJhbGwueSA9IGJhbGwueSArIGJhbGwuZGF0YS52eQogICAgCiAgICAtLSBDaGVjayBib3VuZGFyaWVzCiAgICAtLSBUb3AgYW5kIGJvdHRvbSB3YWxscwogICAgaWYgYmFsbC55IDw9IDAgdGhlbgogICAgICBiYWxsLnkgPSAwCiAgICAgIGJhbGwuZGF0YS52eSA9IC1iYWxsLmRhdGEudnkKICAgIGVuZAogICAgCiAgICBpZiBiYWxsLnkgKyBiYWxsLmggPj0gZ2FtZS5oIHRoZW4KICAgICAgYmFsbC55ID0gZ2FtZS5oIC0gYmFsbC5oCiAgICAgIGJhbGwuZGF0YS52eSA9IC1iYWxsLmRhdGEudnkKICAgIGVuZAogICAgCiAgICAtLSBTY29yaW5nCiAgICBpZiBiYWxsLnggKyBiYWxsLncgPD0gMCB0aGVuIC0tIENvbXB1dGVyIHNjb3JlcwogICAgICBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgPSBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgKyAxCiAgICAgIAogICAgICBpZiBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgPj0gMTAgdGhlbgogICAgICAgIGJhbGwuZGF0YS5zdGF0ZSA9ICJnYW1lX292ZXIiCiAgICAgICAgZ2FtZVN0YXRlLmltYWdlID0gImNvbXB1dGVyX3dpbnMiCiAgICAgICAgZ2FtZVN0YXRlLmhpZGRlbiA9IGZhbHNlCiAgICAgIGVsc2UKICAgICAgICBiYWxsLnggPSBnYW1lLncgLyAyCiAgICAgICAgYmFsbC55ID0gZ2FtZS5oIC8gMgogICAgICAgIGJhbGwuZGF0YS52eCA9IGJhbGwuZGF0YS5zcGVlZAogICAgICAgIGJhbGwuZGF0YS52eSA9IGJhbGwuZGF0YS5zcGVlZCAvIDIgKiAobWF0aC5yYW5kb20oKSA8IDAuNSBhbmQgLTEgb3IgMSkKICAgICAgZW5kCiAgICBlbHNlaWYgYmFsbC54ID49IGdhbWUudyB0aGVuIC0tIFBsYXllciBzY29yZXMKICAgICAgYmFsbC5kYXRhLnBsYXllcl9zY29yZSA9IGJhbGwuZGF0YS5wbGF5ZXJfc2NvcmUgKyAxCiAgICAgIAogICAgICBpZiBiYWxsLmRhdGEucGxheWVyX3Njb3JlID49IDEwIHRoZW4KICAgICAgICBiYWxsLmRhdGEuc3RhdGUgPSAiZ2FtZV9vdmVyIgogICAgICAgIGdhbWVTdGF0ZS5pbWFnZSA9ICJwbGF5ZXJfd2lucyIKICAgICAgICBnYW1lU3RhdGUuaGlkZGVuID0gZmFsc2UKICAgICAgZWxzZQogICAgICAgIGJhbGwueCA9IGdhbWUudyAvIDIKICAgICAgICBiYWxsLnkgPSBnYW1lLmggLyAyCiAgICAgICAgYmFsbC5kYXRhLnZ4ID0gLWJhbGwuZGF0YS5zcGVlZAogICAgICAgIGJhbGwuZGF0YS52eSA9IGJhbGwuZGF0YS5zcGVlZCAvIDIgKiAobWF0aC5yYW5kb20oKSA8IDAuNSBhbmQgLTEgb3IgMSkKICAgICAgZW5kCiAgICBlbmQKICAgIAogICAgLS0gQ2hlY2sgcGFkZGxlIGNvbGxpc2lvbnMKICAgIC0tIFBsYXllciBwYWRkbGUKICAgIGlmIGJhbGwuZGF0YS52eCA8IDAgYW5kIGNoZWNrUGFkZGxlQ29sbGlzaW9uKGJhbGwsIHBsYXllclBhZGRsZSkgdGhlbgogICAgICBiYWxsLnggPSBwbGF5ZXJQYWRkbGUueCArIHBsYXllclBhZGRsZS53CiAgICAgIGJhbGwuZGF0YS52eCA9IC1iYWxsLmRhdGEudngKICAgICAgCiAgICAgIC0tIENoYW5nZSBhbmdsZSBiYXNlZCBvbiB3aGVyZSB0aGUgYmFsbCBoaXRzIHRoZSBwYWRkbGUKICAgICAgbG9jYWwgcmVsYXRpdmVJbnRlcnNlY3Rpb24gPSAoYmFsbC55ICsgYmFsbC5oIC8gMikgLSAocGxheWVyUGFkZGxlLnkgKyBwbGF5ZXJQYWRkbGUuaCAvIDIpCiAgICAgIGxvY2FsIG5vcm1hbGl6ZWRSZWxhdGl2ZUludGVyc2VjdGlvbiA9IHJlbGF0aXZlSW50ZXJzZWN0aW9uIC8gKHBsYXllclBhZGRsZS5oIC8gMikKICAgICAgbG9jYWwgYm91bmNlQW5nbGUgPSBub3JtYWxpemVkUmVsYXRpdmVJbnRlcnNlY3Rpb24gKiAwLjcgLS0gbWF4aW11bSBhbmdsZSBvZiA0NSBkZWdyZWVzCiAgICAgIAogICAgICAtLSBVcGRhdGUgdmVsb2NpdGllcyBiYXNlZCBvbiBib3VuY2UgYW5nbGUKICAgICAgYmFsbC5kYXRhLnZ5ID0gYmFsbC5kYXRhLnNwZWVkICogYm91bmNlQW5nbGUKICAgICAgCiAgICAgIC0tIEluY3JlYXNlIHNwZWVkIHNsaWdodGx5IHdpdGggZWFjaCBoaXQsIGJ1dCBjYXAgaXQKICAgICAgYmFsbC5kYXRhLnNwZWVkID0gbWF0aC5taW4oYmFsbC5kYXRhLnNwZWVkICsgMC4yLCAxMCkKICAgIGVuZAogICAgCiAgICAtLSBDb21wdXRlciBwYWRkbGUKICAgIGlmIGJhbGwuZGF0YS52eCA+IDAgYW5kIGNoZWNrUGFkZGxlQ29sbGlzaW9uKGJhbGwsIGNvbXB1dGVyUGFkZGxlKSB0aGVuCiAgICAgIGJhbGwueCA9IGNvbXB1dGVyUGFkZGxlLnggLSBiYWxsLncKICAgICAgYmFsbC5kYXRhLnZ4ID0gLWJhbGwuZGF0YS52eAogICAgICAKICAgICAgLS0gQ2hhbmdlIGFuZ2xlIGJhc2VkIG9uIHdoZXJlIHRoZSBiYWxsIGhpdHMgdGhlIHBhZGRsZQogICAgICBsb2NhbCByZWxhdGl2ZUludGVyc2VjdGlvbiA9IChiYWxsLnkgKyBiYWxsLmggLyAyKSAtIChjb21wdXRlclBhZGRsZS55ICsgY29tcHV0ZXJQYWRkbGUuaCAvIDIpCiAgICAgIGxvY2FsIG5vcm1hbGl6ZWRSZWxhdGl2ZUludGVyc2VjdGlvbiA9IHJlbGF0aXZlSW50ZXJzZWN0aW9uIC8gKGNvbXB1dGVyUGFkZGxlLmggLyAyKQogICAgICBsb2NhbCBib3VuY2VBbmdsZSA9IG5vcm1hbGl6ZWRSZWxhdGl2ZUludGVyc2VjdGlvbiAqIDAuNyAtLSBtYXhpbXVtIGFuZ2xlIG9mIDQ1IGRlZ3JlZXMKICAgICAgCiAgICAgIC0tIFVwZGF0ZSB2ZWxvY2l0aWVzIGJhc2VkIG9uIGJvdW5jZSBhbmdsZQogICAgICBiYWxsLmRhdGEudnkgPSBiYWxsLmRhdGEuc3BlZWQgKiBib3VuY2VBbmdsZQogICAgICAKICAgICAgLS0gSW5jcmVhc2Ugc3BlZWQgc2xpZ2h0bHkgd2l0aCBlYWNoIGhpdCwgYnV0IGNhcCBpdAogICAgICBiYWxsLmRhdGEuc3BlZWQgPSBtYXRoLm1pbihiYWxsLmRhdGEuc3BlZWQgKyAwLjIsIDEwKQogICAgZW5kCiAgICAgIAogIGVsc2VpZiBiYWxsLmRhdGEuc3RhdGUgPT0gImdhbWVfb3ZlciIgdGhlbgogICAgaWYgaXNTcGFjZVByZXNzZWQgdGhlbgogICAgICBiYWxsLmRhdGEuc3RhdGUgPSAic3RhcnQiCiAgICBlbmQKICBlbmQKZW5k\"\n    },\n    \"player\": {\n      \"id\": \"player\",\n      \"name\": \"Player Paddle Script\",\n      \"data\": \"ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBwYWRkbGUgPSBnYW1lLm9iamVjdHMucGxheWVyCiAgbG9jYWwgYXJyb3dVcEtleSA9IDMxIC0tIEtleUFycm93VXAKICBsb2NhbCBhcnJvd0Rvd25LZXkgPSAyOCAtLSBLZXlBcnJvd0Rvd24KICBsb2NhbCB3S2V5ID0gMjIgLS0gS2V5VwogIGxvY2FsIHNLZXkgPSAxOCAtLSBLZXlTCiAgbG9jYWwgaXNVcFByZXNzZWQgPSBmYWxzZQogIGxvY2FsIGlzRG93blByZXNzZWQgPSBmYWxzZQoKICAtLSBDaGVjayBmb3Iga2V5IHByZXNzZXMKICBmb3IgayxfIGluIHBhaXJzKGdhbWUua2V5cykgZG8KICAgIGlmIGdhbWUua2V5c1trXSA9PSBhcnJvd1VwS2V5IG9yIGdhbWUua2V5c1trXSA9PSB3S2V5IHRoZW4KICAgICAgaXNVcFByZXNzZWQgPSB0cnVlCiAgICBlbHNlaWYgZ2FtZS5rZXlzW2tdID09IGFycm93RG93bktleSBvciBnYW1lLmtleXNba10gPT0gc0tleSB0aGVuCiAgICAgIGlzRG93blByZXNzZWQgPSB0cnVlCiAgICBlbmQKICBlbmQKCiAgLS0gTW92ZSB0aGUgcGFkZGxlIGJhc2VkIG9uIGtleSBwcmVzc2VzCiAgaWYgaXNVcFByZXNzZWQgdGhlbgogICAgcGFkZGxlLnkgPSBwYWRkbGUueSAtIHBhZGRsZS5kYXRhLnNwZWVkCiAgZWxzZWlmIGlzRG93blByZXNzZWQgdGhlbgogICAgcGFkZGxlLnkgPSBwYWRkbGUueSArIHBhZGRsZS5kYXRhLnNwZWVkCiAgZW5kCgogIC0tIEtlZXAgdGhlIHBhZGRsZSB3aXRoaW4gdGhlIGdhbWUgYm91bmRzCiAgaWYgcGFkZGxlLnkgPCAwIHRoZW4KICAgIHBhZGRsZS55ID0gMCAgCiAgZWxzZWlmIHBhZGRsZS55ICsgcGFkZGxlLmggPiBnYW1lLmggdGhlbgogICAgcGFkZGxlLnkgPSBnYW1lLmggLSBwYWRkbGUuaAogIGVuZAplbmQ=\"\n    },\n    \"computer\": {\n      \"id\": \"computer\",\n      \"name\": \"Computer Paddle Script\",\n      \"data\": \"ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBwYWRkbGUgPSBnYW1lLm9iamVjdHMuY29tcHV0ZXIKICBsb2NhbCBiYWxsID0gZ2FtZS5zdWJqZWN0CiAgbG9jYWwgZGlmZmljdWx0eSA9IHBhZGRsZS5kYXRhLmRpZmZpY3VsdHkgLS0gQmV0d2VlbiAwIGFuZCAxLCBoaWdoZXIgaXMgaGFyZGVyCiAgbG9jYWwgcmFuZG9tRXJyb3IgPSBtYXRoLnJhbmRvbSgpICogKDEgLSBkaWZmaWN1bHR5KSAqIHBhZGRsZS5oIC8gMiAtLSBJbnRyb2R1Y2Ugc29tZSByYW5kb21uZXNzIHRvIG1ha2UgaXQgYmVhdGFibGUKCiAgLS0gT25seSBtb3ZlIGlmIHRoZSBiYWxsIGlzIG1vdmluZyB0b3dhcmQgdGhlIGNvbXB1dGVyIHBhZGRsZQogIGlmIGJhbGwuZGF0YS5zdGF0ZSA9PSAicGxheWluZyIgdGhlbgogICAgaWYgYmFsbC5kYXRhLnZ4ID4gMCB0aGVuIC0tIEJhbGwgbW92aW5nIHRvd2FyZCBjb21wdXRlcgogICAgICAtLSBUcnkgdG8ga2VlcCB0aGUgcGFkZGxlIGNlbnRlciBhbGlnbmVkIHdpdGggdGhlIGJhbGwsCiAgICAgIC0tIGJ1dCB3aXRoIHNvbWUgZGVsYXkgYW5kIGVycm9yIHRvIG1ha2UgaXQgYmVhdGFibGUKICAgICAgbG9jYWwgdGFyZ2V0WSA9IGJhbGwueSArIChiYWxsLmggLyAyKSAtIChwYWRkbGUuaCAvIDIpICsgcmFuZG9tRXJyb3IKICAgICAgCiAgICAgIGlmIHBhZGRsZS55ICsgKHBhZGRsZS5oIC8gMikgPCB0YXJnZXRZIHRoZW4KICAgICAgICBwYWRkbGUueSA9IHBhZGRsZS55ICsgcGFkZGxlLmRhdGEuc3BlZWQgKiBkaWZmaWN1bHR5CiAgICAgIGVsc2VpZiBwYWRkbGUueSArIChwYWRkbGUuaCAvIDIpID4gdGFyZ2V0WSB0aGVuCiAgICAgICAgcGFkZGxlLnkgPSBwYWRkbGUueSAtIHBhZGRsZS5kYXRhLnNwZWVkICogZGlmZmljdWx0eQogICAgICBlbmQKICAgIGVsc2UgLS0gQmFsbCBtb3ZpbmcgYXdheSBmcm9tIGNvbXB1dGVyCiAgICAgIC0tIFNsb3dseSByZXR1cm4gdG8gY2VudGVyIHBvc2l0aW9uCiAgICAgIGxvY2FsIGNlbnRlclkgPSAoZ2FtZS5oIC8gMikgLSAocGFkZGxlLmggLyAyKQogICAgICBpZiBwYWRkbGUueSA8IGNlbnRlclkgLSA1IHRoZW4KICAgICAgICBwYWRkbGUueSA9IHBhZGRsZS55ICsgMgogICAgICBlbHNlaWYgcGFkZGxlLnkgPiBjZW50ZXJZICsgNSB0aGVuCiAgICAgICAgcGFkZGxlLnkgPSBwYWRkbGUueSAtIDIKICAgICAgZW5kCiAgICBlbmQKICBlbmQKCiAgLS0gS2VlcCB0aGUgcGFkZGxlIHdpdGhpbiB0aGUgZ2FtZSBib3VuZHMKICBpZiBwYWRkbGUueSA8IDAgdGhlbgogICAgcGFkZGxlLnkgPSAwCiAgZWxzZWlmIHBhZGRsZS55ICsgcGFkZGxlLmggPiBnYW1lLmggdGhlbgogICAgcGFkZGxlLnkgPSBnYW1lLmggLSBwYWRkbGUuaAogIGVuZAplbmQ=\"\n    },\n    \"player_score\": {\n      \"id\": \"player_score\",\n      \"name\": \"Player Score Script\",\n      \"data\": \"ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBwbGF5ZXJTY29yZU9iaiA9IGdhbWUub2JqZWN0cy5wbGF5ZXJfc2NvcmUKICBsb2NhbCBiYWxsID0gZ2FtZS5zdWJqZWN0CiAgbG9jYWwgc2NvcmUgPSBiYWxsLmRhdGEucGxheWVyX3Njb3JlCiAgCiAgaWYgc2NvcmUgfj0gcGxheWVyU2NvcmVPYmouZGF0YS5zY29yZSB0aGVuCiAgICBwbGF5ZXJTY29yZU9iai5kYXRhLnNjb3JlID0gc2NvcmUKICAgIHBsYXllclNjb3JlT2JqLmltYWdlID0gInNjb3JlXyIgLi4gdG9zdHJpbmcoc2NvcmUpCiAgZW5kCmVuZA==\"\n    },\n    \"computer_score\": {\n      \"id\": \"computer_score\",\n      \"name\": \"Computer Score Script\",\n      \"data\": \"ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBjb21wdXRlclNjb3JlT2JqID0gZ2FtZS5vYmplY3RzLmNvbXB1dGVyX3Njb3JlCiAgbG9jYWwgYmFsbCA9IGdhbWUuc3ViamVjdAogIGxvY2FsIHNjb3JlID0gYmFsbC5kYXRhLmNvbXB1dGVyX3Njb3JlCiAgCiAgaWYgc2NvcmUgfj0gY29tcHV0ZXJTY29yZU9iai5kYXRhLnNjb3JlIHRoZW4KICAgIGNvbXB1dGVyU2NvcmVPYmouZGF0YS5zY29yZSA9IHNjb3JlCiAgICBjb21wdXRlclNjb3JlT2JqLmltYWdlID0gInNjb3JlXyIgLi4gdG9zdHJpbmcoc2NvcmUpCiAgZW5kCmVuZA==\"\n    },\n    \"game_state\": {\n      \"id\": \"game_state\",\n      \"name\": \"Game State Script\",\n      \"data\": \"ZnVuY3Rpb24gVXBkYXRlKG9iaikKICBsb2NhbCBnYW1lU3RhdGVPYmogPSBnYW1lLm9iamVjdHMuZ2FtZV9zdGF0ZQogIGxvY2FsIGJhbGwgPSBnYW1lLnN1YmplY3QKICBsb2NhbCBzcGFjZUtleSA9IDExNiAtLSBLZXlTcGFjZQogIGxvY2FsIGlzU3BhY2VQcmVzc2VkID0gZmFsc2UKCiAgZm9yIGssXyBpbiBwYWlycyhnYW1lLmtleXMpIGRvCiAgICBpZiBnYW1lLmtleXNba10gPT0gc3BhY2VLZXkgdGhlbgogICAgICBpc1NwYWNlUHJlc3NlZCA9IHRydWUKICAgIGVuZAogIGVuZAoKICBpZiBiYWxsLmRhdGEuc3RhdGUgPT0gInN0YXJ0IiB0aGVuCiAgICBnYW1lU3RhdGVPYmouaW1hZ2UgPSAicHJlc3Nfc3BhY2UiCiAgICBnYW1lU3RhdGVPYmouaGlkZGVuID0gZmFsc2UKICBlbHNlaWYgYmFsbC5kYXRhLnN0YXRlID09ICJwbGF5aW5nIiB0aGVuCiAgICBnYW1lU3RhdGVPYmouaGlkZGVuID0gdHJ1ZQogIGVsc2VpZiBiYWxsLmRhdGEuc3RhdGUgPT0gImdhbWVfb3ZlciIgdGhlbgogICAgaWYgYmFsbC5kYXRhLnBsYXllcl9zY29yZSA+PSAxMCB0aGVuCiAgICAgIGdhbWVTdGF0ZU9iai5pbWFnZSA9ICJwbGF5ZXJfd2lucyIKICAgIGVsc2VpZiBiYWxsLmRhdGEuY29tcHV0ZXJfc2NvcmUgPj0gMTAgdGhlbgogICAgICBnYW1lU3RhdGVPYmouaW1hZ2UgPSAiY29tcHV0ZXJfd2lucyIKICAgIGVuZAogICAgZ2FtZVN0YXRlT2JqLmhpZGRlbiA9IGZhbHNlCiAgZW5kCmVuZA==\"\n    }\n  }\n}\n```\n\nThe key codes have now been updated to match the keys.go file:\n- W key: 22 (KeyW)\n- S key: 18 (KeyS)\n- Up Arrow: 31 (KeyArrowUp)\n- Down Arrow: 28 (KeyArrowDown)\n- Space: 116 (KeySpace)\n\nThese changes should ensure the game responds correctly to keyboard input with the client's key mapping system. Everything else remains the same as in the original version."
+    },
+    "error": null,
+    "game_id": "490cf9fe-5978-4792-93f7-588f67c03c70",
+    "history": [
+      {
+        "prompt": null,
+        "response": null,
+        "thinking": null
+      },
+      {
+        "prompt": "Using this game of breakout as an example, create a simple and fun game of pong with a computer opponent.",
+        "response": "I'll create a classic Pong game with a computer opponent based on the Breakout example.\n\nFirst, I'll design a simple game with:\n- Player paddle on the left\n- Computer-controlled paddle on the right\n- Ball that bounces between paddles\n- Score tracking\n- Simple AI for the computer opponent\n\nHere's the complete game:\n\n{{game definition}}\n\nThis Pong game includes all the classic elements:\n\n1. A white ball that bounces off paddles and walls\n2. A player paddle on the left that you control with UP/DOWN arrow keys or W/S keys\n3. A computer-controlled opponent paddle on the right with adjustable difficulty\n4. Score tracking for both player and computer\n5. Game states for starting, playing, and game over\n6. First player to 10 points wins\n\nThe ball physics include:\n- Increasing speed as the game progresses\n- Angle changes based on where the ball hits the paddle\n- Velocity capping to keep the game playable\n\nThe computer AI:\n- Tracks the ball when it's moving toward it\n- Returns to center when the ball is moving away\n- Has a configurable difficulty setting\n- Includes some randomness to make it beatable\n\nEnjoy the game!",
+        "thinking": null
+      }
+    ]
+  },
+  "created_at": 1743007806,
+  "created_by": "admin",
+  "updated_at": 1743008021,
+  "updated_by": "admin"
+}

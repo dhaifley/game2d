@@ -12,7 +12,7 @@ export interface User {
   first_name: string;
   status: string;
   scopes: string;
-  data?: any; // Additional data object if it exists
+  data?: any;
   created_at?: number;
   created_by?: string;
   updated_at?: number;
