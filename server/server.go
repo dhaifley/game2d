@@ -114,10 +114,6 @@ func NewServer(cfg *config.Config,
 		return repo.NewClient(repoURL, s.metric, s.tracer)
 	}
 
-	s.getPrompter = func() Prompter {
-		return NewMockPrompter("The AI has responded.", nil, time.Second*3)
-	}
-
 	s.initRouter()
 
 	s.Server.Handler = s.r

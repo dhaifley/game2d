@@ -749,6 +749,12 @@ h1 {
   padding: 0.5rem 1rem;
 }
 
+.edit-button:disabled {
+  background-color: #1a1a1a;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .repo-button {
   background-color: #2a2a2a;
   padding: 0.5rem 1rem;

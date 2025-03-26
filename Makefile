@@ -38,7 +38,7 @@ game2d-app: app/dist/index.html
 .PHONY: game2d-app	
 
 game2d-api: $(shell find . -name "*.go") $(shell find static -type f) game2d-app game2d-wasm
-	CGO_ENABLED=0 go build -v -o game2d-api \
+	CGO_ENABLED=1 go build -v -o game2d-api \
 	-ldflags="-X github.com/dhaifley/game2d/server.Version=${VERSION}" \
 	./cmd/game2d-api
 

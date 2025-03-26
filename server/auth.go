@@ -28,20 +28,22 @@ import (
 
 // Account values represent account data.
 type Account struct {
-	ID             request.FieldString `bson:"id"               json:"id"               yaml:"id"`
-	Name           request.FieldString `bson:"name"             json:"name"             yaml:"name"`
-	Status         request.FieldString `bson:"status"           json:"status"           yaml:"status"`
-	StatusData     request.FieldJSON   `bson:"status_data"      json:"status_data"      yaml:"status_data"`
-	Repo           request.FieldString `bson:"repo"             json:"repo"             yaml:"repo"`
-	RepoStatus     request.FieldString `bson:"repo_status"      json:"repo_status"      yaml:"repo_status"`
-	RepoStatusData request.FieldJSON   `bson:"repo_status_data" json:"repo_status_data" yaml:"repo_status_data"`
-	GameCommitHash request.FieldString `bson:"game_commit_hash" json:"game_commit_hash" yaml:"game_commit_hash"`
-	GameLimit      request.FieldInt64  `bson:"game_limit"       json:"game_limit"       yaml:"game_limit"`
-	Secret         request.FieldString `bson:"secret"           json:"secret"           yaml:"secret"`
-	AIAPIKey       request.FieldString `bson:"ai_api_key"       json:"ai_api_key"       yaml:"ai_api_key"`
-	Data           request.FieldJSON   `bson:"data"             json:"data"             yaml:"data"`
-	CreatedAt      request.FieldTime   `bson:"created_at"       json:"created_at"       yaml:"created_at"`
-	UpdatedAt      request.FieldTime   `bson:"updated_at"       json:"updated_at"       yaml:"updated_at"`
+	ID               request.FieldString `bson:"id"                 json:"id"                 yaml:"id"`
+	Name             request.FieldString `bson:"name"               json:"name"               yaml:"name"`
+	Status           request.FieldString `bson:"status"             json:"status"             yaml:"status"`
+	StatusData       request.FieldJSON   `bson:"status_data"        json:"status_data"        yaml:"status_data"`
+	Repo             request.FieldString `bson:"repo"               json:"repo"               yaml:"repo"`
+	RepoStatus       request.FieldString `bson:"repo_status"        json:"repo_status"        yaml:"repo_status"`
+	RepoStatusData   request.FieldJSON   `bson:"repo_status_data"   json:"repo_status_data"   yaml:"repo_status_data"`
+	GameCommitHash   request.FieldString `bson:"game_commit_hash"   json:"game_commit_hash"   yaml:"game_commit_hash"`
+	GameLimit        request.FieldInt64  `bson:"game_limit"         json:"game_limit"         yaml:"game_limit"`
+	Secret           request.FieldString `bson:"secret"             json:"secret"             yaml:"secret"`
+	AIAPIKey         request.FieldString `bson:"ai_api_key"         json:"ai_api_key"         yaml:"ai_api_key"`
+	AIMaxTokens      request.FieldInt64  `bson:"ai_max_tokens"      json:"ai_max_tokens"      yaml:"ai_max_tokens"`
+	AIThinkingBudget request.FieldInt64  `bson:"ai_thinking_budget" json:"ai_thinking_budget" yaml:"ai_thinking_budget"`
+	Data             request.FieldJSON   `bson:"data"               json:"data"               yaml:"data"`
+	CreatedAt        request.FieldTime   `bson:"created_at"         json:"created_at"         yaml:"created_at"`
+	UpdatedAt        request.FieldTime   `bson:"updated_at"         json:"updated_at"         yaml:"updated_at"`
 }
 
 // Validate checks that the value contains valid data.
@@ -117,6 +119,34 @@ func (a *Account) Validate() error {
 		if a.GameLimit.Value < 0 {
 			return errors.New(errors.ErrInvalidRequest,
 				"invalid game_limit",
+				"account", a)
+		}
+	}
+
+	if a.AIMaxTokens.Set {
+		if !a.AIMaxTokens.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"ai_max_tokens must not be null",
+				"account", a)
+		}
+
+		if a.AIMaxTokens.Value < 0 {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid ai_max_tokens",
+				"account", a)
+		}
+	}
+
+	if a.AIThinkingBudget.Set {
+		if !a.AIThinkingBudget.Valid {
+			return errors.New(errors.ErrInvalidRequest,
+				"ai_thinking_budget must not be null",
+				"account", a)
+		}
+
+		if a.AIThinkingBudget.Value < 0 {
+			return errors.New(errors.ErrInvalidRequest,
+				"invalid ai_thinking_budget",
 				"account", a)
 		}
 	}
@@ -356,6 +386,8 @@ func (s *Server) createAccount(ctx context.Context,
 	request.SetField(doc, "repo_status", req.RepoStatus)
 	request.SetField(doc, "repo_status_data", req.RepoStatusData)
 	request.SetField(doc, "ai_api_key", req.AIAPIKey)
+	request.SetField(doc, "ai_max_tokens", req.AIMaxTokens)
+	request.SetField(doc, "ai_thinking_budget", req.AIThinkingBudget)
 	request.SetField(doc, "data", req.Data)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 

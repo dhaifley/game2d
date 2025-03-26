@@ -15,6 +15,11 @@ game2d is an open-source framework for game development that combines a
 declarative object schema, representable in JSON, it is designed for
 experimenting with game code and assets created with generative AI.
 
+### 🚧 Under Construction
+
+game2d should be considered pre-release. It is intended as a demonstration of
+a proof of a concept. It is not intended for use in any production system.
+
 ### 🏗️ Architecture Overview
 
 ```mermaid

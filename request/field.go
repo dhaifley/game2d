@@ -3,6 +3,7 @@ package request
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -1173,6 +1174,19 @@ func (f *FieldJSON) String() string {
 	}
 
 	return "{}"
+}
+
+// Copy creates a copy of this value.
+func (f FieldJSON) Copy() FieldJSON {
+	m := make(map[string]any, len(f.Value))
+
+	maps.Copy(m, f.Value)
+
+	return FieldJSON{
+		Set:   f.Set,
+		Valid: f.Valid,
+		Value: m,
+	}
 }
 
 // FieldDuration values represent integers tolerant of JSON inputs.

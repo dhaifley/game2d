@@ -34,18 +34,10 @@ func TestMain(m *testing.M) {
 		}
 	}
 
-	su := os.Getenv("SUPERUSER")
-	if su == "" {
-		su = "admin"
-	}
-
-	sp := os.Getenv("SUPERUSER_PASSWORD")
-	if sp == "" {
-		sp = "admin"
-	}
-
-	os.Setenv("SUPERUSER", su)
-	os.Setenv("SUPERUSER_PASSWORD", sp)
+	os.Setenv("SUPERUSER", "admin")
+	os.Setenv("SUPERUSER_PASSWORD", "admin")
+	os.Setenv("GUEST_USER", "guest")
+	os.Setenv("GUEST_USER_PASSWORD", "guest")
 
 	cfg := config.NewDefault()
 
@@ -53,8 +45,11 @@ func TestMain(m *testing.M) {
 		logger.New(cfg.LogOut(), cfg.LogFormat(), cfg.LogLevel()), nil, nil)
 	if err != nil {
 		fmt.Println("server init error", err)
+
 		os.Exit(1)
 	}
+
+	svr.SetPrompter(server.NewMockPrompter(svr, "The AI has responded.", 0))
 
 	svr.ConnectDB()
 

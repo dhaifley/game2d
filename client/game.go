@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,6 +33,11 @@ const (
 	DefaultGameWidth  = 640
 	DefaultGameHeight = 480
 )
+
+// SourceFS is a file system containing the client source code.
+//
+//go:embed *.go
+var SourceFS embed.FS
 
 // Game values represent the game state.
 type Game struct {

@@ -343,6 +343,11 @@ var (
 		Status: http.StatusInternalServerError,
 	}
 
+	ErrPrompt = Code{
+		Name:   "Client",
+		Status: http.StatusInternalServerError,
+	}
+
 	ErrInstall = Code{
 		Name:   "Install",
 		Status: http.StatusInternalServerError,

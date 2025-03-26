@@ -66,7 +66,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [promptText, setPromptText] = useState('');
   const [responseText, setResponseText] = useState(game.prompts?.current?.response || '');
   const responseTextAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [workingText, setWorkingText] = useState(game.prompts?.data?.working || '');
+  const [workingText, setWorkingText] = useState(game.prompts?.current?.thinking || '');
   const workingTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUndo, setIsUndo] = useState(true); // true for Undo, false for Redo
@@ -105,7 +105,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     }
     setResponseText(respText.trim());
 
-    setWorkingText(game.prompts?.data?.working || '');
+    setWorkingText(game.prompts?.current?.thinking || '');
     setIsUndo(true); // Reset to Undo when game changes
     setIsPublic(game.public || false);
     if (clientIframeRef.current) {
@@ -129,31 +129,32 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           const updatedGame = await fetchGame(currentGame.id);
           setCurrentGame(updatedGame);
 
+          let respText = '';
+          updatedGame.prompts?.history?.forEach((prompt: any) => {
+            if (prompt.prompt) {
+              respText += "\nPrompt:\n" + prompt.prompt + "\n";
+            }
+            if (prompt.response) {
+              respText += "\nResponse:\n" + prompt.response + "\n";
+            }
+          });
+          if (updatedGame.prompts?.current?.prompt) {
+            respText += "\nPrompt:\n" + updatedGame.prompts?.current?.prompt + "\n";
+          }
+          if (updatedGame.prompts?.current?.response) {
+            respText += "\nResponse:\n" + updatedGame.prompts?.current?.response + "\n";
+          }
+          setResponseText(respText.trim());
+
+          setWorkingText(updatedGame.prompts?.current?.thinking || '');
+
+          // Refresh the games table
+          await onGameUpdated();
+
           // If status is no longer "updating", clear the interval
           if (updatedGame.status !== "updating") {
             clearInterval(interval);
             setPollingInterval(null);
-
-            let respText = '';
-            updatedGame.prompts?.history?.forEach((prompt: any) => {
-              if (prompt.prompt) {
-                respText += "\nPrompt:\n" + prompt.prompt + "\n";
-              }
-              if (prompt.response) {
-                respText += "\nResponse:\n" + prompt.response + "\n";
-              }
-            });
-            if (updatedGame.prompts?.current?.prompt) {
-              respText += "\nPrompt:\n" + updatedGame.prompts?.current?.prompt + "\n";
-            }
-            if (updatedGame.prompts?.current?.response) {
-              respText += "\nResponse:\n" + updatedGame.prompts?.current?.response + "\n";
-            }
-            setResponseText(respText.trim());
-
-            setWorkingText(updatedGame.prompts?.data?.working || '');
-            // Refresh the games table
-            await onGameUpdated();
           }
         } catch (err) {
           console.error("Error polling game status:", err);
@@ -375,7 +376,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       setIsUndo(true);
 
       // Fetch the updated game to refresh the component
-      console.log('Prompt response:', response.data);
       const updatedGame = await fetchGame(response.data.game_id);
       setCurrentGame(updatedGame);
       
@@ -399,7 +399,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
       }
 
-      setWorkingText(updatedGame.prompts?.data?.working || '');
+      setWorkingText(updatedGame.prompts?.current?.thinking || '');
       if (workingTextAreaRef.current) {
         workingTextAreaRef.current.scrollTop = workingTextAreaRef.current.scrollHeight;
       }
@@ -458,7 +458,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           responseTextAreaRef.current.scrollTop = responseTextAreaRef.current.scrollHeight;
         }
 
-        setWorkingText(updatedGame.prompts?.data?.working || '');
+        setWorkingText(updatedGame.prompts?.current?.thinking || '');
         if (workingTextAreaRef.current) {
           workingTextAreaRef.current.scrollTop = workingTextAreaRef.current.scrollHeight;
         }
@@ -699,7 +699,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
                 id="working"
                 className="working-textarea"
                 readOnly
-                onLoad={() => { setWorkingText(currentGame.prompts?.data?.working || '') }}
+                onLoad={() => { setWorkingText(currentGame.prompts?.current?.thinking || '') }}
                 onChange={(e) => setWorkingText(e.target.value)}
                 value={workingText}
               />
