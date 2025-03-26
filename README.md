@@ -56,7 +56,8 @@ graph TD
 The main client and protocol, typically compiled into WebAssembly (WASM) for
 browser integration, but also buildable for various native architectures.
 
-- **Engine**: Combines the [Ebitengine](https://ebitengine.org/) 2D game engine with a Lua interpreter
+- **Engine**: Combines the [Ebitengine](https://ebitengine.org/) 2D game engine with a
+[Lua](https://github.com/Shopify/go-lua) interpreter
 - **State Management**: Shared game state between Lua and Go code
 - **Game Loop**: Renders assets during draw phase, executes scripts during update phase
 - **Game Schema**: Uses a declarative object schema for game definitions
@@ -78,7 +79,7 @@ A React/Vite application for interacting with the service:
 - **Game Management**: Search, browse, edit, and save game definitions
 - **Account Management**: Update profiles and account settings
 - **AI Interaction**: Submit game definitions and prompts to AI services
-- **Game Player**: Runs the WASM client directly in the browser
+- **Game Player**: Runs the WASM client and games directly in the browser
 
 ## 🚀 Getting Started
 
