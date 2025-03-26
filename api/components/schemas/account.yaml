@@ -49,6 +49,14 @@ properties:
     type: string
     description: The API key for the AI service used by the account.
     examples: [secret-api-key]
+  ai_max_tokens:
+    type: integer
+    description: The maximum number of output tokens allowed for the AI service.
+    examples: [64000]
+  ai_thinking_budget:
+    type: integer
+    description: The thinking token budget for the AI service.
+    examples: [4096]
   data:
     type: object
     description: Additional data related to the account.

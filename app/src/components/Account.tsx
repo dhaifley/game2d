@@ -24,6 +24,8 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedName, setEditedName] = useState('');
+  const [editedMaxTokens, setEditedMaxTokens] = useState<number | undefined>(undefined);
+  const [editedThinkingBudget, setEditedThinkingBudget] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   
@@ -51,6 +53,8 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
         const accountData = await fetchAccount();
         setAccount(accountData);
         setEditedName(accountData.name || '');
+        setEditedMaxTokens(accountData.ai_max_tokens);
+        setEditedThinkingBudget(accountData.ai_thinking_budget);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load account data');
         console.error('Error loading account:', err);
@@ -73,6 +77,8 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
     setIsEditMode(false);
     if (account) {
       setEditedName(account.name || '');
+      setEditedMaxTokens(account.ai_max_tokens);
+      setEditedThinkingBudget(account.ai_thinking_budget);
     }
     setSaveError(null);
   };
@@ -87,7 +93,9 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
       
       // Prepare the update payload
       const updates: Partial<AccountType> = {
-        name: editedName.trim()
+        name: editedName.trim(),
+        ai_max_tokens: editedMaxTokens,
+        ai_thinking_budget: editedThinkingBudget
       };
       
       // Call the API to update the account
@@ -311,6 +319,30 @@ const Account: React.FC<AccountProps> = ({ onClose }) => {
               value={account.game_limit?.toString() || ''}
               className="readonly-input"
               readOnly
+            />
+          </div>
+
+          <div className="account-field-container">
+            <label htmlFor='ai_max_tokens'>AI Max Tokens:</label>
+            <input
+              type="number"
+              id="ai_max_tokens"
+              value={isEditMode ? editedMaxTokens?.toString() || '' : account.ai_max_tokens?.toString() || ''}
+              onChange={(e) => setEditedMaxTokens(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+              className={isEditMode ? "name-input" : "readonly-input"}
+              readOnly={!isEditMode}
+            />
+          </div>
+          
+          <div className="account-field-container">
+            <label htmlFor='ai_thinking_budget'>Thinking Budget:</label>
+            <input
+              type="number"
+              id="ai_thinking_budget"
+              value={isEditMode ? editedThinkingBudget || '' : account.ai_thinking_budget || ''}
+              onChange={(e) => setEditedThinkingBudget(e.target.value)}
+              className={isEditMode ? "name-input" : "readonly-input"}
+              readOnly={!isEditMode}
             />
           </div>
           

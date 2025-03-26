@@ -318,7 +318,7 @@ func (s *Server) initPrompter(ctx context.Context) error {
 		maxTokens = a.AIMaxTokens.Value
 	}
 
-	budgetTokens := int64(32000)
+	budgetTokens := int64(7000)
 	if a.AIThinkingBudget.Value > 0 {
 		budgetTokens = a.AIThinkingBudget.Value
 	}

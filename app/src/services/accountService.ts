@@ -15,6 +15,8 @@ export interface Account {
   game_commit_hash?: string;
   game_limit?: number;
   ai_api_key?: string;
+  ai_max_tokens?: number;
+  ai_thinking_budget?: string;
   data?: any;
   created_at?: number;
   updated_at?: number;
@@ -35,9 +37,7 @@ export const fetchAccount = async (): Promise<Account> => {
 export const updateAccount = async (updates: Partial<Account>): Promise<Account> => {
   try {
     // According to requirements, we'll only update name and other specific fields as needed
-    const payload = {
-      name: updates.name
-    };
+    const payload = updates;
     
     const response = await axios.post(`${API_BASE_URL}/account`, payload);
     return response.data;

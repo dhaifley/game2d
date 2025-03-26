@@ -20,8 +20,11 @@ interface GameProps {
 const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const { user: authUser } = useAuth();
 
-  // Determine icon source: use base64 SVG from game.icon or fallback to avatar.svg
-  const iconSrc = game.icon ? `data:image/svg+xml;base64,${game.icon}` : avatarImage;
+  // Game icon state
+  const [gameIcon, setGameIcon] = useState<string | undefined>(game.icon);
+  
+  // Determine icon source: use base64 SVG from gameIcon or fallback to avatar.svg
+  const iconSrc = gameIcon ? `data:image/svg+xml;base64,${gameIcon}` : avatarImage;
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -84,6 +87,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   // Update form fields when game prop changes
   useEffect(() => {
     setCurrentGame(game);
+    setGameIcon(game.icon);
     setEditedName(game.name);
     setEditedDescription(game.description || '');
     setEditedTags(game.tags?.join(', ') || '');
@@ -128,6 +132,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           // Fetch the latest game data
           const updatedGame = await fetchGame(currentGame.id);
           setCurrentGame(updatedGame);
+          setGameIcon(updatedGame.icon);
 
           let respText = '';
           updatedGame.prompts?.history?.forEach((prompt: any) => {
@@ -378,6 +383,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       // Fetch the updated game to refresh the component
       const updatedGame = await fetchGame(response.data.game_id);
       setCurrentGame(updatedGame);
+      setGameIcon(updatedGame.icon);
       
       let respText = '';
       updatedGame.prompts?.history?.forEach((prompt: any) => {
@@ -437,6 +443,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
         // Fetch the updated game
         const updatedGame = await fetchGame(response.data.game_id);
         setCurrentGame(updatedGame);
+        setGameIcon(updatedGame.icon);
 
         let respText = '';
         updatedGame.prompts?.history?.forEach((prompt: any) => {
@@ -494,6 +501,7 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       // Fetch updated game data
       const updatedGame = await fetchGame(currentGame.id);
       setCurrentGame(updatedGame);
+      setGameIcon(updatedGame.icon);
       
       // Refresh the iframe content
       if (gameIframeRef.current) {
