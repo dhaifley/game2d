@@ -29,6 +29,11 @@ const Help: React.FC = () => {
             <span className="keys">Ctrl + Q</span> to reset the game.
           </p>
           <p>
+            It is important to open your browser's developer console when working with AI to generate
+            games. If the AI service generates a game that contains an error, the game client will
+            display any error or debugging messages in the console.
+          </p>
+          <p>
             For game-specific controls, refer to the individual game's instructions which will be displayed
             in the description of the game.
           </p>

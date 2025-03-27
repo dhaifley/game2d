@@ -27,6 +27,7 @@ import (
 	"github.com/dhaifley/game2d/static"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.opentelemetry.io/otel/attribute"
@@ -290,6 +291,87 @@ func (s *Server) ConnectDB() {
 				s.db = c
 
 				s.Unlock()
+
+				if _, err := s.db.Database(s.cfg.DBDatabase()).
+					Collection("accounts").Indexes().CreateMany(ctx,
+					[]mongo.IndexModel{{
+						Keys:    bson.D{{Key: "id", Value: 1}},
+						Options: options.Index().SetUnique(true),
+					}, {
+						Keys: bson.D{{Key: "name", Value: 1}},
+					}}); err != nil {
+					s.log.Log(ctx, logger.LvlError,
+						"unable to create account indexes",
+						"error", err,
+						"database", s.cfg.DBDatabase())
+				}
+
+				if _, err := s.db.Database(s.cfg.DBDatabase()).
+					Collection("users").Indexes().CreateMany(ctx,
+					[]mongo.IndexModel{{
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "id", Value: 1},
+						},
+						Options: options.Index().SetUnique(true),
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "email", Value: 1},
+						},
+					}}); err != nil {
+					s.log.Log(ctx, logger.LvlError,
+						"unable to create user indexes",
+						"error", err,
+						"database", s.cfg.DBDatabase())
+				}
+
+				if _, err := s.db.Database(s.cfg.DBDatabase()).
+					Collection("games").Indexes().CreateMany(ctx,
+					[]mongo.IndexModel{{
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "id", Value: 1},
+						},
+						Options: options.Index().SetUnique(true),
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "previous_id", Value: 1},
+						},
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "name", Value: 1},
+						},
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "status", Value: 1},
+						},
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "source", Value: 1},
+							{Key: "commit_hash", Value: 1},
+						},
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "tags", Value: 1},
+						},
+					}, {
+						Keys: bson.D{
+							{Key: "account_id", Value: 1},
+							{Key: "updated_by", Value: 1},
+							{Key: "updated_at", Value: -1},
+						},
+					}}); err != nil {
+					s.log.Log(ctx, logger.LvlError,
+						"unable to create game indexes",
+						"error", err,
+						"database", s.cfg.DBDatabase())
+				}
 
 				s.log.Log(ctx, logger.LvlInfo,
 					"connected to database",

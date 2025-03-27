@@ -11,9 +11,9 @@
 ## 📋 Overview
 
 game2d is an open-source framework for game development that combines a
-2D game engine with Lua scripting and a WebAssembly client. Built with a
-declarative object schema, representable in JSON, it is designed for
-experimenting with game code and assets created with generative AI.
+2D game engine with Lua scripting and a WebAssembly client. Built using a
+declarative JSON object schema, it is designed for experimenting with game code
+and assets created with generative AI.
 
 ### 🚧 Under Construction
 

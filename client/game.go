@@ -877,6 +877,11 @@ func (g *Game) updateFromMap(m map[string]any) error {
 
 	if v, ok := m["subject"].(map[string]any); ok {
 		obj := NewObjectFromMap(v)
+		if obj == nil {
+			return errors.New(errors.ErrClient,
+				"game subject object not found",
+				"game", g)
+		}
 
 		g.sub = obj
 		g.sub.game = g
@@ -886,6 +891,10 @@ func (g *Game) updateFromMap(m map[string]any) error {
 		for id, v := range v {
 			if vv, ok := v.(map[string]any); ok {
 				obj := NewObjectFromMap(vv)
+				if obj == nil {
+					continue
+				}
+
 				obj.game = g
 
 				g.obj[id] = obj

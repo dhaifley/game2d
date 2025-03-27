@@ -747,16 +747,12 @@ func (s *Server) createUser(ctx context.Context,
 
 	doc := &bson.D{}
 
-	request.SetField(doc, "account_id", req.AccountID)
-	request.SetField(doc, "id", req.ID)
 	request.SetField(doc, "email", req.Email)
 	request.SetField(doc, "last_name", req.LastName)
 	request.SetField(doc, "first_name", req.FirstName)
 	request.SetField(doc, "status", req.Status)
 	request.SetField(doc, "scopes", req.Scopes)
 	request.SetField(doc, "data", req.Data)
-	request.SetField(doc, "created_at", req.CreatedAt)
-	request.SetField(doc, "created_by", req.CreatedBy)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
 	request.SetField(doc, "updated_by", req.UpdatedBy)
 
@@ -772,8 +768,17 @@ func (s *Server) createUser(ctx context.Context,
 		})
 	}
 
-	if err := s.DB().Collection("users").FindOneAndReplace(ctx, f, doc,
-		options.FindOneAndReplace().SetProjection(bson.M{"_id": 0}).
+	cDoc := &bson.D{}
+
+	request.SetField(cDoc, "account_id", req.AccountID)
+	request.SetField(cDoc, "id", req.ID)
+	request.SetField(cDoc, "created_at", req.CreatedAt)
+	request.SetField(doc, "created_by", req.CreatedBy)
+
+	doc = &bson.D{{Key: "$set", Value: doc}, {Key: "$setOnInsert", Value: cDoc}}
+
+	if err := s.DB().Collection("users").FindOneAndUpdate(ctx, f, doc,
+		options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0}).
 			SetReturnDocument(options.After).SetUpsert(true)).
 		Decode(&res); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

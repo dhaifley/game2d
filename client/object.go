@@ -10,12 +10,12 @@ import (
 
 // Object values represent the objects in the game.
 type Object struct {
-	game          *Game
-	sub, hidden   bool
-	w, h, x, y, z int
-	id, name      string
-	src, img      string
-	data          map[string]any
+	game             *Game
+	sub, hidden      bool
+	w, h, x, y, z, r int
+	id, name         string
+	src, img         string
+	data             map[string]any
 }
 
 // NewObject creates and initializes a new object.
@@ -85,6 +85,11 @@ func (o *Object) SetZ(z int) {
 	o.z = z
 }
 
+// SetR sets the object rotation.
+func (o *Object) SetR(r int) {
+	o.r = r
+}
+
 // SetW sets the object width.
 func (o *Object) SetW(w int) {
 	o.w = w
@@ -124,6 +129,7 @@ func (o *Object) Map() map[string]any {
 		"x":       o.x,
 		"y":       o.y,
 		"z":       o.z,
+		"r":       o.r,
 		"w":       o.w,
 		"h":       o.h,
 		"image":   o.img,
@@ -144,6 +150,7 @@ func NewObjectFromMap(m map[string]any) *Object {
 	x, _ := m["x"].(float64)
 	y, _ := m["y"].(float64)
 	z, _ := m["z"].(float64)
+	r, _ := m["r"].(float64)
 	w, _ := m["w"].(float64)
 	h, _ := m["h"].(float64)
 
@@ -162,6 +169,7 @@ func NewObjectFromMap(m map[string]any) *Object {
 		x:      int(x),
 		y:      int(y),
 		z:      int(z),
+		r:      int(r),
 		w:      int(w),
 		h:      int(h),
 	}
@@ -176,6 +184,7 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 		X      int            `json:"x"`
 		Y      int            `json:"y"`
 		Z      int            `json:"z"`
+		R      int            `json:"r"`
 		W      int            `json:"w"`
 		H      int            `json:"h"`
 		Image  string         `json:"image,omitempty"`
@@ -188,6 +197,7 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 		X:      o.x,
 		Y:      o.y,
 		Z:      o.z,
+		R:      o.r,
 		W:      o.w,
 		H:      o.h,
 		Image:  o.img,
@@ -205,6 +215,7 @@ func (o *Object) UnmarshalJSON(data []byte) error {
 		X      int            `json:"x"`
 		Y      int            `json:"y"`
 		Z      int            `json:"z"`
+		R      int            `json:"r"`
 		W      int            `json:"w"`
 		H      int            `json:"h"`
 		Image  string         `json:"image,omitempty"`
@@ -222,6 +233,7 @@ func (o *Object) UnmarshalJSON(data []byte) error {
 	o.x = v.X
 	o.y = v.Y
 	o.z = v.Z
+	o.r = v.R
 	o.w = v.W
 	o.h = v.H
 	o.src = v.Script
@@ -294,6 +306,10 @@ func (o *Object) Draw(screen *ebiten.Image) {
 	}
 
 	geo := ebiten.GeoM{}
+	if o.r != 0 {
+		geo.Rotate(float64(o.r) * (3.14 / 180))
+	}
+
 	geo.Translate(float64(o.x), float64(o.y))
 
 	op := &ebiten.DrawImageOptions{GeoM: geo}
