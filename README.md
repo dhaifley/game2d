@@ -3,6 +3,7 @@
 <div align="center">
 
 ![game2d](https://img.shields.io/badge/game2d-Framework-646cff)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/dhaifley/game2d)](https://pkg.go.dev/github.com/dhaifley/game2d?tab=doc)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
