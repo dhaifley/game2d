@@ -14,6 +14,7 @@ import (
 	"github.com/dhaifley/game2d/errors"
 	"github.com/dhaifley/game2d/logger"
 	"github.com/dhaifley/game2d/request"
+	"github.com/dhaifley/game2d/static"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -113,7 +114,7 @@ func (s *Server) sendPrompt(ctx context.Context, g *Game, prompts *Prompts) {
 		}
 	}
 
-	p := s.getPrompter()
+	p := s.getPrompter(ctx)
 	if p == nil {
 		prompts.Error = request.FieldString{
 			Set: true, Valid: true, Value: "prompter not found",
@@ -301,29 +302,23 @@ type Prompter interface {
 }
 
 // initPrompter initializes a prompter for use by the server.
-func (s *Server) initPrompter(ctx context.Context) error {
-	a, err := s.getAccount(ctx, "")
-	if err != nil || a == nil {
-		return errors.Wrap(err, errors.ErrDatabase,
-			"unable to get account to initialize prompter")
-	}
+func (s *Server) initPrompter() error {
+	s.getPrompter = func(ctx context.Context) Prompter {
+		a, err := s.getAccount(ctx, "")
+		if err != nil || a == nil || a.AIAPIKey.Value == "" {
+			return nil
+		}
 
-	if a.AIAPIKey.Value == "" {
-		return errors.New(errors.ErrUnavailable,
-			"the account does not have an AI API key")
-	}
+		maxTokens := int64(64000)
+		if a.AIMaxTokens.Value > 0 {
+			maxTokens = a.AIMaxTokens.Value
+		}
 
-	maxTokens := int64(64000)
-	if a.AIMaxTokens.Value > 0 {
-		maxTokens = a.AIMaxTokens.Value
-	}
+		budgetTokens := int64(7000)
+		if a.AIThinkingBudget.Value > 0 {
+			budgetTokens = a.AIThinkingBudget.Value
+		}
 
-	budgetTokens := int64(7000)
-	if a.AIThinkingBudget.Value > 0 {
-		budgetTokens = a.AIThinkingBudget.Value
-	}
-
-	s.getPrompter = func() Prompter {
 		return NewAnthropicPrompter(s, a.AIAPIKey.Value,
 			maxTokens, budgetTokens)
 	}
@@ -395,42 +390,51 @@ func (p *anthropicPrompter) Prompt(ctx context.Context,
 		Set: true, Valid: true, Value: "",
 	}
 
-	gameFile, err := client.SourceFS.ReadFile("game.go")
+	gameFile, err := static.FS.ReadFile("game.json")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrServer,
-			"unable to read client source file",
-			"file", "game.go")
+			"unable to read game JSON schema source",
+			"file", "game.json")
 	}
 
-	imageFile, err := client.SourceFS.ReadFile("image.go")
-	if err != nil {
-		return errors.Wrap(err, errors.ErrServer,
-			"unable to read client source file",
-			"file", "image.go")
-	}
-
-	objectFile, err := client.SourceFS.ReadFile("object.go")
-	if err != nil {
-		return errors.Wrap(err, errors.ErrServer,
-			"unable to read client source file",
-			"file", "object.go")
-	}
-
-	scriptFile, err := client.SourceFS.ReadFile("script.go")
-	if err != nil {
-		return errors.Wrap(err, errors.ErrServer,
-			"unable to read client source file",
-			"file", "script.go")
-	}
-
-	keysFile, err := client.SourceFS.ReadFile("keys.go")
+	keysFile, err := static.FS.ReadFile("keys.go")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrServer,
 			"unable to read client keys file",
 			"file", "keys.go")
 	}
 
-	gb, err := json.MarshalIndent(game, "", "  ")
+	clientGameFile, err := client.SourceFS.ReadFile("game.go")
+	if err != nil {
+		return errors.Wrap(err, errors.ErrServer,
+			"unable to read client game source",
+			"file", "game.go")
+	}
+
+	clientImageFile, err := client.SourceFS.ReadFile("image.go")
+	if err != nil {
+		return errors.Wrap(err, errors.ErrServer,
+			"unable to read client image source",
+			"file", "image.go")
+	}
+
+	clientObjectFile, err := client.SourceFS.ReadFile("object.go")
+	if err != nil {
+		return errors.Wrap(err, errors.ErrServer,
+			"unable to read client object source",
+			"file", "object.go")
+	}
+
+	clientScriptFile, err := client.SourceFS.ReadFile("script.go")
+	if err != nil {
+		return errors.Wrap(err, errors.ErrServer,
+			"unable to read client script source",
+			"file", "script.go")
+	}
+
+	game.Prompts = request.FieldJSON{}
+
+	gb, err := json.MarshalIndent(game, "  ", "  ")
 	if err != nil {
 		return errors.Wrap(err, errors.ErrServer,
 			"unable to encode game for prompt",
@@ -458,11 +462,9 @@ func (p *anthropicPrompter) Prompt(ctx context.Context,
 	}
 
 	messages = append(messages, anthropic.NewUserMessage(
-		anthropic.NewTextBlock(prompts.Current.Prompt.Value)))
-	messages = append(messages, anthropic.NewUserMessage(
-		anthropic.NewTextBlock(
-			"```current game definition\n"+
-				string(gb)+"\n```\n")))
+		anthropic.NewTextBlock("Here is the current game definition:\n"+
+			"\n<document source=\"game2d.json\">\n"+string(gb)+
+			"\n</document>\n\n"+prompts.Current.Prompt.Value)))
 
 	count, err := p.cli.Messages.CountTokens(ctx,
 		anthropic.MessageCountTokensParams{
@@ -515,74 +517,99 @@ func (p *anthropicPrompter) Prompt(ctx context.Context,
 			})),
 		Messages: anthropic.F(messages),
 		System: anthropic.F([]anthropic.TextBlockParam{
-			anthropic.NewTextBlock(`You are an expert 2D game developer.
-You work with game2d, a framework which let's you express 2D games as game
-definitions in a JSON format. The game definitions include images, scripts and
-objects which are used to define the game. The images are all SVG format images
-encoded in base64. The client renders them into bitmap sprites. The scripts are
-all written in Lua and are also encoded in base64. The total size of the JSON
-game definition must not exceed either 1 MB or your max tokens limit.
+			anthropic.NewTextBlock(`You are an expert 2D game developer and an
+expert in the Lua programming language. You work with game2d, a framework which
+let's you express 2D games as game definitions in a JSON format. The following
+text blocks contain the JSON schema of the game definition you will create. You
+should reference this schema carefully when generating the game definition
+to make sure it will work when run using the client. The keys.go file will be
+sent right after the JSON schema and contains the key codes used by the game
+client which must be used in the Lua scripts to recognize which keys are being
+pressed by the user. There is only keyboard input in the game client, there is
+no mouse or other input. Finally, the Go code for the client is provided for
+your reference and to ensure that you produce a working game without errors.` +
+				"\n<document source=\"game.json\">\n" +
+				string(gameFile) + "\n</document>\n" +
+				"\n<document source=\"keys.go\">\n" +
+				string(keysFile) + "\n</document>\n" +
+				"\n<document source=\"client/game.go\">\n" +
+				string(clientGameFile) + "\n</document>n" +
+				"\n<document source=\"client/image.go\">\n" +
+				string(clientImageFile) + "\n</document>\n" +
+				"\n<document source=\"client/object.go\">\n" +
+				string(clientObjectFile) + "\n</document>\n" +
+				"\n<document source=\"client/script.go\">\n" +
+				string(clientScriptFile) + "\n</document>\n\n" +
+				`The JSON schema for the game definition contains maps, keyed by
+id, of “objects”, “images”, and “scripts.”
+
+Objects are the objects which comprise the game, and contain predefined
+attributes for identification, position and other things. They also contain a
+data attribute for use storing game data between game loop update phases. Each
+object also has an image attribute, containing the id of the image in the
+game.images map that is rendered for the object during the game loop draw
+phases. Each object also has a script attribute containing the id of the Lua
+script in the game.scripts map that is executed for the object during game loop
+update phases. 
+
+Images are assets used by the client game engine, and rendered for objects
+during the game loop draw phase. Images contain data attributes containing
+base64 encoded SVG image data. This data is read by the client SVG reader and
+rasterized into sprites for use in the game. The client SVG reader uses the Go
+github.com/srwiley/oksvg library and the ReadIconStream() function to read and
+the SVG images. This means only a subset of SVG is supported, so restrict SVG
+images to only use simple rectangles, circles, and paths, no text or other
+SVG objects should be used.
+
+Scripts are written in Lua and are executed for their objects during the game
+loop update phase by the client game engine. Scripts contain data attributes
+which contain the base64 encoded Lua script text. Each Lua script must consist
+only of an Update function that accepts a parameter named data and does not
+return any value. The data parameter is only used to pass the id of the object
+to the Lua script Update function in the form { "id": "object ID" }. These Lua
+scripts all are given access, by the game engine client, which runs the Lua
+interpreter, to a global object named: game. This game object mirrors the schema
+of the game definition JSON schema. It is primarily used to allow scripts to
+have access to game.objects[“id”].data fields. These should be used to store
+game data between game loop update phases and for objects to check on and share
+data of other objects. Local variables should only be used for temporary data,
+which is discarded between game loop update phases. Any global data other than
+the game object, such as any _G objects, should not be used by the Lua scripts.
+Do not write Lua code that risks causing a nil reference error of any kind or
+that contains any syntax errors.
+
+Finally, the game definition contains a "subject" attribute, which is a special
+object that is used to represent the player in the game. It is otherwise
+identical to other objects, but is always rendered lase in the game loop draw
+and is always updated last in the game loop update.
+
+The total size of the JSON game definition must not exceed 8 MB.
 
 You will create one of these game definitions based on the user's prompt. And,
-your response must include this game definition. The game definition must be
-at the end of the response and must be immediately preceded by the text
+your response must include the created game definition. The game definition must
+be at the end of the response and must be immediately preceded by the text
 "` + "```" + `game definition\n" and immediately followed by the text "\n` +
 				"```" + `\n". The game definition "id" field must be a UUID and
-can be random. In addition to the fields defined by the client, add a "name"
-field to the game definition, containing the name of the game, a "description"
-field, containing the description, game controls and features, and add an "icon"
-field containing a base64 encoded SVG image of an icon for the game.
-
-The Lua scripts all have access, through the client game engine, to a global
-game object, whose structure essentially resembles that of the game definition
-itself. This game state is copied into the Lua interpreter before each object’s
-script is executed in the update phase of the game loop. Then, it is copied back
-out at the end of the update phase. Safely use this to share and manipulate
-object data within the Lua scripts. Do not write any Lua code that risks
-creating any sort of null reference error. Only use global variables in the Lua
-scripts if they are defined under the game object. Do not use _G or any other
-type of global variable, other than the game object, in the Lua scripts. You
-can create any variables needed within the objects contained in game.objects.
-Do not create local variable copies of the global game object values in the Lua
-scripts, just use the game.objects values directly.
-
-It is very important that you keep the scope of the game minimal so that it
-can be built entirely without errors. You must maintain full comprehension of
-all the game scripts, objects, and images so that you can be sure the game
-definition will definitely run without error when executed in the client. Refer
-to the client code below to make sure any Lua scripts and SVG images will work
-correctly in the client.
+can be random. In addition the game definition should contain a "name" field,
+containing the name of the game, a "description" field, containing the
+description, game controls and features, and add an "icon" field containing a
+base64 encoded SVG image of an icon for the game.
 
 The history of messages between you and the user has had the previous game
 definitions replaced with the text "{{game definition}}". The current game
-definition in the most recent user message is the last game definition in the
-history. If you need the code you previously generated, because the user is
-reporting an error in the game, you can use the game definition submitted with
-the user message as your previously generated code. The data for the images,
-scripts and objects are base64 encoded.
+definition is always appended to the most recent user message and is the most
+recent game definition in the history. This is the previously generated game
+definition, if you need it, because the user is reporting an error in the game.
+Do not rewrite the game from scratch if you can learn from, and improve the
+game definition submitted with the users prompt.
 
 Your responses to the user will be rendered in plain monospaced text. Do not
 use any markdown in your responses. The ` + "```" + `game definition\n" and
-"\n` +
-				"```" + `\n" text used to surround the game definition is not
+"\n` + "```" + `\n" text used to surround the game definition is not
 considered to be markdown.
 
-The following text blocks contain the Go source code of the game2d client, which
-is used to run the game definitions. You should reference this code carefully
-when generating the game definition to make sure it will work when run using
-this client. They keys.go file contains the key codes used by the client which
-must be determining the numbers to use as keys in the Lua scripts since the
-numbers to not correspond to the default ASCII values for the keys`),
-			anthropic.NewTextBlock("```game.go\n" +
-				string(gameFile) + "\n```\n"),
-			anthropic.NewTextBlock("```image.go\n" +
-				string(imageFile) + "\n```\n"),
-			anthropic.NewTextBlock("```object.go\n" +
-				string(objectFile) + "\n```\n"),
-			anthropic.NewTextBlock("```script.go\n" +
-				string(scriptFile) + "\n```\n"),
-			anthropic.NewTextBlock("```keys.go\n" +
-				string(keysFile) + "\n```\n"),
+Think through the process of creating the game definition, and make sure it is
+complete and free of errors.`),
 		}),
 	})
 

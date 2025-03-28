@@ -1,0 +1,450 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://game2d.ai/game.json",
+    "title": "Game Definition",
+    "type": "object",
+    "description": "A game2d game definition.",
+    "properties": {
+        "account_id": {
+            "type": "string",
+            "description": "The ID of the account of the game.",
+            "examples": [
+                "1234567890abcdef"
+            ]
+        },
+        "public": {
+            "type": "boolean",
+            "description": "Whether the game is visible publicly.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "id": {
+            "type": "string",
+            "description": "The ID of the game.",
+            "examples": [
+                "11223344-5566-7788-9900-aabbccddeeff"
+            ]
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the game.",
+            "examples": [
+                "test-game"
+            ]
+        },
+        "version": {
+            "type": "string",
+            "description": "The version of the game.",
+            "examples": [
+                "1"
+            ]
+        },
+        "description": {
+            "type": "string",
+            "description": "The description of the game.",
+            "examples": [
+                "A test game"
+            ]
+        },
+        "debug": {
+            "type": "boolean",
+            "description": "Whether the game is in debug mode.",
+            "examples": [
+                false
+            ]
+        },
+        "w": {
+            "type": "integer",
+            "description": "The width of the game in device independent pixels.",
+            "examples": [
+                640
+            ]
+        },
+        "h": {
+            "type": "integer",
+            "description": "The height of the game in device independent pixels.",
+            "examples": [
+                480
+            ]
+        },
+        "status": {
+            "type": "string",
+            "description": "The current status of the game.",
+            "enum": [
+                "active",
+                "inactive",
+                "updating",
+                "error"
+            ],
+            "examples": [
+                "active"
+            ]
+        },
+        "status_data": {
+            "type": "object",
+            "description": "Additional data related to the status."
+        },
+        "subject": {
+            "description": "The player object.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The ID of the object.",
+                    "examples": [
+                    "11223344-5566-7788-9900-aabbccddeeff"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the object.",
+                    "examples": [
+                    "test-object"
+                    ]
+                },
+                "hidden": {
+                    "type": "boolean",
+                    "description": "Whether the object is hidden or drawn.",
+                    "examples": [
+                    false
+                    ]
+                },
+                "x": {
+                    "type": "integer",
+                    "description": "The x-coordinate of the object in device independent pixels.",
+                    "examples": [
+                    100
+                    ]
+                },
+                "y": {
+                    "type": "integer",
+                    "description": "The y-coordinate of the object in device independent pixels.",
+                    "examples": [
+                    50
+                    ]
+                },
+                "z": {
+                    "type": "integer",
+                    "description": "The z-index of the object.",
+                    "examples": [
+                    1
+                    ]
+                },
+                "w": {
+                    "type": "integer",
+                    "description": "The width of the object in device independent pixels.",
+                    "examples": [
+                    200
+                    ]
+                },
+                "h": {
+                    "type": "integer",
+                    "description": "The height of the object in device independent pixels.",
+                    "examples": [
+                    100
+                    ]
+                },
+                "r": {
+                    "type": "integer",
+                    "description": "The rotation of the object in positive or negative degrees.",
+                    "examples": [
+                    90
+                    ]
+                },
+                "image": {
+                    "type": "string",
+                    "description": "The ID of the object image.",
+                    "examples": [
+                    "image_id"
+                    ]
+                },
+                "script": {
+                    "type": "string",
+                    "description": "The ID of the object script.",
+                    "examples": [
+                    "script_id"
+                    ]
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Additional object data, including game data used by scripts."
+                }
+            }
+        },
+        "objects": {
+            "type": "object",
+            "description": "A map of game objects keyed by ID.",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The ID of the object.",
+                        "examples": [
+                        "11223344-5566-7788-9900-aabbccddeeff"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the object.",
+                        "examples": [
+                        "test-object"
+                        ]
+                    },
+                    "hidden": {
+                        "type": "boolean",
+                        "description": "Whether the object is hidden or drawn.",
+                        "examples": [
+                        false
+                        ]
+                    },
+                    "x": {
+                        "type": "integer",
+                        "description": "The x-coordinate of the object in device independent pixels.",
+                        "examples": [
+                        100
+                        ]
+                    },
+                    "y": {
+                        "type": "integer",
+                        "description": "The y-coordinate of the object in device independent pixels.",
+                        "examples": [
+                        50
+                        ]
+                    },
+                    "z": {
+                        "type": "integer",
+                        "description": "The z-index of the object.",
+                        "examples": [
+                        1
+                        ]
+                    },
+                    "w": {
+                        "type": "integer",
+                        "description": "The width of the object in device independent pixels.",
+                        "examples": [
+                        200
+                        ]
+                    },
+                    "h": {
+                        "type": "integer",
+                        "description": "The height of the object in device independent pixels.",
+                        "examples": [
+                        100
+                        ]
+                    },
+                    "r": {
+                        "type": "integer",
+                        "description": "The rotation of the object in positive or negative degrees.",
+                        "examples": [
+                        90
+                        ]
+                    },
+                    "image": {
+                        "type": "string",
+                        "description": "The ID of the object image.",
+                        "examples": [
+                        "image_id"
+                        ]
+                    },
+                    "script": {
+                        "type": "string",
+                        "description": "The ID of the object script.",
+                        "examples": [
+                        "script_id"
+                        ]
+                    },
+                    "data": {
+                        "type": "object",
+                        "description": "Additional object data, including game data used by scripts."
+                    }
+                }
+            }
+        },
+        "images": {
+            "type": "object",
+            "description": "A map of game images keyed by ID.",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The ID of the image.",
+                        "examples": [
+                        "11223344-5566-7788-9900-aabbccddeeff"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the image.",
+                        "examples": [
+                        "test-image"
+                        ]
+                    },
+                    "data": {
+                        "type": "string",
+                        "description": "Base64 encoded SVG image data."
+                    }
+                }
+            }
+        },
+        "scripts": {
+            "type": "object",
+            "description": "A map of game scripts keyed by ID.",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The ID of the script.",
+                        "examples": [
+                        "11223344-5566-7788-9900-aabbccddeeff"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the script.",
+                        "examples": [
+                        "test-script"
+                        ]
+                    },
+                    "data": {
+                        "type": "string",
+                        "description": "Base64 encoded Lua script code."
+                    }
+                }
+            }
+        },
+        "source": {
+            "type": "string",
+            "description": "The source of the game.",
+            "enum": [
+                "app",
+                "git",
+                "sys"
+            ],
+            "examples": [
+                "app"
+            ]
+        },
+        "commit_hash": {
+            "type": "string",
+            "description": "The commit hash of the of the import repository when source is git."
+        },
+        "tags": {
+            "type": "array",
+            "description": "A list of tags associated with the game.",
+            "items": {
+                "type": "string",
+                "examples": [
+                    "tag1:value1",
+                    "tag2:value2"
+                ]
+            }
+        },
+        "keys": {
+            "type": "array",
+            "description": "A list of keys currently being pressed by the user.",
+            "items": {
+                "type": "integer",
+                "examples": [
+                    116
+                ]
+            }
+        },
+        "prompts": {
+            "type": "object",
+            "description": "AI prompt exchange data resulting in the current game.",
+            "properties": {
+            "game_id": {
+                "type": "string",
+                "description": "The ID of the game.",
+                "examples": [
+                "11223344-5566-7788-9900-aabbccddeeff"
+                ]
+            },
+            "current": {
+                "type": "object",
+                "description": "The most recent prompt and response responsible for the current state of the game.",
+                "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "A prompt to an AI service.",
+                    "examples": [
+                    "prompt"
+                    ]
+                },
+                "response": {
+                    "type": "string",
+                    "description": "A response from an AI service.",
+                    "examples": [
+                    "response"
+                    ]
+                }
+                }
+            },
+            "history": {
+                "type": "array",
+                "description": "The history of prompts and responses, prior to the current one, responsible for the state of the game.",
+                "items": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                    "type": "string",
+                    "description": "A prompt to an AI service.",
+                    "examples": [
+                        "prompt"
+                    ]
+                    },
+                    "response": {
+                    "type": "string",
+                    "description": "A response from an AI service.",
+                    "examples": [
+                        "response"
+                    ]
+                    }
+                }
+                }
+            },
+            "data": {
+                "type": "object",
+                "description": "Additional data related to AI prompt or response."
+            },
+            "error": {
+                "type": "object",
+                "description": "An error response from the AI service."
+            }
+            }
+        },
+        "created_at": {
+            "type": "integer",
+            "description": "The Unix epoch timestamp for when the game was created.",
+            "examples": [
+                1234567890
+            ]
+        },
+        "created_by": {
+            "type": "string",
+            "description": "The ID of the user that created the game.",
+            "examples": [
+                "test@test.com"
+            ]
+        },
+        "updated_at": {
+            "type": "integer",
+            "description": "The Unix epoch timestamp for when the game was last updated.",
+            "examples": [
+                1234567890
+            ]
+        },
+        "updated_by": {
+            "type": "string",
+            "description": "The ID of the user that last updated the game.",
+            "examples": [
+                "test@test.com"
+            ]
+        }
+    }
+}

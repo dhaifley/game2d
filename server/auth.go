@@ -743,7 +743,7 @@ func (s *Server) createUser(ctx context.Context,
 		}
 	}()
 
-	f := bson.M{"id": req.ID.Value, "account_id": aID}
+	f := bson.M{"account_id": req.AccountID.Value, "id": req.ID.Value}
 
 	doc := &bson.D{}
 
@@ -773,7 +773,7 @@ func (s *Server) createUser(ctx context.Context,
 	request.SetField(cDoc, "account_id", req.AccountID)
 	request.SetField(cDoc, "id", req.ID)
 	request.SetField(cDoc, "created_at", req.CreatedAt)
-	request.SetField(doc, "created_by", req.CreatedBy)
+	request.SetField(cDoc, "created_by", req.CreatedBy)
 
 	doc = &bson.D{{Key: "$set", Value: doc}, {Key: "$setOnInsert", Value: cDoc}}
 
@@ -859,7 +859,7 @@ func (s *Server) updateUser(ctx context.Context,
 		}
 	}()
 
-	f := bson.M{"id": req.ID.Value, "account_id": aID}
+	f := bson.M{"account_id": req.AccountID.Value, "id": req.ID.Value}
 
 	doc := &bson.D{}
 
@@ -922,7 +922,7 @@ func (s *Server) deleteUser(ctx context.Context,
 			"id", id)
 	}
 
-	f := bson.M{"id": id, "account_id": aID}
+	f := bson.M{"account_id": aID, "id": id}
 
 	if res, err := s.DB().Collection("users").
 		DeleteOne(ctx, f, options.DeleteOne()); err != nil {

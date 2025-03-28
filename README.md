@@ -173,7 +173,7 @@ game2d uses a declarative schema for defining games:
 2. Add audio support
 3. Implement user and account management and/or integration with external IDPs
 4. Play and viability testing and system prompt enhancements
-5. AI controlled Player 2 and NPC's
+5. AI tool usage to allow game definition testing
 
 ## 🤝 Contributing
 

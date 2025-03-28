@@ -57,7 +57,7 @@ type Server struct {
 	authOnce      sync.Once
 	gameOnce      sync.Once
 	getRepoClient func(repoURL string) (repo.Client, error)
-	getPrompter   func() Prompter
+	getPrompter   func(ctx context.Context) Prompter
 }
 
 // NewServer creates a new HTTP server.
@@ -147,7 +147,7 @@ func (s *Server) SetRepoClient(cli repo.Client) {
 
 // SetPrompter sets the AI prompt sending interface client.
 func (s *Server) SetPrompter(p Prompter) {
-	s.getPrompter = func() Prompter {
+	s.getPrompter = func(ctx context.Context) Prompter {
 		return p
 	}
 }

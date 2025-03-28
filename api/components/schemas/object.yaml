@@ -34,6 +34,10 @@ properties:
     type: integer
     description: The height of the object in device independent pixels.
     examples: [100]
+  r:
+    type: integer
+    description: The rotation of the object in positive or negative degrees.
+    examples: [90]
   image:
     type: string
     description: The ID of the object image.

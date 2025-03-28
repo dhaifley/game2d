@@ -334,8 +334,6 @@ func (s *Server) getGame(ctx context.Context,
 func (s *Server) createGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
-	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
-
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
 		return nil, errors.New(errors.ErrUnauthorized,
@@ -451,7 +449,7 @@ func (s *Server) createGame(ctx context.Context,
 
 	var res *Game
 
-	f := bson.M{"id": req.ID.Value, "account_id": aID}
+	f := bson.M{"account_id": req.AccountID.Value, "id": req.ID.Value}
 
 	doc := &bson.D{}
 
@@ -606,8 +604,6 @@ func (s *Server) createGame(ctx context.Context,
 func (s *Server) updateGame(ctx context.Context,
 	req *Game,
 ) (*Game, error) {
-	ctx = context.WithValue(ctx, CtxKeyGameMinData, true)
-
 	aID, err := request.ContextAccountID(ctx)
 	if err != nil {
 		return nil, errors.New(errors.ErrUnauthorized,
@@ -658,7 +654,7 @@ func (s *Server) updateGame(ctx context.Context,
 
 	var res *Game
 
-	f := bson.M{"id": req.ID.Value, "account_id": aID}
+	f := bson.M{"account_id": req.AccountID.Value, "id": req.ID.Value}
 
 	doc := &bson.D{}
 
@@ -756,7 +752,7 @@ func (s *Server) deleteGame(ctx context.Context,
 			"id", id)
 	}
 
-	f := bson.M{"id": id, "account_id": aID}
+	f := bson.M{"account_id": aID, "id": id}
 
 	if res, err := s.DB().Collection("games").
 		DeleteOne(ctx, f, options.DeleteOne()); err != nil {
@@ -1795,7 +1791,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 	}
 
 	if s.getPrompter == nil {
-		if err := s.initPrompter(ctx); err != nil {
+		if err := s.initPrompter(); err != nil {
 			s.error(errors.Wrap(err, errors.ErrUnavailable,
 				"unable to initialize prompter"), w, r)
 
