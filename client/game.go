@@ -804,17 +804,11 @@ func tableToMap(l *lua.State, index int) (map[string]any, error) {
 		if l.IsString(-2) {
 			key, _ := l.ToString(-2)
 			result[key] = getValue(l, -1)
+		} else {
+			break
 		}
 
 		l.Pop(1)
-
-		if _, ok := result["1"]; ok {
-			break
-		}
-
-		if !l.IsTable(-2) {
-			break
-		}
 	}
 
 	l.Pop(1)
