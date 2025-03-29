@@ -443,7 +443,7 @@ func TestGamesServer(t *testing.T) {
 		name:   "copy game",
 		url:    "http://localhost:8080/api/v1/games/copy",
 		method: http.MethodPost,
-		body:   map[string]any{"id": TestUUID},
+		body:   map[string]any{"id": TestUUID, "name": "test copy"},
 		resp: func(t *testing.T, res *http.Response) {
 			expC := http.StatusCreated
 

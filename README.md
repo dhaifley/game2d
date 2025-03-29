@@ -163,7 +163,7 @@ game2d uses a declarative schema for defining games:
 
 - **Game State**: Overall game properties and metadata
 - **Assets**: Images and resources needed for rendering
-- **Scripts**: Lua code executed during the game loop
+- **Script**: Lua code executed during the game loop
 - **Objects**: Compositions of assets, scripts, and data
 - **Subject**: The special object representing the player
 

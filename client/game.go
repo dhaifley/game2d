@@ -3,7 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
-	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,11 +34,6 @@ const (
 	DefaultGameHeight = 480
 )
 
-// SourceFS is a file system containing the client source code.
-//
-//go:embed *.go
-var SourceFS embed.FS
-
 // Game values represent the game state.
 type Game struct {
 	log      logger.Logger
@@ -60,7 +55,7 @@ type Game struct {
 	sub      *Object
 	obj      map[string]*Object
 	img      map[string]*Image
-	src      map[string]*Script
+	src      string
 	err      error
 }
 
@@ -113,7 +108,6 @@ func NewGame(log logger.Logger, w, h int, id, name, desc string) *Game {
 		source: "app",
 		obj:    make(map[string]*Object),
 		img:    make(map[string]*Image),
-		src:    make(map[string]*Script),
 	}
 }
 
@@ -123,6 +117,8 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Debug   bool               `json:"debug,omitempty"`
 		Pause   bool               `json:"pause,omitempty"`
 		Public  bool               `json:"public,omitempty"`
+		W       int                `json:"w"`
+		H       int                `json:"h"`
 		ID      string             `json:"id"`
 		PID     string             `json:"previous_id,omitempty"`
 		Name    string             `json:"name"`
@@ -131,12 +127,10 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Icon    string             `json:"icon,omitempty"`
 		Status  string             `json:"status,omitempty"`
 		Source  string             `json:"source,omitempty"`
-		W       int                `json:"w"`
-		H       int                `json:"h"`
 		Subject *Object            `json:"subject,omitempty"`
 		Objects map[string]*Object `json:"objects,omitempty"`
 		Images  map[string]*Image  `json:"images,omitempty"`
-		Scripts map[string]*Script `json:"scripts,omitempty"`
+		Script  string             `json:"script"`
 	}{
 		Debug:   g.debug,
 		Pause:   g.pause,
@@ -154,7 +148,7 @@ func (g *Game) MarshalJSON() ([]byte, error) {
 		Subject: g.sub,
 		Objects: g.obj,
 		Images:  g.img,
-		Scripts: g.src,
+		Script:  base64.StdEncoding.EncodeToString([]byte(g.src)),
 	})
 }
 
@@ -177,10 +171,15 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 		Subject *Object            `json:"subject,omitempty"`
 		Objects map[string]*Object `json:"objects,omitempty"`
 		Images  map[string]*Image  `json:"images,omitempty"`
-		Scripts map[string]*Script `json:"scripts,omitempty"`
+		Script  string             `json:"script"`
 	}{}
 
 	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	b, err := base64.StdEncoding.DecodeString(v.Script)
+	if err != nil {
 		return err
 	}
 
@@ -201,7 +200,7 @@ func (g *Game) UnmarshalJSON(data []byte) error {
 	g.sub = v.Subject
 	g.obj = v.Objects
 	g.img = v.Images
-	g.src = v.Scripts
+	g.src = string(b)
 
 	g.lua = lua.NewState()
 	lua.OpenLibraries(g.lua)
@@ -300,17 +299,9 @@ func (g *Game) AddImage(img *Image) {
 	g.img[img.id] = img
 }
 
-// AddScript adds a script to the game.
-func (g *Game) AddScript(src *Script) {
-	if src == nil {
-		return
-	}
-
-	if g.src == nil {
-		g.src = make(map[string]*Script)
-	}
-
-	g.src[src.id] = src
+// SetScript sets the game script.
+func (g *Game) SetScript(src string) {
+	g.src = src
 }
 
 // Update updates the game state each frame.
@@ -348,7 +339,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if !g.pause {
+	if !g.pause && g.src != "" {
 		objects := make(map[string]any, len(g.obj))
 
 		for k, obj := range g.obj {
@@ -372,20 +363,29 @@ func (g *Game) Update() error {
 			"keys":    keyMap,
 		}
 
+		buf := bytes.NewBufferString(g.src)
+
+		if err := g.lua.Load(buf, "Update", "text"); err != nil {
+			return errors.Wrap(err, errors.ErrClient,
+				"unable to load script",
+				"game", g,
+				"script", g.src)
+		}
+
+		g.lua.Call(0, 0)
+
+		g.lua.Global("Update")
+
+		if !g.lua.IsFunction(-1) {
+			return errors.New(errors.ErrClient,
+				"no Update function in script",
+				"game", g,
+				"script", g.src)
+		}
+
 		pushMap(g.lua, d)
-		g.lua.SetGlobal("game")
 
-		for _, obj := range g.obj {
-			if err := obj.Update(); err != nil {
-				return err
-			}
-		}
-
-		if g.sub != nil {
-			if err := g.sub.Update(); err != nil {
-				return err
-			}
-		}
+		g.lua.Call(1, 1)
 
 		luaState, err := pullMap(g.lua)
 		if err != nil {
@@ -432,8 +432,31 @@ func (g *Game) Update() error {
 
 // Draw renders the game state and all objects each frame.
 func (g *Game) Draw(screen *ebiten.Image) {
+	zi := map[int][]*Object{}
+
 	for _, obj := range g.obj {
-		obj.Draw(screen)
+		if obj == nil || obj.hidden {
+			continue
+		}
+
+		if _, ok := zi[obj.z]; !ok {
+			zi[obj.z] = []*Object{}
+		}
+
+		zi[obj.z] = append(zi[obj.z], obj)
+	}
+
+	indexes := make([]int, 0, len(zi))
+	for i := range zi {
+		indexes = append(indexes, i)
+	}
+
+	slices.Sort(indexes)
+
+	for i := range indexes {
+		for _, obj := range zi[i] {
+			obj.Draw(screen)
+		}
 	}
 
 	if g.sub != nil {
@@ -563,10 +586,7 @@ func (g *Game) Load() (rErr error) {
 
 	defer func() {
 		ebiten.SetWindowTitle(g.name)
-
-		if rErr != nil {
-			g.err = rErr
-		}
+		g.err = rErr
 	}()
 
 	if g.apiURL != "" {
@@ -638,16 +658,15 @@ func (g *Game) Load() (rErr error) {
 			"unable to decode game save")
 	}
 
-	g.debug = g2.debug
-	g.pause = g2.pause
-	g.public = g2.public
-
 	if g2.w <= 0 || g2.h <= 0 {
 		return errors.New(errors.ErrClient,
-			"game width and height data not found",
+			"game save data not found",
 			"game", g2)
 	}
 
+	g.debug = g2.debug
+	g.pause = g2.pause
+	g.public = g2.public
 	g.w = g2.w
 	g.h = g2.h
 	g.id = g2.id
@@ -829,13 +848,11 @@ func getValue(l *lua.State, index int) any {
 
 // pullMap retrieves a map from the lua global table.
 func pullMap(l *lua.State) (map[string]any, error) {
-	l.Global("game")
-
 	if !l.IsTable(-1) {
 		l.Pop(1)
 
 		return nil, errors.New(errors.ErrClient,
-			"global game table not found")
+			"game table not found")
 	}
 
 	result, err := tableToMap(l, -1)
@@ -888,6 +905,8 @@ func (g *Game) updateFromMap(m map[string]any) error {
 	}
 
 	if v, ok := m["objects"].(map[string]any); ok {
+		g.obj = make(map[string]*Object, len(v))
+
 		for id, v := range v {
 			if vv, ok := v.(map[string]any); ok {
 				obj := NewObjectFromMap(vv)

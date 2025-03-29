@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	TestID   = "test"
-	TestName = "test"
-	TestDesc = "test"
+	TestID     = "test"
+	TestName   = "test"
+	TestDesc   = "test"
+	TestScript = "function Update(data)\nend"
 )
 
 func TestNewGame(t *testing.T) {
@@ -26,12 +27,10 @@ func TestUpdate(t *testing.T) {
 	game := client.NewGame(nil, client.DefaultGameWidth,
 		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
-	game.AddScript(client.NewScript(TestID, TestName, TestScript, nil))
+	game.SetScript(TestScript)
 	game.AddImage(client.NewImage(TestID, TestName, TestImage, 0, 0))
-	game.AddSubject(client.NewSubject(game, TestID, TestName, TestID, TestID,
-		nil))
-	game.AddObject(client.NewObject(game, TestID, TestName, TestID, TestID,
-		nil))
+	game.AddSubject(client.NewSubject(game, TestID, TestName, TestID, nil))
+	game.AddObject(client.NewObject(game, TestID, TestName, TestID, nil))
 
 	err := game.Update()
 	assert.NoError(t, err, "Update should not return an error")
@@ -82,12 +81,10 @@ func TestGameSaveLoad(t *testing.T) {
 	game := client.NewGame(nil, client.DefaultGameWidth,
 		client.DefaultGameHeight, TestID, TestName, TestDesc)
 
-	game.AddScript(client.NewScript(TestID, TestName, TestScript, nil))
+	game.SetScript(TestScript)
 	game.AddImage(client.NewImage(TestID, TestName, TestImage, 0, 0))
-	game.AddSubject(client.NewSubject(game, TestID, TestName, TestID, TestID,
-		nil))
-	game.AddObject(client.NewObject(game, TestID, TestName, TestID, TestID,
-		nil))
+	game.AddSubject(client.NewSubject(game, TestID, TestName, TestID, nil))
+	game.AddObject(client.NewObject(game, TestID, TestName, TestID, nil))
 
 	au := game.APIURL()
 

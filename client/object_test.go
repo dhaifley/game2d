@@ -10,28 +10,19 @@ import (
 )
 
 func TestNewObject(t *testing.T) {
-	object := client.NewObject(nil, TestID, TestName, "", "", nil)
+	object := client.NewObject(nil, TestID, TestName, "", nil)
 	assert.NotNil(t, object, "Object should not be nil")
 }
 
-func TestObjectUpdate(t *testing.T) {
-	object := client.NewObject(client.NewGame(nil,
-		client.DefaultGameWidth, client.DefaultGameHeight,
-		TestID, TestName, TestDesc), TestID, TestName, "", "", nil)
-
-	err := object.Update()
-	assert.NoError(t, err, "Update should not return an error")
-}
-
 func TestObjectDraw(t *testing.T) {
-	object := client.NewObject(nil, TestID, TestName, "", "", nil)
+	object := client.NewObject(nil, TestID, TestName, "", nil)
 
 	object.Draw(ebiten.NewImage(client.DefaultGameWidth,
 		client.DefaultGameHeight))
 }
 
 func TestObjectLayout(t *testing.T) {
-	object := client.NewObject(nil, TestID, TestName, "", "", nil)
+	object := client.NewObject(nil, TestID, TestName, "", nil)
 
 	w, h := object.Layout(client.DefaultGameWidth, client.DefaultGameHeight)
 	assert.Equal(t, 0, w, "Width should be 0")
@@ -40,7 +31,7 @@ func TestObjectLayout(t *testing.T) {
 
 func TestObjectJSONMarshaling(t *testing.T) {
 	originalObject := client.NewObject(nil, TestID, TestName,
-		"test script", "", map[string]any{"score": 42})
+		"", map[string]any{"score": 42})
 
 	data, err := json.Marshal(originalObject)
 	assert.NoError(t, err, "Marshal should not return an error")

@@ -11,8 +11,6 @@ object:
   $ref: "./object.yaml"
 prompts:
   $ref: "./prompts.yaml"
-script:
-  $ref: "./script.yaml"
 tags:
   $ref: "./tags.yaml"
 user:

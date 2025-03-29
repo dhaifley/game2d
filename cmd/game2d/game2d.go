@@ -52,9 +52,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	g.AddScript(client.NewScript("p1", "avatar.lua", script, []string{"image"}))
+	g.SetScript(script)
 
-	sub := client.NewSubject(g, "p1", "Player 1", "p1", "p1", nil)
+	sub := client.NewSubject(g, "p1", "Player 1", "p1", nil)
 	sub.SetX(288)
 	sub.SetY(208)
 
@@ -76,7 +76,7 @@ func main() {
 		for j := 0; j <= 7; j++ {
 			ids := "bg_" + strconv.Itoa(i) + "_" + strconv.Itoa(j)
 
-			obj := client.NewObject(g, ids, ids, "", "bg", nil)
+			obj := client.NewObject(g, ids, ids, "bg", nil)
 			obj.SetX(i * 64)
 			obj.SetY(j * 64)
 

@@ -1,5 +1,5 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://game2d.ai/game.json",
     "title": "Game Definition",
     "type": "object",
@@ -92,84 +92,77 @@
             "properties": {
                 "id": {
                     "type": "string",
-                    "description": "The ID of the object.",
+                    "description": "The ID of the subject.",
                     "examples": [
-                    "11223344-5566-7788-9900-aabbccddeeff"
+                        "11223344-5566-7788-9900-aabbccddeeff"
                     ]
                 },
                 "name": {
                     "type": "string",
-                    "description": "The name of the object.",
+                    "description": "The name of the subject.",
                     "examples": [
-                    "test-object"
+                        "test-subject"
                     ]
                 },
                 "hidden": {
                     "type": "boolean",
-                    "description": "Whether the object is hidden or drawn.",
+                    "description": "Whether the subject is hidden or drawn.",
                     "examples": [
-                    false
+                        false
                     ]
                 },
                 "x": {
                     "type": "integer",
-                    "description": "The x-coordinate of the object in device independent pixels.",
+                    "description": "The x-coordinate of the subject in device independent pixels.",
                     "examples": [
-                    100
+                        100
                     ]
                 },
                 "y": {
                     "type": "integer",
-                    "description": "The y-coordinate of the object in device independent pixels.",
+                    "description": "The y-coordinate of the subject in device independent pixels.",
                     "examples": [
-                    50
+                        50
                     ]
                 },
                 "z": {
                     "type": "integer",
-                    "description": "The z-index of the object.",
+                    "description": "The z-index of the subject.",
                     "examples": [
-                    1
+                        1
                     ]
                 },
                 "w": {
                     "type": "integer",
-                    "description": "The width of the object in device independent pixels.",
+                    "description": "The width of the subject in device independent pixels.",
                     "examples": [
-                    200
+                        200
                     ]
                 },
                 "h": {
                     "type": "integer",
-                    "description": "The height of the object in device independent pixels.",
+                    "description": "The height of the subject in device independent pixels.",
                     "examples": [
-                    100
+                        100
                     ]
                 },
                 "r": {
                     "type": "integer",
-                    "description": "The rotation of the object in positive or negative degrees.",
+                    "description": "The rotation of the subject in positive or negative degrees.",
                     "examples": [
-                    90
+                        90
                     ]
                 },
                 "image": {
                     "type": "string",
-                    "description": "The ID of the object image.",
+                    "description": "The ID of the subject image.",
                     "examples": [
-                    "image_id"
-                    ]
-                },
-                "script": {
-                    "type": "string",
-                    "description": "The ID of the object script.",
-                    "examples": [
-                    "script_id"
+                        "image_id"
                     ]
                 },
                 "data": {
                     "type": "object",
-                    "description": "Additional object data, including game data used by scripts."
+                    "description": "Additional subject data used by the game script."
                 }
             }
         },
@@ -183,82 +176,75 @@
                         "type": "string",
                         "description": "The ID of the object.",
                         "examples": [
-                        "11223344-5566-7788-9900-aabbccddeeff"
+                            "11223344-5566-7788-9900-aabbccddeeff"
                         ]
                     },
                     "name": {
                         "type": "string",
                         "description": "The name of the object.",
                         "examples": [
-                        "test-object"
+                            "test-object"
                         ]
                     },
                     "hidden": {
                         "type": "boolean",
                         "description": "Whether the object is hidden or drawn.",
                         "examples": [
-                        false
+                            false
                         ]
                     },
                     "x": {
                         "type": "integer",
                         "description": "The x-coordinate of the object in device independent pixels.",
                         "examples": [
-                        100
+                            100
                         ]
                     },
                     "y": {
                         "type": "integer",
                         "description": "The y-coordinate of the object in device independent pixels.",
                         "examples": [
-                        50
+                            50
                         ]
                     },
                     "z": {
                         "type": "integer",
                         "description": "The z-index of the object.",
                         "examples": [
-                        1
+                            1
                         ]
                     },
                     "w": {
                         "type": "integer",
                         "description": "The width of the object in device independent pixels.",
                         "examples": [
-                        200
+                            200
                         ]
                     },
                     "h": {
                         "type": "integer",
                         "description": "The height of the object in device independent pixels.",
                         "examples": [
-                        100
+                            100
                         ]
                     },
                     "r": {
                         "type": "integer",
                         "description": "The rotation of the object in positive or negative degrees.",
                         "examples": [
-                        90
+                            90
                         ]
                     },
                     "image": {
                         "type": "string",
                         "description": "The ID of the object image.",
                         "examples": [
-                        "image_id"
-                        ]
-                    },
-                    "script": {
-                        "type": "string",
-                        "description": "The ID of the object script.",
-                        "examples": [
-                        "script_id"
+                            "image_id"
                         ]
                     },
                     "data": {
                         "type": "object",
-                        "description": "Additional object data, including game data used by scripts."
+                        "description": "Additional object data used by the game script."
                     }
                 }
             }
@@ -273,14 +259,14 @@
                         "type": "string",
                         "description": "The ID of the image.",
                         "examples": [
-                        "11223344-5566-7788-9900-aabbccddeeff"
+                            "11223344-5566-7788-9900-aabbccddeeff"
                         ]
                     },
                     "name": {
                         "type": "string",
                         "description": "The name of the image.",
                         "examples": [
-                        "test-image"
+                            "test-image"
                         ]
                     },
                     "data": {
@@ -290,32 +276,9 @@
                 }
             }
         },
-        "scripts": {
-            "type": "object",
-            "description": "A map of game scripts keyed by ID.",
-            "additionalProperties": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "The ID of the script.",
-                        "examples": [
-                        "11223344-5566-7788-9900-aabbccddeeff"
-                        ]
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "The name of the script.",
-                        "examples": [
-                        "test-script"
-                        ]
-                    },
-                    "data": {
-                        "type": "string",
-                        "description": "Base64 encoded Lua script code."
-                    }
-                }
-            }
+        "script": {
+            "type": "string",
+            "description": "The base64 encoded Lua script game code."
         },
         "source": {
             "type": "string",
@@ -346,9 +309,129 @@
         },
         "keys": {
             "type": "array",
-            "description": "A list of keys currently being pressed by the user.",
+            "description": "A list of keys currently being pressed by the user.\nA = 0\nB = 1\nC = 2\nD = 3\nE = 4\nF = 5\nG = 6\nH = 7\nI = 8\nJ = 9\nK = 10\nL = 11\nM = 12\nN = 13\nO = 14\nP = 15\nQ = 16\nR = 17\nS = 18\nT = 19\nU = 20\nV = 21\nW = 22\nX = 23\nY = 24\nZ = 25\nAltLeft = 26\nAltRight = 27\nArrowDown = 28\nArrowLeft = 29\nArrowRight = 30\nArrowUp = 31\nBackquote = 32\nBackslash = 33\nBackspace = 34\nBracketLeft = 35\nBracketRight = 36\nCapsLock = 37\nComma = 38\nContextMenu = 39\nControlLeft = 40\nControlRight = 41\nDelete = 42\nDigit0 = 43\nDigit1 = 44\nDigit2 = 45\nDigit3 = 46\nDigit4 = 47\nDigit5 = 48\nDigit6 = 49\nDigit7 = 50\nDigit8 = 51\nDigit9 = 52\nEnd = 53\nEnter = 54\nEqual = 55\nEscape = 56\nF1 = 57\nF2 = 58\nF3 = 59\nF4 = 60\nF5 = 61\nF6 = 62\nF7 = 63\nF8 = 64\nF9 = 65\nF10 = 66\nF11 = 67\nF12 = 68\nF13 = 69\nF14 = 70\nF15 = 71\nF16 = 72\nF17 = 73\nF18 = 74\nF19 = 75\nF20 = 76\nF21 = 77\nF22 = 78\nF23 = 79\nF24 = 80\nHome = 81\nInsert = 82\nIntlBackslash = 83\nMetaLeft = 84\nMetaRight = 85\nMinus = 86\nNumLock = 87\nNumpad0 = 88\nNumpad1 = 89\nNumpad2 = 90\nNumpad3 = 91\nNumpad4 = 92\nNumpad5 = 93\nNumpad6 = 94\nNumpad7 = 95\nNumpad8 = 96\nNumpad9 = 97\nNumpadAdd = 98\nNumpadDecimal = 99\nNumpadDivide = 100\nNumpadEnter = 101\nNumpadEqual = 102\nNumpadMultiply = 103\nNumpadSubtract = 104\nPageDown = 105\nPageUp = 106\nPause = 107\nPeriod = 108\nPrintScreen = 109\nQuote = 110\nScrollLock = 111\nSemicolon = 112\nShiftLeft = 113\nShiftRight = 114\nSlash = 115\nSpace = 116\nTab = 117\n",
             "items": {
                 "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41,
+                    42,
+                    43,
+                    44,
+                    45,
+                    46,
+                    47,
+                    48,
+                    49,
+                    50,
+                    51,
+                    52,
+                    53,
+                    54,
+                    55,
+                    56,
+                    57,
+                    58,
+                    59,
+                    60,
+                    61,
+                    62,
+                    63,
+                    64,
+                    65,
+                    66,
+                    67,
+                    68,
+                    69,
+                    70,
+                    71,
+                    72,
+                    73,
+                    74,
+                    75,
+                    76,
+                    77,
+                    78,
+                    79,
+                    80,
+                    81,
+                    82,
+                    83,
+                    84,
+                    85,
+                    86,
+                    87,
+                    88,
+                    89,
+                    90,
+                    91,
+                    92,
+                    93,
+                    94,
+                    95,
+                    96,
+                    97,
+                    98,
+                    99,
+                    100,
+                    101,
+                    102,
+                    103,
+                    104,
+                    105,
+                    106,
+                    107,
+                    108,
+                    109,
+                    110,
+                    111,
+                    112,
+                    113,
+                    114,
+                    115,
+                    116,
+                    117
+                ],
                 "examples": [
                     116
                 ]
@@ -358,64 +441,64 @@
             "type": "object",
             "description": "AI prompt exchange data resulting in the current game.",
             "properties": {
-            "game_id": {
-                "type": "string",
-                "description": "The ID of the game.",
-                "examples": [
-                "11223344-5566-7788-9900-aabbccddeeff"
-                ]
-            },
-            "current": {
-                "type": "object",
-                "description": "The most recent prompt and response responsible for the current state of the game.",
-                "properties": {
-                "prompt": {
+                "game_id": {
                     "type": "string",
-                    "description": "A prompt to an AI service.",
+                    "description": "The ID of the game.",
                     "examples": [
-                    "prompt"
+                        "11223344-5566-7788-9900-aabbccddeeff"
                     ]
                 },
-                "response": {
-                    "type": "string",
-                    "description": "A response from an AI service.",
-                    "examples": [
-                    "response"
-                    ]
-                }
-                }
-            },
-            "history": {
-                "type": "array",
-                "description": "The history of prompts and responses, prior to the current one, responsible for the state of the game.",
-                "items": {
-                "type": "object",
-                "properties": {
-                    "prompt": {
-                    "type": "string",
-                    "description": "A prompt to an AI service.",
-                    "examples": [
-                        "prompt"
-                    ]
-                    },
-                    "response": {
-                    "type": "string",
-                    "description": "A response from an AI service.",
-                    "examples": [
-                        "response"
-                    ]
+                "current": {
+                    "type": "object",
+                    "description": "The most recent prompt and response responsible for the current state of the game.",
+                    "properties": {
+                        "prompt": {
+                            "type": "string",
+                            "description": "A prompt to an AI service.",
+                            "examples": [
+                                "prompt"
+                            ]
+                        },
+                        "response": {
+                            "type": "string",
+                            "description": "A response from an AI service.",
+                            "examples": [
+                                "response"
+                            ]
+                        }
                     }
+                },
+                "history": {
+                    "type": "array",
+                    "description": "The history of prompts and responses, prior to the current one, responsible for the state of the game.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "prompt": {
+                                "type": "string",
+                                "description": "A prompt to an AI service.",
+                                "examples": [
+                                    "prompt"
+                                ]
+                            },
+                            "response": {
+                                "type": "string",
+                                "description": "A response from an AI service.",
+                                "examples": [
+                                    "response"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Additional data related to AI prompt or response."
+                },
+                "error": {
+                    "type": "object",
+                    "description": "An error response from the AI service."
                 }
-                }
-            },
-            "data": {
-                "type": "object",
-                "description": "Additional data related to AI prompt or response."
-            },
-            "error": {
-                "type": "object",
-                "description": "An error response from the AI service."
-            }
             }
         },
         "created_at": {

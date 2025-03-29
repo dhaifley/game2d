@@ -1,36 +1,19 @@
-function Update(data)
+function Update(game)
 	if game == nil then
 		print("Global game table is nil")
-		return
+		return game
 	end
 
 	if game.objects == nil then
 		print("Game objects table is nil")
-		return
+		return game
 	end
 
-	local obj = game.objects[data.id]
-	if game.subject ~= nil and game.subject.id == data.id then
-		obj = game.subject
-	end
+	local obj = game.subject
 
 	if obj == nil then
-		print("Game object not found: " .. data.id)
-		local function dump(o)
-			if type(o) == 'table' then
-				local s = '{ '
-				for k,v in pairs(o) do
-					if type(k) ~= 'number' then k = '"'..k..'"' end
-					s = s .. '['..k..'] = ' .. dump(v) .. ','
-				end
-				return s .. '} '
-			else
-				return tostring(o)
-			end
-		end
-
-		print(dump(game.objects))
-		return
+		print("Game subject not found")
+		return game
 	end
 
 	if obj.data == nil then
@@ -87,9 +70,7 @@ function Update(data)
 		obj.y = 0
 	end
 
-	if game.subject ~= nil and game.subject.id == data.id then
-		game.subject = obj
-	else
-		game.objects[data.id] = obj
-	end
+	game.subject = obj
+
+	return game
 end

@@ -95,7 +95,7 @@ export const createGame = async (name: string): Promise<Game> => {
   }
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/games`, { name });
+    const response = await axios.post(`${API_BASE_URL}/games`, { "name": name });
     return response.data;
   } catch (error) {
     console.error('Error creating game:', error);
@@ -110,7 +110,8 @@ export const copyGame = async (id: string, name: string): Promise<Game> => {
   }
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/games/copy`, { id, name });
+    const response = await axios.post(`${API_BASE_URL}/games/copy`,
+      { "id": id, "name": name });
     return response.data;
   } catch (error) {
     console.error(`Error copying game ${id}:`, error);

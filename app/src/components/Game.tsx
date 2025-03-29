@@ -29,7 +29,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedName, setEditedName] = useState(game.name);
   const [editedDescription, setEditedDescription] = useState(game.description || '');
-  const [editedTags, setEditedTags] = useState(game.tags?.join(', ') || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -89,7 +88,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     setGameIcon(game.icon);
     setEditedName(game.name);
     setEditedDescription(game.description || '');
-    setEditedTags(game.tags?.join(', ') || '');
 
     let respText = '';
     game.prompts?.history?.forEach((prompt: any) => {
@@ -132,6 +130,8 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
           const updatedGame = await fetchGame(currentGame.id);
           setCurrentGame(updatedGame);
           setGameIcon(updatedGame.icon);
+          setEditedName(updatedGame.name);
+          setEditedDescription(updatedGame.description || '');
 
           let respText = '';
           updatedGame.prompts?.history?.forEach((prompt: any) => {
@@ -260,7 +260,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
     setIsEditMode(false);
     setEditedName(currentGame.name);
     setEditedDescription(currentGame.description || '');
-    setEditedTags(currentGame.tags?.join(', ') || '');
     setSaveError(null);
   };
 
@@ -279,7 +278,6 @@ const Game: React.FC<GameProps> = ({ game, onClose, onGameUpdated }) => {
       const updates: Partial<GameType> = {
         name: editedName.trim(),
         description: editedDescription.trim(),
-        tags: editedTags.trim() ? editedTags.split(',').map(tag => tag.trim()) : []
       };
 
       // Call the API to update the game

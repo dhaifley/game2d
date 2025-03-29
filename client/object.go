@@ -1,10 +1,8 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 
-	"github.com/dhaifley/game2d/errors"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -13,16 +11,14 @@ type Object struct {
 	game             *Game
 	sub, hidden      bool
 	w, h, x, y, z, r int
-	id, name         string
-	src, img         string
+	id, name, img    string
 	data             map[string]any
 }
 
 // NewObject creates and initializes a new object.
 func NewObject(
 	game *Game,
-	id, name string,
-	src, img string,
+	id, name, img string,
 	data map[string]any,
 ) *Object {
 	w, h := 0, 0
@@ -40,7 +36,6 @@ func NewObject(
 		h:    h,
 		id:   id,
 		name: name,
-		src:  src,
 		img:  img,
 		data: data,
 	}
@@ -49,11 +44,10 @@ func NewObject(
 // NewSubject creates and initializes a new subject object.
 func NewSubject(
 	game *Game,
-	id, name string,
-	src, img string,
+	id, name, img string,
 	data map[string]any,
 ) *Object {
-	sub := NewObject(game, id, name, src, img, data)
+	sub := NewObject(game, id, name, img, data)
 
 	sub.sub = true
 
@@ -110,11 +104,6 @@ func (o *Object) SetImage(img string) {
 	}
 }
 
-// SetScript sets the object script.
-func (o *Object) SetScript(src string) {
-	o.src = src
-}
-
 // SetData sets the object data.
 func (o *Object) SetData(data map[string]any) {
 	o.data = data
@@ -133,7 +122,6 @@ func (o *Object) Map() map[string]any {
 		"w":       o.w,
 		"h":       o.h,
 		"image":   o.img,
-		"script":  o.src,
 		"data":    o.data,
 	}
 }
@@ -143,7 +131,6 @@ func NewObjectFromMap(m map[string]any) *Object {
 	hidden, _ := m["hidden"].(bool)
 	id, _ := m["id"].(string)
 	name, _ := m["name"].(string)
-	src, _ := m["script"].(string)
 	img, _ := m["image"].(string)
 	data, _ := m["data"].(map[string]any)
 	sub, _ := m["subject"].(bool)
@@ -162,7 +149,6 @@ func NewObjectFromMap(m map[string]any) *Object {
 		id:     id,
 		name:   name,
 		hidden: hidden,
-		src:    src,
 		img:    img,
 		data:   data,
 		sub:    sub,
@@ -188,7 +174,6 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 		W      int            `json:"w"`
 		H      int            `json:"h"`
 		Image  string         `json:"image,omitempty"`
-		Script string         `json:"script,omitempty"`
 		Data   map[string]any `json:"data,omitempty"`
 	}{
 		ID:     o.id,
@@ -201,7 +186,6 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 		W:      o.w,
 		H:      o.h,
 		Image:  o.img,
-		Script: o.src,
 		Data:   o.data,
 	})
 }
@@ -219,7 +203,6 @@ func (o *Object) UnmarshalJSON(data []byte) error {
 		W      int            `json:"w"`
 		H      int            `json:"h"`
 		Image  string         `json:"image,omitempty"`
-		Script string         `json:"script,omitempty"`
 		Data   map[string]any `json:"data,omitempty"`
 	}{}
 
@@ -236,56 +219,8 @@ func (o *Object) UnmarshalJSON(data []byte) error {
 	o.r = v.R
 	o.w = v.W
 	o.h = v.H
-	o.src = v.Script
 	o.img = v.Image
 	o.data = v.Data
-
-	return nil
-}
-
-// Update updates the object state each frame.
-func (o *Object) Update() error {
-	if o.src == "" || o.game == nil || o.game.lua == nil || o.game.src == nil {
-		return nil
-	}
-
-	src, ok := o.game.src[o.src]
-	if !ok || src == nil {
-		return errors.New(errors.ErrClient,
-			"script not found",
-			"object_id", o.id,
-			"script_id", o.src)
-	}
-
-	l := o.game.lua
-
-	buf := bytes.NewBufferString(src.data)
-
-	if err := l.Load(buf, "Update", "text"); err != nil {
-		return errors.Wrap(err, errors.ErrClient,
-			"unable to load script",
-			"object_id", o.id,
-			"script_id", o.src,
-			"script", string(src.data))
-	}
-
-	l.Call(0, 0)
-
-	l.Global("Update")
-
-	if !l.IsFunction(-1) {
-		return errors.New(errors.ErrClient,
-			"no Update function in script",
-			"object_id", o.id,
-			"script_id", o.src,
-			"script", string(src.data))
-	}
-
-	d := map[string]any{"id": o.id}
-
-	pushMap(l, d)
-
-	l.Call(1, 0)
 
 	return nil
 }
@@ -296,13 +231,9 @@ func (o *Object) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	if !o.sub && o.game.sub != nil {
-		if o.x-o.game.sub.x > screen.Bounds().Dx() ||
-			o.x-o.game.sub.x < -screen.Bounds().Dx() ||
-			o.y-o.game.sub.y < -screen.Bounds().Dy() ||
-			o.y-o.game.sub.y > screen.Bounds().Dy() {
-			return
-		}
+	if o.x < 0 || o.x > screen.Bounds().Dx() ||
+		o.y < 0 || o.y > screen.Bounds().Dy() {
+		return
 	}
 
 	geo := ebiten.GeoM{}

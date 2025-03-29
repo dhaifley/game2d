@@ -42,10 +42,6 @@ properties:
     type: string
     description: The ID of the object image.
     examples: ["image_id"]
-  script:
-    type: string
-    description: The ID of the object script.
-    examples: ["script_id"]
   data:
     type: object
     description: Additional object data.

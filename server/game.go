@@ -51,7 +51,7 @@ type Game struct {
 	Subject     request.FieldJSON        `bson:"subject"     json:"subject"     yaml:"subject"`
 	Objects     request.FieldJSON        `bson:"objects"     json:"objects"     yaml:"objects"`
 	Images      request.FieldJSON        `bson:"images"      json:"images"      yaml:"images"`
-	Scripts     request.FieldJSON        `bson:"scripts"     json:"scripts"     yaml:"scripts"`
+	Script      request.FieldString      `bson:"script"      json:"script"      yaml:"script"`
 	Source      request.FieldString      `bson:"source"      json:"source"      yaml:"source"`
 	CommitHash  request.FieldString      `bson:"commit_hash" json:"commit_hash" yaml:"commit_hash"`
 	Tags        request.FieldStringArray `bson:"tags"        json:"tags"        yaml:"tags"`
@@ -388,6 +388,18 @@ func (s *Server) createGame(ctx context.Context,
 		}
 	}
 
+	if req.W.Value <= 0 {
+		req.W = request.FieldInt64{
+			Set: true, Valid: true, Value: 640,
+		}
+	}
+
+	if req.H.Value <= 0 {
+		req.W = request.FieldInt64{
+			Set: true, Valid: true, Value: 480,
+		}
+	}
+
 	if err := req.ValidateCreate(); err != nil {
 		return nil, err
 	}
@@ -466,7 +478,7 @@ func (s *Server) createGame(ctx context.Context,
 	request.SetField(doc, "subject", req.Subject)
 	request.SetField(doc, "objects", req.Objects)
 	request.SetField(doc, "images", req.Images)
-	request.SetField(doc, "scripts", req.Scripts)
+	request.SetField(doc, "script", req.Script)
 	request.SetField(doc, "commit_hash", req.CommitHash)
 	request.SetField(doc, "prompts", req.Prompts)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
@@ -671,7 +683,7 @@ func (s *Server) updateGame(ctx context.Context,
 	request.SetField(doc, "subject", req.Subject)
 	request.SetField(doc, "objects", req.Objects)
 	request.SetField(doc, "images", req.Images)
-	request.SetField(doc, "scripts", req.Scripts)
+	request.SetField(doc, "script", req.Script)
 	request.SetField(doc, "commit_hash", req.CommitHash)
 	request.SetField(doc, "prompts", req.Prompts)
 	request.SetField(doc, "updated_at", req.UpdatedAt)
@@ -1689,6 +1701,12 @@ func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
 				"req", req)
 		}
 
+		if req.Name.Value == "" {
+			return nil, errors.New(errors.ErrInvalidRequest,
+				"missing game name",
+				"req", req)
+		}
+
 		ctx = context.WithValue(ctx, CtxKeyGameAllowTags, true)
 		ctx = context.WithValue(ctx, CtxKeyGameAllowPreviousID, true)
 
@@ -1712,7 +1730,7 @@ func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
 			PreviousID: request.FieldString{
 				Set: true, Valid: false,
 			},
-			Name:        g.Name,
+			Name:        req.Name,
 			Version:     g.Version,
 			Description: g.Description,
 			Icon:        g.Icon,
@@ -1723,7 +1741,7 @@ func (s *Server) postGamesCopyHandler(w http.ResponseWriter,
 			Subject:    g.Subject,
 			Objects:    g.Objects,
 			Images:     g.Images,
-			Scripts:    g.Scripts,
+			Script:     g.Script,
 			Source: request.FieldString{
 				Set: true, Valid: true, Value: "app",
 			},
@@ -1950,7 +1968,7 @@ func (s *Server) postGamesPromptHandler(w http.ResponseWriter,
 		Subject:    g.Subject,
 		Objects:    g.Objects,
 		Images:     g.Images,
-		Scripts:    g.Scripts,
+		Script:     g.Script,
 		Source: request.FieldString{
 			Set: true, Valid: true, Value: "app",
 		},

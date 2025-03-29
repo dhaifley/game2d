@@ -64,11 +64,10 @@ properties:
     description: A map of game images keyed by ID.
     additionalProperties:
       $ref: "./image.yaml"
-  scripts:
-    type: object
-    description: A map of game scripts keyed by ID.
-    additionalProperties:
-      $ref: "./script.yaml"
+  script:
+    type: string
+    description: The base64 encoded Lua script for the game.
+    examples: ["function Update(game) return game end"]
   source:
     type: string
     description: The source of the game.
