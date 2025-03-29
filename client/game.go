@@ -784,7 +784,7 @@ func pushValue(l *lua.State, v any) {
 }
 
 // tableToMap retrieves a table from the lua stack, at index, as a map.
-func tableToMap(l *lua.State, index int) (map[string]any, error) {
+func tableToMap(l *lua.State, index int) (any, error) {
 	if !l.IsTable(index) {
 		return nil, errors.New(errors.ErrClient,
 			"value at index is not a table",
@@ -800,10 +800,14 @@ func tableToMap(l *lua.State, index int) (map[string]any, error) {
 
 	result := make(map[string]any)
 
+	resA := make([]any, 0)
+
 	for l.Next(-2) {
 		if l.IsString(-2) {
 			key, _ := l.ToString(-2)
 			result[key] = getValue(l, -1)
+		} else if l.IsNumber(-2) {
+			resA = append(resA, getValue(l, -1))
 		} else {
 			break
 		}
@@ -812,6 +816,10 @@ func tableToMap(l *lua.State, index int) (map[string]any, error) {
 	}
 
 	l.Pop(1)
+
+	if len(resA) > 0 {
+		return resA, nil
+	}
 
 	return result, nil
 }
@@ -849,7 +857,16 @@ func pullMap(l *lua.State) (map[string]any, error) {
 			"game table not found")
 	}
 
-	result, err := tableToMap(l, -1)
+	val, err := tableToMap(l, -1)
+	if err != nil {
+		return nil, err
+	}
+
+	result, ok := val.(map[string]any)
+	if !ok {
+		return nil, errors.New(errors.ErrClient,
+			"invalid game definition received")
+	}
 
 	l.Pop(1)
 
