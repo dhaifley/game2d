@@ -1,7 +1,6 @@
 module github.com/dhaifley/game2d
 
 go 1.24.0
-
 require (
 	github.com/Shopify/go-lua v0.0.0-20240527182111-9ab1540f3f5f
 	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.13
@@ -12,7 +11,7 @@ require (
 	github.com/google/go-github/v39 v39.2.0
 	github.com/google/gomemcache v0.0.0-20210709172713-c1c93e4523ee
 	github.com/google/uuid v1.6.0
-	github.com/hajimehoshi/ebiten/v2 v2.8.6
+	github.com/hajimehoshi/ebiten/v2 v2.8.7
 	github.com/ktrysmt/go-bitbucket v0.9.81
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
