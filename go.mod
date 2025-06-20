@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/Shopify/go-lua v0.0.0-20240527182111-9ab1540f3f5f
 	github.com/anthropics/anthropic-sdk-go v0.2.0-beta.3
-	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
